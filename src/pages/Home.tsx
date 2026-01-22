@@ -1,44 +1,11 @@
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Hero } from '@/components/Hero'
 
 export function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center bg-neutral-50 px-4">
-        <div className="container mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
-            <h1 className="text-5xl font-light tracking-tight text-neutral-900 md:text-7xl">
-              Discover Timeless
-              <br />
-              <span className="font-semibold">Elegance</span>
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-neutral-600 md:text-xl">
-              Curated collections that blend modern design with classic
-              sophistication
-            </p>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <Link
-                to="/shop"
-                className="inline-flex items-center space-x-2 rounded-full bg-neutral-900 px-8 py-4 text-sm font-medium text-white transition-all hover:bg-neutral-800"
-              >
-                <span>Explore Collection</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Featured Section */}
       <section className="py-24">
