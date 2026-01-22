@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingBag, Search, User, Menu } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   Sheet,
   SheetContent,
@@ -9,17 +10,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-
-const navLinks = [
-  { name: 'Shop', href: '/shop' },
-  { name: 'Collections', href: '/collections' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' },
-]
+import { LanguageSwitcher, LanguageSwitcherMobile } from '@/components/LanguageSwitcher'
 
 export function Header() {
+  const { t } = useTranslation()
   const [isScrolled, setIsScrolled] = useState(false)
   const [cartCount] = useState(0)
+
+  const navLinks = [
+    { name: t('nav.shop'), href: '/shop' },
+    { name: t('nav.collections'), href: '/collections' },
+    { name: t('nav.about'), href: '/about' },
+    { name: t('nav.contact'), href: '/contact' },
+  ]
 
   // Handle scroll effect for header styling
   useState(() => {
@@ -61,7 +64,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
-            <ul className="flex items-center space-x-8">
+            <ul className="flex items-center gap-8">
               {navLinks.map((link) => (
                 <li key={link.href}>
                   <NavigationLink href={link.href}>
@@ -73,13 +76,16 @@ export function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center space-x-3 md:space-x-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Language Switcher - Desktop */}
+            <LanguageSwitcher className="hidden md:block" />
+
             {/* Search Button */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
-              aria-label="Search"
+              aria-label={t('common.search')}
             >
               <Search className="h-5 w-5" />
             </motion.button>
@@ -89,7 +95,7 @@ export function Header() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
-              aria-label="Account"
+              aria-label={t('common.account')}
             >
               <User className="h-5 w-5" />
             </motion.button>
@@ -99,7 +105,7 @@ export function Header() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-              aria-label="Shopping cart"
+              aria-label={t('common.cart')}
             >
               <ShoppingBag className="h-5 w-5" />
               <AnimatePresence>
@@ -108,7 +114,7 @@ export function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
+                    className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
                   >
                     {cartCount}
                   </motion.span>
@@ -123,7 +129,7 @@ export function Header() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   className="rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 lg:hidden"
-                  aria-label="Menu"
+                  aria-label={t('common.menu')}
                 >
                   <Menu className="h-5 w-5" />
                 </motion.button>
@@ -131,10 +137,10 @@ export function Header() {
               <SheetContent side="right" className="w-full sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="font-display text-2xl font-light tracking-tight">
-                    Menu
+                    {t('common.menu')}
                   </SheetTitle>
                 </SheetHeader>
-                <MobileNavigation />
+                <MobileNavigation navLinks={navLinks} />
               </SheetContent>
             </Sheet>
           </div>
@@ -163,7 +169,7 @@ function NavigationLink({
     >
       {children}
       <motion.span
-        className="absolute -bottom-1 left-0 h-[2px] w-full bg-neutral-900"
+        className="absolute -bottom-1 start-0 h-[2px] w-full bg-neutral-900"
         initial={{ scaleX: 0 }}
         animate={{ scaleX: isHovered ? 1 : 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -174,7 +180,13 @@ function NavigationLink({
 }
 
 // Mobile Navigation Component
-function MobileNavigation() {
+interface MobileNavigationProps {
+  navLinks: { name: string; href: string }[]
+}
+
+function MobileNavigation({ navLinks }: MobileNavigationProps) {
+  const { t } = useTranslation()
+
   return (
     <nav className="mt-8">
       <ul className="space-y-1">
@@ -201,22 +213,32 @@ function MobileNavigation() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.3 }}
-          className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
         >
           <Search className="h-5 w-5" />
-          <span className="font-medium">Search</span>
+          <span className="font-medium">{t('common.search')}</span>
         </motion.button>
 
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
-          className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
         >
           <User className="h-5 w-5" />
-          <span className="font-medium">Account</span>
+          <span className="font-medium">{t('common.account')}</span>
         </motion.button>
       </div>
+
+      {/* Language Switcher - Mobile */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6, duration: 0.3 }}
+        className="mt-6 border-t border-neutral-200 pt-6"
+      >
+        <LanguageSwitcherMobile />
+      </motion.div>
     </nav>
   )
 }

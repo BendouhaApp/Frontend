@@ -1,0 +1,106 @@
+{
+  "common": {
+    "shopNow": "Acheter maintenant",
+    "exploreCollection": "Explorer la collection",
+    "discoverMore": "En savoir plus",
+    "viewAll": "Voir tout",
+    "addToCart": "Ajouter au panier",
+    "buyNow": "Acheter",
+    "learnMore": "En savoir plus",
+    "search": "Rechercher",
+    "account": "Compte",
+    "cart": "Panier",
+    "menu": "Menu",
+    "close": "Fermer",
+    "items": "articles",
+    "price": "Prix",
+    "quantity": "Quantité",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "free": "Gratuit",
+    "newArrival": "Nouveauté",
+    "bestSeller": "Meilleure vente",
+    "sale": "Soldes",
+    "outOfStock": "Rupture de stock",
+    "inStock": "En stock",
+    "language": "Langue"
+  },
+  "nav": {
+    "shop": "Boutique",
+    "collections": "Collections",
+    "about": "À propos",
+    "contact": "Contact",
+    "newArrivals": "Nouveautés",
+    "bestSellers": "Meilleures ventes"
+  },
+  "hero": {
+    "eyebrow": "Nouvelle Collection 2026",
+    "headline": "Créé pour ceux qui apprécient",
+    "highlightWord": "l'Excellence",
+    "subtitle": "Découvrez notre collection raffinée de pièces intemporelles, conçues avec une attention méticuleuse aux détails et un engagement sans faille envers la qualité.",
+    "cta": "Explorer la collection",
+    "stats": {
+      "customers": "Clients satisfaits",
+      "pieces": "Pièces uniques",
+      "quality": "Qualité garantie"
+    },
+    "scroll": "Défiler"
+  },
+  "categories": {
+    "title": "Acheter par catégorie",
+    "subtitle": "Explorez nos collections soigneusement sélectionnées pour un intérieur moderne",
+    "exploreCollection": "Explorer la collection",
+    "livingRoom": "Salon",
+    "livingRoomDesc": "Confort élégant pour les moments du quotidien",
+    "bedroom": "Chambre",
+    "bedroomDesc": "Des refuges paisibles pour des nuits reposantes",
+    "kitchen": "Cuisine",
+    "kitchenDesc": "Là où l'art culinaire commence",
+    "lighting": "Éclairage",
+    "lightingDesc": "Illuminez avec intention",
+    "textiles": "Textiles",
+    "textilesDesc": "Des touches douces de luxe",
+    "decor": "Décoration",
+    "decorDesc": "Les détails qui font la différence",
+    "outdoor": "Extérieur"
+  },
+  "products": {
+    "featured": "Produits vedettes",
+    "featuredSubtitle": "Sélections triées sur le volet pour le client exigeant",
+    "newArrivals": "Nouveautés",
+    "bestSellers": "Meilleures ventes",
+    "allProducts": "Tous les produits",
+    "filterBy": "Filtrer par",
+    "sortBy": "Trier par",
+    "priceRange": "Fourchette de prix",
+    "color": "Couleur",
+    "size": "Taille",
+    "material": "Matériau"
+  },
+  "footer": {
+    "brandDescription": "Une expérience e-commerce premium, créée avec une attention aux détails.",
+    "shop": "Boutique",
+    "allProducts": "Tous les produits",
+    "collections": "Collections",
+    "newArrivals": "Nouveautés",
+    "sale": "Soldes",
+    "company": "Entreprise",
+    "aboutUs": "À propos",
+    "contact": "Contact",
+    "careers": "Carrières",
+    "press": "Presse",
+    "followUs": "Suivez-nous",
+    "copyright": "© {{year}} Bendouha. Tous droits réservés.",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfService": "Conditions d'utilisation"
+  },
+  "about": {
+    "title": "À propos de nous",
+    "subtitle": "Notre histoire"
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Contactez-nous"
+  }
+}

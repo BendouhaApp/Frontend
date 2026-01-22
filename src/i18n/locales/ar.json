@@ -1,0 +1,106 @@
+{
+  "common": {
+    "shopNow": "تسوق الآن",
+    "exploreCollection": "استكشف المجموعة",
+    "discoverMore": "اكتشف المزيد",
+    "viewAll": "عرض الكل",
+    "addToCart": "أضف إلى السلة",
+    "buyNow": "اشترِ الآن",
+    "learnMore": "اعرف المزيد",
+    "search": "بحث",
+    "account": "الحساب",
+    "cart": "السلة",
+    "menu": "القائمة",
+    "close": "إغلاق",
+    "items": "منتجات",
+    "price": "السعر",
+    "quantity": "الكمية",
+    "total": "المجموع",
+    "subtotal": "المجموع الفرعي",
+    "shipping": "الشحن",
+    "free": "مجاني",
+    "newArrival": "وصل حديثاً",
+    "bestSeller": "الأكثر مبيعاً",
+    "sale": "تخفيضات",
+    "outOfStock": "نفذت الكمية",
+    "inStock": "متوفر",
+    "language": "اللغة"
+  },
+  "nav": {
+    "shop": "المتجر",
+    "collections": "المجموعات",
+    "about": "من نحن",
+    "contact": "اتصل بنا",
+    "newArrivals": "وصل حديثاً",
+    "bestSellers": "الأكثر مبيعاً"
+  },
+  "hero": {
+    "eyebrow": "مجموعة جديدة 2026",
+    "headline": "صُنع لمن يقدّرون",
+    "highlightWord": "التميّز",
+    "subtitle": "اكتشف مجموعتنا المنسقة من القطع الخالدة، المصممة باهتمام دقيق بالتفاصيل والتزام راسخ بالجودة.",
+    "cta": "استكشف المجموعة",
+    "stats": {
+      "customers": "عملاء سعداء",
+      "pieces": "قطع فريدة",
+      "quality": "جودة مضمونة"
+    },
+    "scroll": "مرر للأسفل"
+  },
+  "categories": {
+    "title": "تسوق حسب الفئة",
+    "subtitle": "استكشف مجموعاتنا المختارة بعناية للحياة العصرية",
+    "exploreCollection": "استكشف المجموعة",
+    "livingRoom": "غرفة المعيشة",
+    "livingRoomDesc": "راحة أنيقة للحظات اليومية",
+    "bedroom": "غرفة النوم",
+    "bedroomDesc": "ملاذات هادئة لليالي مريحة",
+    "kitchen": "المطبخ",
+    "kitchenDesc": "حيث يبدأ فن الطهي",
+    "lighting": "الإضاءة",
+    "lightingDesc": "أنر بإتقان",
+    "textiles": "المنسوجات",
+    "textilesDesc": "لمسات ناعمة من الفخامة",
+    "decor": "الديكور",
+    "decorDesc": "التفاصيل النهائية المهمة",
+    "outdoor": "الخارجية"
+  },
+  "products": {
+    "featured": "منتجات مميزة",
+    "featuredSubtitle": "اختيارات منتقاة للعميل المميز",
+    "newArrivals": "وصل حديثاً",
+    "bestSellers": "الأكثر مبيعاً",
+    "allProducts": "جميع المنتجات",
+    "filterBy": "تصفية حسب",
+    "sortBy": "ترتيب حسب",
+    "priceRange": "نطاق السعر",
+    "color": "اللون",
+    "size": "الحجم",
+    "material": "المادة"
+  },
+  "footer": {
+    "brandDescription": "تجربة تسوق إلكتروني فاخرة، صُنعت باهتمام بالتفاصيل.",
+    "shop": "المتجر",
+    "allProducts": "جميع المنتجات",
+    "collections": "المجموعات",
+    "newArrivals": "وصل حديثاً",
+    "sale": "تخفيضات",
+    "company": "الشركة",
+    "aboutUs": "من نحن",
+    "contact": "اتصل بنا",
+    "careers": "الوظائف",
+    "press": "الصحافة",
+    "followUs": "تابعنا",
+    "copyright": "© {{year}} بن دوحة. جميع الحقوق محفوظة.",
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsOfService": "شروط الخدمة"
+  },
+  "about": {
+    "title": "من نحن",
+    "subtitle": "قصتنا"
+  },
+  "contact": {
+    "title": "اتصل بنا",
+    "subtitle": "تواصل معنا"
+  }
+}
