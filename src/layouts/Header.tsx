@@ -1,87 +1,222 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingBag, Search, User, Menu } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+
+const navLinks = [
+  { name: 'Shop', href: '/shop' },
+  { name: 'Collections', href: '/collections' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact', href: '/contact' },
+]
 
 export function Header() {
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [cartCount] = useState(0)
+
+  // Handle scroll effect for header styling
+  useState(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  })
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/80 backdrop-blur-md"
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className={`
+        sticky top-0 z-50 w-full border-b transition-all duration-300
+        ${
+          isScrolled
+            ? 'border-neutral-200 bg-background/95 shadow-sm backdrop-blur-md'
+            : 'border-transparent bg-background/80 backdrop-blur-sm'
+        }
+      `}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-              Bendouha
-            </h1>
-          </motion.div>
-        </Link>
+      <div className="container mx-auto">
+        <div className="flex h-20 items-center justify-between px-4 md:px-6">
+          {/* Logo */}
+          <Link to="/" className="relative z-10">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h1 className="font-display text-2xl font-light tracking-tight text-neutral-900 md:text-3xl">
+                Bendouha
+              </h1>
+            </motion.div>
+          </Link>
 
-        {/* Navigation */}
-        <nav className="hidden items-center space-x-8 md:flex">
-          <Link
-            to="/shop"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
-          >
-            Shop
-          </Link>
-          <Link
-            to="/collections"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
-          >
-            Collections
-          </Link>
-          <Link
-            to="/about"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
-          >
-            About
-          </Link>
-          <Link
-            to="/contact"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
-          >
-            Contact
-          </Link>
-        </nav>
+          {/* Desktop Navigation */}
+          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
+            <ul className="flex items-center space-x-8">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <NavigationLink href={link.href}>
+                    {link.name}
+                  </NavigationLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Actions */}
-        <div className="flex items-center space-x-4">
-          <button
-            className="text-neutral-600 transition-colors hover:text-neutral-900"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </button>
-          <button
-            className="text-neutral-600 transition-colors hover:text-neutral-900"
-            aria-label="Account"
-          >
-            <User className="h-5 w-5" />
-          </button>
-          <button
-            className="relative text-neutral-600 transition-colors hover:text-neutral-900"
-            aria-label="Shopping cart"
-          >
-            <ShoppingBag className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-neutral-900 text-xs text-white">
-              0
-            </span>
-          </button>
-          <button
-            className="text-neutral-600 transition-colors hover:text-neutral-900 md:hidden"
-            aria-label="Menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          {/* Actions */}
+          <div className="flex items-center space-x-3 md:space-x-4">
+            {/* Search Button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5" />
+            </motion.button>
+
+            {/* Account Button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
+              aria-label="Account"
+            >
+              <User className="h-5 w-5" />
+            </motion.button>
+
+            {/* Cart Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+              aria-label="Shopping cart"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 lg:hidden"
+                  aria-label="Menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </motion.button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="font-display text-2xl font-light tracking-tight">
+                    Menu
+                  </SheetTitle>
+                </SheetHeader>
+                <MobileNavigation />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </motion.header>
+  )
+}
+
+// Navigation Link Component with hover animation
+function NavigationLink({
+  href,
+  children,
+}: {
+  href: string
+  children: React.ReactNode
+}) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <Link
+      to={href}
+      className="relative text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {children}
+      <motion.span
+        className="absolute -bottom-1 left-0 h-[2px] w-full bg-neutral-900"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: isHovered ? 1 : 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        style={{ originX: 0 }}
+      />
+    </Link>
+  )
+}
+
+// Mobile Navigation Component
+function MobileNavigation() {
+  return (
+    <nav className="mt-8">
+      <ul className="space-y-1">
+        {navLinks.map((link, index) => (
+          <motion.li
+            key={link.href}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1, duration: 0.3 }}
+          >
+            <Link
+              to={link.href}
+              className="block rounded-lg px-4 py-3 text-lg font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+            >
+              {link.name}
+            </Link>
+          </motion.li>
+        ))}
+      </ul>
+
+      {/* Mobile Actions */}
+      <div className="mt-8 space-y-3 border-t border-neutral-200 pt-6">
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
+          className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+        >
+          <Search className="h-5 w-5" />
+          <span className="font-medium">Search</span>
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+          className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+        >
+          <User className="h-5 w-5" />
+          <span className="font-medium">Account</span>
+        </motion.button>
+      </div>
+    </nav>
   )
 }
