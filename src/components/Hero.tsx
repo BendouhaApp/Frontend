@@ -1,5 +1,6 @@
 import { motion, type Variants } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 // Animation variants for staggered entrance
@@ -56,14 +57,22 @@ interface HeroProps {
 }
 
 export function Hero({
-  headline = 'Crafted for Those Who Appreciate',
-  highlightWord = 'Excellence',
-  subtitle = 'Discover our curated collection of timeless pieces, designed with meticulous attention to detail and an unwavering commitment to quality.',
-  ctaText = 'Explore Collection',
+  headline,
+  highlightWord,
+  subtitle,
+  ctaText,
   ctaHref = '/shop',
   backgroundImage,
   showDecorative = true,
 }: HeroProps) {
+  const { t } = useTranslation()
+
+  // Use translations as defaults
+  const displayHeadline = headline ?? t('hero.headline')
+  const displayHighlight = highlightWord ?? t('hero.highlightWord')
+  const displaySubtitle = subtitle ?? t('hero.subtitle')
+  const displayCta = ctaText ?? t('hero.cta')
+
   return (
     <section className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
       {/* Background Layer */}
@@ -124,7 +133,7 @@ export function Hero({
               variants={itemVariants}
               className="mb-6 inline-block text-sm font-medium uppercase tracking-widest text-neutral-500"
             >
-              New Collection 2026
+              {t('hero.eyebrow')}
             </motion.span>
 
             {/* Main Headline */}
@@ -132,9 +141,9 @@ export function Hero({
               variants={itemVariants}
               className="font-display text-5xl font-light leading-[1.1] tracking-tight text-neutral-900 sm:text-6xl md:text-7xl lg:text-8xl"
             >
-              {headline}
+              {displayHeadline}
               <br />
-              <span className="font-normal text-primary">{highlightWord}</span>
+              <span className="font-normal text-primary">{displayHighlight}</span>
             </motion.h1>
 
             {/* Subtitle */}
@@ -142,7 +151,7 @@ export function Hero({
               variants={itemVariants}
               className="mt-8 max-w-xl text-lg leading-relaxed text-neutral-600 md:text-xl"
             >
-              {subtitle}
+              {displaySubtitle}
             </motion.p>
 
             {/* CTA Button */}
@@ -153,8 +162,8 @@ export function Hero({
                 asChild
               >
                 <a href={ctaHref}>
-                  {ctaText}
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  {displayCta}
+                  <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
                 </a>
               </Button>
             </motion.div>
@@ -166,17 +175,17 @@ export function Hero({
             >
               <div>
                 <p className="text-2xl font-light text-neutral-900">10k+</p>
-                <p className="text-sm text-neutral-500">Happy Customers</p>
+                <p className="text-sm text-neutral-500">{t('hero.stats.customers')}</p>
               </div>
               <div className="h-10 w-px bg-neutral-200" />
               <div>
                 <p className="text-2xl font-light text-neutral-900">500+</p>
-                <p className="text-sm text-neutral-500">Unique Pieces</p>
+                <p className="text-sm text-neutral-500">{t('hero.stats.pieces')}</p>
               </div>
               <div className="hidden h-10 w-px bg-neutral-200 sm:block" />
               <div className="hidden sm:block">
                 <p className="text-2xl font-light text-neutral-900">100%</p>
-                <p className="text-sm text-neutral-500">Quality Assured</p>
+                <p className="text-sm text-neutral-500">{t('hero.stats.quality')}</p>
               </div>
             </motion.div>
           </motion.div>
@@ -188,7 +197,7 @@ export function Hero({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 start-1/2 -translate-x-1/2 rtl:translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}
@@ -196,7 +205,7 @@ export function Hero({
           className="flex flex-col items-center gap-2"
         >
           <span className="text-xs font-medium uppercase tracking-wider text-neutral-400">
-            Scroll
+            {t('hero.scroll')}
           </span>
           <div className="h-12 w-px bg-gradient-to-b from-neutral-300 to-transparent" />
         </motion.div>

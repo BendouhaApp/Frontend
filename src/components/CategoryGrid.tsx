@@ -1,46 +1,47 @@
 import { motion, type Variants } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
-// Mock data for categories
-const categories = [
+// Category data structure (translations handled separately)
+const categoryData = [
   {
     id: '1',
-    name: 'Living Room',
-    description: 'Elegant comfort for everyday moments',
+    nameKey: 'categories.livingRoom',
+    descKey: 'categories.livingRoomDesc',
     image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80',
     itemCount: 42,
   },
   {
     id: '2',
-    name: 'Bedroom',
-    description: 'Peaceful retreats for restful nights',
+    nameKey: 'categories.bedroom',
+    descKey: 'categories.bedroomDesc',
     image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80',
     itemCount: 38,
   },
   {
     id: '3',
-    name: 'Kitchen',
-    description: 'Where culinary artistry begins',
+    nameKey: 'categories.kitchen',
+    descKey: 'categories.kitchenDesc',
     image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
     itemCount: 56,
   },
   {
     id: '4',
-    name: 'Lighting',
-    description: 'Illuminate with intention',
+    nameKey: 'categories.lighting',
+    descKey: 'categories.lightingDesc',
     image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
     itemCount: 31,
   },
   {
     id: '5',
-    name: 'Textiles',
-    description: 'Soft touches of luxury',
+    nameKey: 'categories.textiles',
+    descKey: 'categories.textilesDesc',
     image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
     itemCount: 67,
   },
   {
     id: '6',
-    name: 'Decor',
-    description: 'Finishing details that matter',
+    nameKey: 'categories.decor',
+    descKey: 'categories.decorDesc',
     image: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=800&q=80',
     itemCount: 89,
   },
@@ -78,10 +79,22 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({
-  title = 'Shop by Category',
-  subtitle = 'Explore our curated collections designed for modern living',
+  title,
+  subtitle,
   showItemCount = true,
 }: CategoryGridProps) {
+  const { t } = useTranslation()
+
+  const displayTitle = title ?? t('categories.title')
+  const displaySubtitle = subtitle ?? t('categories.subtitle')
+
+  // Build categories with translations
+  const categories = categoryData.map((cat) => ({
+    ...cat,
+    name: t(cat.nameKey),
+    description: t(cat.descKey),
+  }))
+
   return (
     <section className="section-padding bg-background">
       <div className="container mx-auto">
@@ -94,10 +107,10 @@ export function CategoryGrid({
           className="mb-12 text-center md:mb-16"
         >
           <h2 className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
-            {title}
+            {displayTitle}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-neutral-600">
-            {subtitle}
+            {displaySubtitle}
           </p>
         </motion.div>
 
@@ -114,6 +127,8 @@ export function CategoryGrid({
               key={category.id}
               category={category}
               showItemCount={showItemCount}
+              exploreText={t('categories.exploreCollection')}
+              itemsText={t('common.items')}
             />
           ))}
         </motion.div>
@@ -123,12 +138,22 @@ export function CategoryGrid({
 }
 
 // Individual Category Card Component
-interface CategoryCardProps {
-  category: (typeof categories)[0]
-  showItemCount?: boolean
+interface Category {
+  id: string
+  name: string
+  description: string
+  image: string
+  itemCount: number
 }
 
-function CategoryCard({ category, showItemCount }: CategoryCardProps) {
+interface CategoryCardProps {
+  category: Category
+  showItemCount?: boolean
+  exploreText: string
+  itemsText: string
+}
+
+function CategoryCard({ category, showItemCount, exploreText, itemsText }: CategoryCardProps) {
   return (
     <motion.a
       href={`/category/${category.id}`}
@@ -159,7 +184,7 @@ function CategoryCard({ category, showItemCount }: CategoryCardProps) {
               transition={{ delay: 0.2 }}
               className="mb-3 w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm"
             >
-              {category.itemCount} items
+              {category.itemCount} {itemsText}
             </motion.span>
           )}
 
@@ -175,9 +200,9 @@ function CategoryCard({ category, showItemCount }: CategoryCardProps) {
 
           {/* Explore link - reveals on hover */}
           <span className="mt-4 inline-flex translate-y-4 items-center text-sm font-medium text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-            Explore Collection
+            {exploreText}
             <svg
-              className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+              className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
