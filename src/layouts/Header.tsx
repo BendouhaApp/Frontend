@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Search, User, Menu } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Search, User, Menu } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import {
   Sheet,
@@ -11,11 +11,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { LanguageSwitcher, LanguageSwitcherMobile } from '@/components/LanguageSwitcher'
+import { CartDrawer } from '@/components/CartDrawer'
 
 export function Header() {
   const { t } = useTranslation()
   const [isScrolled, setIsScrolled] = useState(false)
-  const [cartCount] = useState(0)
 
   const navLinks = [
     { name: t('nav.shop'), href: '/shop' },
@@ -100,27 +100,8 @@ export function Header() {
               <User className="h-5 w-5" />
             </motion.button>
 
-            {/* Cart Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-              aria-label={t('common.cart')}
-            >
-              <ShoppingBag className="h-5 w-5" />
-              <AnimatePresence>
-                {cartCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground"
-                  >
-                    {cartCount}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+            {/* Cart Drawer */}
+            <CartDrawer />
 
             {/* Mobile Menu */}
             <Sheet>
