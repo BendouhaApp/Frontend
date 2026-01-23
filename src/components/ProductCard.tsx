@@ -87,23 +87,30 @@ export function ProductCard({
   return (
     <motion.a
       href={`/product/${product.id}`}
-      className={cn('group block', className)}
+      className={cn('group block focus-visible:outline-none', className)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
+      aria-label={`${product.name} - $${product.price.toFixed(2)}`}
     >
       {/* Image Container */}
-      <div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-xl bg-neutral-100">
-        {/* Loading skeleton */}
+      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-lg bg-neutral-100 sm:mb-4 sm:rounded-xl">
+        {/* Loading skeleton with shimmer effect */}
         {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-neutral-200" />
+          <div className="absolute inset-0 overflow-hidden bg-neutral-200">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200" />
+          </div>
         )}
 
         {/* Product Image */}
         <motion.img
           src={product.image}
-          alt={product.name}
+          alt=""
+          loading="lazy"
+          decoding="async"
           className={cn(
             'h-full w-full object-cover transition-all duration-500',
             imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -117,7 +124,7 @@ export function ProductCard({
         {product.badge && (
           <span
             className={cn(
-              'absolute start-3 top-3 rounded-full px-3 py-1 text-xs font-medium',
+              'absolute start-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium sm:start-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs',
               badgeColors[product.badge]
             )}
           >
@@ -128,32 +135,36 @@ export function ProductCard({
         {/* Out of Stock Overlay */}
         {product.inStock === false && (
           <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 backdrop-blur-[2px]">
-            <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-900">
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-neutral-900 sm:px-4 sm:py-2 sm:text-sm">
               {t('common.outOfStock')}
             </span>
           </div>
         )}
 
-        {/* Wishlist Button */}
+        {/* Wishlist Button - Always visible on mobile for better touch access */}
         <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered || isWishlisted ? 1 : 0 }}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: isHovered || isWishlisted ? 1 : 0.7 }}
           transition={{ duration: 0.2 }}
           onClick={handleWishlist}
           className={cn(
-            'absolute end-3 top-3 rounded-full bg-white/90 p-2 backdrop-blur-sm transition-colors',
+            'absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition-colors sm:end-3 sm:top-3 sm:h-9 sm:w-9',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
             isWishlisted
               ? 'text-red-500'
               : 'text-neutral-600 hover:text-neutral-900'
           )}
-          aria-label="Add to wishlist"
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={isWishlisted}
+          type="button"
         >
           <Heart
             className={cn('h-4 w-4', isWishlisted && 'fill-current')}
+            aria-hidden="true"
           />
         </motion.button>
 
-        {/* Quick Actions Overlay */}
+        {/* Quick Actions Overlay - Hidden on mobile for cleaner look */}
         <AnimatePresence>
           {isHovered && product.inStock !== false && (
             <motion.div
@@ -161,7 +172,7 @@ export function ProductCard({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-x-3 bottom-3 flex gap-2"
+              className="absolute inset-x-2 bottom-2 hidden gap-2 sm:inset-x-3 sm:bottom-3 sm:flex"
             >
               <Button
                 onClick={handleAddToCart}
@@ -185,34 +196,34 @@ export function ProductCard({
       </div>
 
       {/* Product Info */}
-      <div className="space-y-2">
+      <div className="space-y-1 sm:space-y-2">
         {/* Category */}
-        <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 sm:text-xs">
           {product.category}
         </span>
 
         {/* Name */}
-        <h3 className="text-lg font-medium text-neutral-900 transition-colors group-hover:text-neutral-600">
+        <h3 className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 transition-colors group-hover:text-neutral-600 sm:text-base md:text-lg">
           {product.name}
         </h3>
 
         {/* Price */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-medium text-neutral-900">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-sm font-medium text-neutral-900 sm:text-base md:text-lg">
             ${product.price.toFixed(2)}
           </span>
           {product.originalPrice && (
-            <span className="text-sm text-neutral-400 line-through">
+            <span className="text-xs text-neutral-400 line-through sm:text-sm">
               ${product.originalPrice.toFixed(2)}
             </span>
           )}
         </div>
 
-        {/* Rating */}
+        {/* Rating - Hidden on very small screens */}
         {product.rating && (
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            <span className="text-sm font-medium text-neutral-700">
+          <div className="hidden items-center gap-1 xs:flex">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 sm:h-4 sm:w-4" aria-hidden="true" />
+            <span className="text-xs font-medium text-neutral-700 sm:text-sm">
               {product.rating}
             </span>
             {product.reviewCount && (
