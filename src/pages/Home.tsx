@@ -5,11 +5,6 @@ import { FeaturedProducts } from '@/components/ProductGrid'
 import { DURATION, EASE } from '@/lib/motion'
 
 export function Home() {
-  const handleAddToCart = (product: { name: string }) => {
-    // UI only - no actual cart logic
-    console.log('Add to cart:', product.name)
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -24,7 +19,7 @@ export function Home() {
       <CategoryGridMinimal />
 
       {/* Featured Products Section */}
-      <FeaturedProducts count={4} onAddToCart={handleAddToCart} />
+      <FeaturedProducts count={4} />
 
       {/* Category Grid Section */}
       <CategoryGrid />

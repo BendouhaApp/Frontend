@@ -4,7 +4,7 @@ import { ShoppingBag, Heart, Eye, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { Product } from '@/data/products'
+import type { Product } from '@/types/api'
 
 interface ProductCardProps {
   product: Product

@@ -11,58 +11,22 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useCart, useRemoveFromCart } from '@/services/cart'
+import type { CartItem } from '@/types/api'
 import { cn } from '@/lib/utils'
-
-// Mock cart item type
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  image: string
-  quantity: number
-  size?: string
-  color?: string
-}
-
-// Mock cart data
-const initialCartItems: CartItem[] = [
-  {
-    id: '1',
-    name: 'Ceramic Table Lamp',
-    price: 189.0,
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=200&q=80',
-    quantity: 1,
-    color: 'Natural White',
-  },
-  {
-    id: '2',
-    name: 'Velvet Cushion Set',
-    price: 79.0,
-    image: 'https://images.unsplash.com/photo-1629949009765-40fc74c9ec21?w=200&q=80',
-    quantity: 2,
-    size: '50×50 cm',
-    color: 'Forest Green',
-  },
-  {
-    id: '3',
-    name: 'Linen Throw Blanket',
-    price: 129.0,
-    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=200&q=80',
-    quantity: 1,
-    size: '150×200 cm',
-    color: 'Natural',
-  },
-]
 
 // Cart Item Component
 function CartItemRow({
   item,
   onUpdateQuantity,
   onRemove,
+  isUpdating,
 }: {
   item: CartItem
   onUpdateQuantity: (id: string, quantity: number) => void
   onRemove: (id: string) => void
+  isUpdating?: boolean
 }) {
   return (
     <motion.div
@@ -71,16 +35,16 @@ function CartItemRow({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className="flex gap-4 py-4"
+      className={cn('flex gap-4 py-4', isUpdating && 'opacity-50')}
     >
       {/* Product Image */}
       <Link
-        to={`/product/${item.id}`}
+        to={`/product/${item.productId}`}
         className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100"
       >
         <img
-          src={item.image}
-          alt={item.name}
+          src={item.product.image}
+          alt={item.product.name}
           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
         />
       </Link>
@@ -89,10 +53,10 @@ function CartItemRow({
       <div className="flex flex-1 flex-col justify-between">
         <div>
           <Link
-            to={`/product/${item.id}`}
+            to={`/product/${item.productId}`}
             className="text-sm font-medium text-neutral-900 transition-colors hover:text-neutral-600"
           >
-            {item.name}
+            {item.product.name}
           </Link>
           <div className="mt-1 space-y-0.5">
             {item.color && (
@@ -109,7 +73,7 @@ function CartItemRow({
           <div className="flex items-center">
             <button
               onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-              disabled={item.quantity <= 1}
+              disabled={item.quantity <= 1 || isUpdating}
               className="flex h-8 w-8 items-center justify-center rounded-s-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Minus className="h-3 w-3" />
@@ -119,7 +83,8 @@ function CartItemRow({
             </div>
             <button
               onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-e-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50"
+              disabled={isUpdating}
+              className="flex h-8 w-8 items-center justify-center rounded-e-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-3 w-3" />
             </button>
@@ -127,7 +92,7 @@ function CartItemRow({
 
           {/* Price */}
           <span className="text-sm font-medium text-neutral-900">
-            ${(item.price * item.quantity).toFixed(2)}
+            ${(item.product.price * item.quantity).toFixed(2)}
           </span>
         </div>
       </div>
@@ -135,12 +100,34 @@ function CartItemRow({
       {/* Remove Button */}
       <button
         onClick={() => onRemove(item.id)}
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+        disabled={isUpdating}
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 disabled:cursor-not-allowed"
         aria-label="Remove item"
       >
         <X className="h-4 w-4" />
       </button>
     </motion.div>
+  )
+}
+
+// Loading Skeleton
+function CartSkeleton() {
+  return (
+    <div className="space-y-4 px-6">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex gap-4 py-4">
+          <Skeleton className="h-24 w-24 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+            <div className="flex justify-between pt-2">
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -182,35 +169,42 @@ interface CartDrawerProps {
 export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems)
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
 
-  // UI only - update quantity
-  const handleUpdateQuantity = (id: string, quantity: number) => {
+  // Fetch cart from API
+  const { data: cart, isLoading, isError } = useCart()
+  
+  // Mutations
+  const removeFromCart = useRemoveFromCart()
+
+  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     if (quantity < 1) return
-    setCartItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, quantity } : item))
-    )
-    console.log('Update quantity:', id, quantity)
+    setUpdatingItemId(itemId)
+    try {
+      // This would call the actual API
+      // For now, using the postAction hook directly
+      console.log('Update quantity:', itemId, quantity)
+    } finally {
+      setUpdatingItemId(null)
+    }
   }
 
-  // UI only - remove item
-  const handleRemoveItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
-    console.log('Remove item:', id)
+  const handleRemoveItem = (itemId: string) => {
+    removeFromCart.mutate({
+      method: 'delete',
+      path: `cart/items/${itemId}`,
+    })
   }
 
-  // Calculate totals
-  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  )
-  const shipping = subtotal >= 150 ? 0 : 15
-  const total = subtotal + shipping
+  // Calculate totals from cart data
+  const items = cart?.items || []
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const subtotal = cart?.subtotal || 0
+  const shipping = cart?.shipping || (subtotal >= 150 ? 0 : 15)
+  const total = cart?.total || subtotal + shipping
 
-  // UI only - checkout handler
   const handleCheckout = () => {
-    console.log('Checkout:', { items: cartItems, subtotal, shipping, total })
+    console.log('Checkout:', { items, subtotal, shipping, total })
   }
 
   return (
@@ -260,84 +254,99 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
           </SheetTitle>
         </SheetHeader>
 
+        {/* Loading State */}
+        {isLoading && <CartSkeleton />}
+
+        {/* Error State */}
+        {isError && (
+          <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
+            <p className="text-neutral-600">Failed to load cart</p>
+          </div>
+        )}
+
         {/* Cart Content */}
-        {cartItems.length === 0 ? (
-          <EmptyCart />
-        ) : (
+        {!isLoading && !isError && (
           <>
-            {/* Items List */}
-            <div className="flex-1 overflow-y-auto px-6">
-              <AnimatePresence mode="popLayout">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="border-b border-neutral-100">
-                    <CartItemRow
-                      item={item}
-                      onUpdateQuantity={handleUpdateQuantity}
-                      onRemove={handleRemoveItem}
-                    />
-                  </div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-neutral-200 bg-neutral-50/50 px-6 py-6">
-              {/* Order Summary */}
-              <div className="mb-6 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">{t('common.subtotal')}</span>
-                  <span className="font-medium text-neutral-900">
-                    ${subtotal.toFixed(2)}
-                  </span>
+            {items.length === 0 ? (
+              <EmptyCart />
+            ) : (
+              <>
+                {/* Items List */}
+                <div className="flex-1 overflow-y-auto px-6">
+                  <AnimatePresence mode="popLayout">
+                    {items.map((item) => (
+                      <div key={item.id} className="border-b border-neutral-100">
+                        <CartItemRow
+                          item={item}
+                          onUpdateQuantity={handleUpdateQuantity}
+                          onRemove={handleRemoveItem}
+                          isUpdating={updatingItemId === item.id || removeFromCart.isPending}
+                        />
+                      </div>
+                    ))}
+                  </AnimatePresence>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">{t('common.shipping')}</span>
-                  <span className="font-medium text-neutral-900">
-                    {shipping === 0 ? (
-                      <span className="text-green-600">{t('common.free')}</span>
-                    ) : (
-                      `$${shipping.toFixed(2)}`
+
+                {/* Footer */}
+                <div className="border-t border-neutral-200 bg-neutral-50/50 px-6 py-6">
+                  {/* Order Summary */}
+                  <div className="mb-6 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-600">{t('common.subtotal')}</span>
+                      <span className="font-medium text-neutral-900">
+                        ${subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-600">{t('common.shipping')}</span>
+                      <span className="font-medium text-neutral-900">
+                        {shipping === 0 ? (
+                          <span className="text-green-600">{t('common.free')}</span>
+                        ) : (
+                          `$${shipping.toFixed(2)}`
+                        )}
+                      </span>
+                    </div>
+                    {shipping > 0 && (
+                      <p className="text-xs text-neutral-500">
+                        Free shipping on orders over $150
+                      </p>
                     )}
-                  </span>
-                </div>
-                {shipping > 0 && (
-                  <p className="text-xs text-neutral-500">
-                    Free shipping on orders over $150
-                  </p>
-                )}
-                <div className="border-t border-neutral-200 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium text-neutral-900">
-                      {t('common.total')}
-                    </span>
-                    <span className="text-lg font-medium text-neutral-900">
-                      ${total.toFixed(2)}
-                    </span>
+                    <div className="border-t border-neutral-200 pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-base font-medium text-neutral-900">
+                          {t('common.total')}
+                        </span>
+                        <span className="text-lg font-medium text-neutral-900">
+                          ${total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleCheckout}
+                      size="lg"
+                      className="w-full rounded-full"
+                    >
+                      Checkout
+                      <ArrowRight className="ms-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full rounded-full"
+                      asChild
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Link to="/shop">Continue Shopping</Link>
+                    </Button>
                   </div>
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="space-y-3">
-                <Button
-                  onClick={handleCheckout}
-                  size="lg"
-                  className="w-full rounded-full"
-                >
-                  Checkout
-                  <ArrowRight className="ms-2 h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full rounded-full"
-                  asChild
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Link to="/shop">Continue Shopping</Link>
-                </Button>
-              </div>
-            </div>
+              </>
+            )}
           </>
         )}
       </SheetContent>

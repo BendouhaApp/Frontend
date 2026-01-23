@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
-import { products, getFeaturedProducts, type Product } from '@/data/products'
+import { SkeletonProductGrid } from '@/components/ui/skeleton'
+import { useFeaturedProducts, useProducts } from '@/services/products'
+import { useAddToCart } from '@/services/cart'
+import type { Product } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 const containerVariants: Variants = {
@@ -32,7 +35,7 @@ interface ProductGridProps {
   title?: string
   /** Custom subtitle */
   subtitle?: string
-  /** Products to display (defaults to all products) */
+  /** Products to display */
   products?: Product[]
   /** Number of columns on different breakpoints */
   columns?: 2 | 3 | 4
@@ -46,21 +49,23 @@ interface ProductGridProps {
   className?: string
   /** Callback when add to cart is clicked */
   onAddToCart?: (product: Product) => void
+  /** Loading state */
+  isLoading?: boolean
 }
 
 export function ProductGrid({
   title,
   subtitle,
-  products: customProducts,
+  products = [],
   columns = 4,
   showViewAll = true,
   viewAllLink = '/shop',
   cardVariant = 'default',
   className,
   onAddToCart,
+  isLoading = false,
 }: ProductGridProps) {
   const { t } = useTranslation()
-  const displayProducts = customProducts || products
 
   const gridCols = {
     2: 'grid-cols-1 sm:grid-cols-2',
@@ -108,80 +113,101 @@ export function ProductGrid({
           </motion.div>
         )}
 
+        {/* Loading State */}
+        {isLoading && <SkeletonProductGrid count={columns} />}
+
         {/* Product Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className={cn('grid gap-6 md:gap-8', gridCols[columns])}
-        >
-          {displayProducts.map((product) => (
-            <motion.div key={product.id} variants={itemVariants}>
-              <ProductCard
-                product={product}
-                variant={cardVariant}
-                onAddToCart={onAddToCart}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        {!isLoading && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            className={cn('grid gap-6 md:gap-8', gridCols[columns])}
+          >
+            {products.map((product) => (
+              <motion.div key={product.id} variants={itemVariants}>
+                <ProductCard
+                  product={product}
+                  variant={cardVariant}
+                  onAddToCart={onAddToCart}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </section>
   )
 }
 
-// Featured Products Section
+// Featured Products Section - Uses API
 export function FeaturedProducts({
   count = 4,
-  onAddToCart,
 }: {
   count?: number
-  onAddToCart?: (product: Product) => void
 }) {
   const { t } = useTranslation()
-  const featuredProducts = getFeaturedProducts(count)
+  const { data: products, isLoading } = useFeaturedProducts(count)
+  const addToCart = useAddToCart()
+
+  const handleAddToCart = (product: Product) => {
+    addToCart.mutate({
+      productId: product.id,
+      quantity: 1,
+    })
+  }
 
   return (
     <ProductGrid
       title={t('products.featured')}
       subtitle={t('products.featuredSubtitle')}
-      products={featuredProducts}
+      products={products || []}
       columns={count === 3 ? 3 : 4}
-      onAddToCart={onAddToCart}
+      onAddToCart={handleAddToCart}
+      isLoading={isLoading}
     />
   )
 }
 
-// New Arrivals Section
-export function NewArrivals({
-  onAddToCart,
-}: {
-  onAddToCart?: (product: Product) => void
-}) {
+// New Arrivals Section - Uses API
+export function NewArrivals() {
   const { t } = useTranslation()
-  const newProducts = products.filter((p) => p.badge === 'new')
+  const { data, isLoading } = useProducts({ badge: 'new' })
+  const addToCart = useAddToCart()
+
+  const handleAddToCart = (product: Product) => {
+    addToCart.mutate({
+      productId: product.id,
+      quantity: 1,
+    })
+  }
 
   return (
     <ProductGrid
       title={t('products.newArrivals')}
-      products={newProducts}
+      products={data?.products || []}
       columns={3}
       showViewAll
       viewAllLink="/shop?filter=new"
-      onAddToCart={onAddToCart}
+      onAddToCart={handleAddToCart}
+      isLoading={isLoading}
     />
   )
 }
 
-// Sale Products Section
-export function SaleProducts({
-  onAddToCart,
-}: {
-  onAddToCart?: (product: Product) => void
-}) {
+// Sale Products Section - Uses API
+export function SaleProducts() {
   const { t } = useTranslation()
-  const saleProducts = products.filter((p) => p.badge === 'sale')
+  const { data, isLoading } = useProducts({ badge: 'sale' })
+  const addToCart = useAddToCart()
+
+  const handleAddToCart = (product: Product) => {
+    addToCart.mutate({
+      productId: product.id,
+      quantity: 1,
+    })
+  }
 
   return (
     <section className="section-padding bg-red-50">
@@ -201,40 +227,51 @@ export function SaleProducts({
           </h2>
         </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {saleProducts.map((product) => (
-            <motion.div key={product.id} variants={itemVariants}>
-              <ProductCard
-                product={product}
-                variant="detailed"
-                onAddToCart={onAddToCart}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        {isLoading && <SkeletonProductGrid count={3} />}
+
+        {!isLoading && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {(data?.products || []).map((product) => (
+              <motion.div key={product.id} variants={itemVariants}>
+                <ProductCard
+                  product={product}
+                  variant="detailed"
+                  onAddToCart={handleAddToCart}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </section>
   )
 }
 
-// Horizontal scrollable product list
+// Horizontal scrollable product list - Uses API
 export function ProductCarousel({
   title,
-  products: customProducts,
-  onAddToCart,
+  products = [],
+  isLoading = false,
 }: {
   title?: string
   products?: Product[]
-  onAddToCart?: (product: Product) => void
+  isLoading?: boolean
 }) {
   const { t } = useTranslation()
-  const displayProducts = customProducts || products
+  const addToCart = useAddToCart()
+
+  const handleAddToCart = (product: Product) => {
+    addToCart.mutate({
+      productId: product.id,
+      quantity: 1,
+    })
+  }
 
   return (
     <section className="section-padding-sm bg-background">
@@ -258,28 +295,40 @@ export function ProductCarousel({
           </motion.div>
         )}
 
-        <div className="-mx-4 overflow-x-auto px-4 pb-4 scrollbar-hide">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="flex gap-6"
-          >
-            {displayProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                variants={itemVariants}
-                className="w-72 flex-shrink-0"
-              >
-                <ProductCard
-                  product={product}
-                  onAddToCart={onAddToCart}
-                />
-              </motion.div>
+        {isLoading && (
+          <div className="flex gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="w-72 flex-shrink-0">
+                <SkeletonProductGrid count={1} />
+              </div>
             ))}
-          </motion.div>
-        </div>
+          </div>
+        )}
+
+        {!isLoading && (
+          <div className="-mx-4 overflow-x-auto px-4 pb-4 scrollbar-hide">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="flex gap-6"
+            >
+              {products.map((product) => (
+                <motion.div
+                  key={product.id}
+                  variants={itemVariants}
+                  className="w-72 flex-shrink-0"
+                >
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        )}
       </div>
     </section>
   )
