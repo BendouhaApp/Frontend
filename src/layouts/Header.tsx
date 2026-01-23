@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { Search, User, Menu } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -12,10 +12,13 @@ import {
 } from '@/components/ui/sheet'
 import { LanguageSwitcher, LanguageSwitcherMobile } from '@/components/LanguageSwitcher'
 import { CartDrawer } from '@/components/CartDrawer'
+import { cn } from '@/lib/utils'
 
 export function Header() {
   const { t } = useTranslation()
+  const location = useLocation()
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navLinks = [
     { name: t('nav.shop'), href: '/shop' },
@@ -25,49 +28,64 @@ export function Header() {
   ]
 
   // Handle scroll effect for header styling
-  useState(() => {
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Check initial state
     return () => window.removeEventListener('scroll', handleScroll)
-  })
+  }, [])
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className={`
-        sticky top-0 z-50 w-full border-b transition-all duration-300
-        ${
-          isScrolled
-            ? 'border-neutral-200 bg-background/95 shadow-sm backdrop-blur-md'
-            : 'border-transparent bg-background/80 backdrop-blur-sm'
-        }
-      `}
+      role="banner"
+      className={cn(
+        'sticky top-0 z-50 w-full border-b transition-all duration-300',
+        isScrolled
+          ? 'border-neutral-200 bg-background/95 shadow-sm backdrop-blur-md'
+          : 'border-transparent bg-background/80 backdrop-blur-sm'
+      )}
     >
       <div className="container mx-auto">
-        <div className="flex h-20 items-center justify-between px-4 md:px-6">
+        <div className="flex h-16 items-center justify-between px-4 sm:h-20 md:px-6">
           {/* Logo */}
-          <Link to="/" className="relative z-10">
+          <Link 
+            to="/" 
+            className="relative z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+            aria-label="Bendouha - Home"
+          >
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.2 }}
             >
-              <h1 className="font-display text-2xl font-light tracking-tight text-neutral-900 md:text-3xl">
+              <span className="font-display text-xl font-light tracking-tight text-neutral-900 sm:text-2xl md:text-3xl">
                 Bendouha
-              </h1>
+              </span>
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block">
-            <ul className="flex items-center gap-8">
+          <nav 
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block"
+            aria-label="Main navigation"
+          >
+            <ul className="flex items-center gap-6 xl:gap-8" role="list">
               {navLinks.map((link) => (
                 <li key={link.href}>
-                  <NavigationLink href={link.href}>
+                  <NavigationLink 
+                    href={link.href}
+                    isActive={location.pathname === link.href}
+                  >
                     {link.name}
                   </NavigationLink>
                 </li>
@@ -76,7 +94,7 @@ export function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             {/* Language Switcher - Desktop */}
             <LanguageSwitcher className="hidden md:block" />
 
@@ -84,35 +102,39 @@ export function Header() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
               aria-label={t('common.search')}
+              type="button"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5" aria-hidden="true" />
             </motion.button>
 
             {/* Account Button */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="hidden rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:block"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
               aria-label={t('common.account')}
+              type="button"
             >
-              <User className="h-5 w-5" />
+              <User className="h-5 w-5" aria-hidden="true" />
             </motion.button>
 
             {/* Cart Drawer */}
             <CartDrawer />
 
             {/* Mobile Menu */}
-            <Sheet>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 lg:hidden"
-                  aria-label={t('common.menu')}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
+                  aria-label={isMobileMenuOpen ? t('common.close') : t('common.menu')}
+                  aria-expanded={isMobileMenuOpen}
+                  type="button"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-5 w-5" aria-hidden="true" />
                 </motion.button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:w-[400px]">
@@ -121,7 +143,7 @@ export function Header() {
                     {t('common.menu')}
                   </SheetTitle>
                 </SheetHeader>
-                <MobileNavigation navLinks={navLinks} />
+                <MobileNavigation navLinks={navLinks} currentPath={location.pathname} />
               </SheetContent>
             </Sheet>
           </div>
@@ -135,26 +157,34 @@ export function Header() {
 function NavigationLink({
   href,
   children,
+  isActive,
 }: {
   href: string
   children: React.ReactNode
+  isActive?: boolean
 }) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
     <Link
       to={href}
-      className="relative text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+      className={cn(
+        'relative rounded-sm px-1 py-0.5 text-sm font-medium transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        isActive ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      aria-current={isActive ? 'page' : undefined}
     >
       {children}
       <motion.span
         className="absolute -bottom-1 start-0 h-[2px] w-full bg-neutral-900"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: isHovered ? 1 : 0 }}
+        initial={{ scaleX: isActive ? 1 : 0 }}
+        animate={{ scaleX: isHovered || isActive ? 1 : 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         style={{ originX: 0 }}
+        aria-hidden="true"
       />
     </Link>
   )
@@ -163,40 +193,52 @@ function NavigationLink({
 // Mobile Navigation Component
 interface MobileNavigationProps {
   navLinks: { name: string; href: string }[]
+  currentPath: string
 }
 
-function MobileNavigation({ navLinks }: MobileNavigationProps) {
+function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
   const { t } = useTranslation()
 
   return (
-    <nav className="mt-8">
-      <ul className="space-y-1">
-        {navLinks.map((link, index) => (
-          <motion.li
-            key={link.href}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.3 }}
-          >
-            <Link
-              to={link.href}
-              className="block rounded-lg px-4 py-3 text-lg font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+    <nav className="mt-8" aria-label="Mobile navigation">
+      <ul className="space-y-1" role="list">
+        {navLinks.map((link, index) => {
+          const isActive = currentPath === link.href
+          return (
+            <motion.li
+              key={link.href}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.3 }}
             >
-              {link.name}
-            </Link>
-          </motion.li>
-        ))}
+              <Link
+                to={link.href}
+                className={cn(
+                  'block rounded-lg px-4 py-3 text-lg font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                  isActive
+                    ? 'bg-neutral-100 text-neutral-900'
+                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                )}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {link.name}
+              </Link>
+            </motion.li>
+          )
+        })}
       </ul>
 
       {/* Mobile Actions */}
-      <div className="mt-8 space-y-3 border-t border-neutral-200 pt-6">
+      <div className="mt-8 space-y-2 border-t border-neutral-200 pt-6">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.3 }}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <Search className="h-5 w-5" />
+          <Search className="h-5 w-5" aria-hidden="true" />
           <span className="font-medium">{t('common.search')}</span>
         </motion.button>
 
@@ -204,9 +246,10 @@ function MobileNavigation({ navLinks }: MobileNavigationProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100"
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <User className="h-5 w-5" />
+          <User className="h-5 w-5" aria-hidden="true" />
           <span className="font-medium">{t('common.account')}</span>
         </motion.button>
       </div>

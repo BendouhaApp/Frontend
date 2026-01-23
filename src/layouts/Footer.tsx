@@ -21,12 +21,16 @@ function SocialLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors hover:bg-primary hover:text-primary-foreground"
+      className={cn(
+        'flex h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors',
+        'hover:bg-primary hover:text-primary-foreground',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+      )}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
-      aria-label={label}
+      aria-label={`Follow us on ${label}`}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-5 w-5" aria-hidden="true" />
     </motion.a>
   )
 }
@@ -43,10 +47,14 @@ function FooterLink({
     <li>
       <Link
         to={to}
-        className="group inline-flex items-center gap-1 text-sm text-neutral-600 transition-colors hover:text-neutral-900"
+        className={cn(
+          'group inline-flex items-center gap-1 py-1 text-sm text-neutral-600 transition-colors',
+          'hover:text-neutral-900',
+          'focus-visible:outline-none focus-visible:text-neutral-900 focus-visible:underline'
+        )}
       >
         <span>{children}</span>
-        <ArrowRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+        <ArrowRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden="true" />
       </Link>
     </li>
   )
@@ -90,10 +98,10 @@ export function Footer() {
   }
 
   return (
-    <footer className="border-t border-neutral-200 bg-neutral-50">
+    <footer className="border-t border-neutral-200 bg-neutral-50" role="contentinfo">
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-16 md:px-6 md:py-20 lg:py-24">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:px-6 md:py-20 lg:py-24">
+        <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-12 lg:gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-4">
             <Link to="/" className="inline-block">
