@@ -96,7 +96,7 @@ export function CategoryGrid({
   }))
 
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-navy-50">
       <div className="container mx-auto">
         {/* Section Header */}
         <motion.div
@@ -106,10 +106,10 @@ export function CategoryGrid({
           transition={{ duration: 0.6 }}
           className="mb-12 text-center md:mb-16"
         >
-          <h2 className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
+          <h2 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
             {displayTitle}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-neutral-600">
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-navy-600">
             {displaySubtitle}
           </p>
         </motion.div>
@@ -158,7 +158,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
     <motion.a
       href={`/category/${category.id}`}
       variants={itemVariants}
-      className="group relative block overflow-hidden rounded-xl bg-neutral-100"
+      className="group relative block overflow-hidden rounded-xl bg-navy-100"
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -172,7 +172,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
         />
 
         {/* Overlay - darkens on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/70 via-neutral-900/20 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/30 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
 
         {/* Content Overlay */}
         <div className="absolute inset-0 flex flex-col justify-end p-6">
@@ -182,7 +182,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mb-3 w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm"
+              className="mb-3 w-fit rounded-full bg-primary/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm"
             >
               {category.itemCount} {itemsText}
             </motion.span>
@@ -199,7 +199,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
           </p>
 
           {/* Explore link - reveals on hover */}
-          <span className="mt-4 inline-flex translate-y-4 items-center text-sm font-medium text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <span className="mt-4 inline-flex translate-y-4 items-center text-sm font-medium text-cyan opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             {exploreText}
             <svg
               className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
@@ -223,19 +223,21 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
 
 // Alternative: Minimal Category Grid (no images, just text)
 export function CategoryGridMinimal() {
+  const { t } = useTranslation()
+
   const minimalCategories = [
-    { id: '1', name: 'New Arrivals', href: '/new' },
-    { id: '2', name: 'Best Sellers', href: '/best-sellers' },
-    { id: '3', name: 'Living Room', href: '/living-room' },
-    { id: '4', name: 'Bedroom', href: '/bedroom' },
-    { id: '5', name: 'Kitchen', href: '/kitchen' },
-    { id: '6', name: 'Outdoor', href: '/outdoor' },
-    { id: '7', name: 'Lighting', href: '/lighting' },
-    { id: '8', name: 'Sale', href: '/sale' },
+    { id: '1', nameKey: 'categories.newArrivals', href: '/new' },
+    { id: '2', nameKey: 'categories.bestSellers', href: '/best-sellers' },
+    { id: '3', nameKey: 'categories.livingRoom', href: '/living-room' },
+    { id: '4', nameKey: 'categories.bedroom', href: '/bedroom' },
+    { id: '5', nameKey: 'categories.kitchen', href: '/kitchen' },
+    { id: '6', nameKey: 'categories.outdoor', href: '/outdoor' },
+    { id: '7', nameKey: 'categories.lighting', href: '/lighting' },
+    { id: '8', nameKey: 'common.sale', href: '/sale' },
   ]
 
   return (
-    <section className="section-padding-sm border-y border-neutral-200 bg-neutral-50">
+    <section className="section-padding-sm border-y border-navy-200 bg-navy-50">
       <div className="container mx-auto">
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
           {minimalCategories.map((cat, index) => (
@@ -246,10 +248,10 @@ export function CategoryGridMinimal() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.05, duration: 0.4 }}
-              className="group relative text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 md:text-base"
+              className="group relative text-sm font-medium text-navy-600 transition-colors hover:text-primary md:text-base"
             >
-              {cat.name}
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-neutral-900 transition-all duration-300 group-hover:w-full" />
+              {t(cat.nameKey)}
+              <span className="absolute -bottom-1 start-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full" />
             </motion.a>
           ))}
         </div>
@@ -260,25 +262,27 @@ export function CategoryGridMinimal() {
 
 // Alternative: Featured Categories (larger cards, 2 columns)
 export function CategoryGridFeatured() {
+  const { t } = useTranslation()
+
   const featuredCategories = [
     {
       id: '1',
-      name: 'The Living Collection',
-      description: 'Thoughtfully designed pieces for your living space',
+      nameKey: 'categories.theLivingCollection',
+      descKey: 'categories.theLivingCollectionDesc',
       image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80',
-      cta: 'Discover Living',
+      ctaKey: 'categories.discoverLiving',
     },
     {
       id: '2',
-      name: 'The Bedroom Edit',
-      description: 'Create your perfect sanctuary',
+      nameKey: 'categories.theBedroomEdit',
+      descKey: 'categories.theBedroomEditDesc',
       image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1200&q=80',
-      cta: 'Shop Bedroom',
+      ctaKey: 'categories.shopBedroom',
     },
   ]
 
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-navy-50">
       <div className="container mx-auto">
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {featuredCategories.map((category, index) => (
@@ -295,27 +299,27 @@ export function CategoryGridFeatured() {
               <div className="relative aspect-[3/4] md:aspect-[4/5]">
                 <motion.img
                   src={category.image}
-                  alt={category.name}
+                  alt={t(category.nameKey)}
                   className="h-full w-full object-cover"
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.7, ease: 'easeOut' }}
                 />
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 via-neutral-900/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/40 to-transparent" />
 
                 {/* Content */}
                 <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-10">
                   <h3 className="font-display text-3xl font-light text-white md:text-4xl">
-                    {category.name}
+                    {t(category.nameKey)}
                   </h3>
                   <p className="mt-3 max-w-sm text-base text-white/80">
-                    {category.description}
+                    {t(category.descKey)}
                   </p>
-                  <span className="mt-6 inline-flex items-center text-sm font-medium text-white transition-all duration-300 group-hover:translate-x-2">
-                    {category.cta}
+                  <span className="mt-6 inline-flex items-center text-sm font-medium text-cyan transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2">
+                    {t(category.ctaKey)}
                     <svg
-                      className="ml-2 h-4 w-4"
+                      className="ms-2 h-4 w-4 rtl:rotate-180"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

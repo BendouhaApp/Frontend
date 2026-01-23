@@ -74,7 +74,7 @@ export function ProductGrid({
   }
 
   return (
-    <section className={cn('section-padding bg-background', className)}>
+    <section className={cn('section-padding bg-white', className)}>
       <div className="container mx-auto">
         {/* Header */}
         {(title || subtitle) && (
@@ -87,12 +87,12 @@ export function ProductGrid({
           >
             <div>
               {title && (
-                <h2 className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
+                <h2 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
                   {title}
                 </h2>
               )}
               {subtitle && (
-                <p className="mt-3 max-w-2xl text-lg text-neutral-600">
+                <p className="mt-3 max-w-2xl text-lg text-navy-600">
                   {subtitle}
                 </p>
               )}
@@ -101,7 +101,7 @@ export function ProductGrid({
             {showViewAll && (
               <Button
                 variant="outline"
-                className="group rounded-full"
+                className="group rounded-full border-primary text-primary hover:bg-primary hover:text-white"
                 asChild
               >
                 <a href={viewAllLink}>
@@ -210,7 +210,7 @@ export function SaleProducts() {
   }
 
   return (
-    <section className="section-padding bg-red-50">
+    <section className="section-padding bg-gold-50">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -219,10 +219,10 @@ export function SaleProducts() {
           transition={{ duration: 0.6 }}
           className="mb-12 text-center"
         >
-          <span className="mb-4 inline-block rounded-full bg-red-500 px-4 py-1 text-sm font-medium text-white">
+          <span className="mb-4 inline-block rounded-full bg-gold px-4 py-1 text-sm font-medium text-navy">
             {t('common.sale')}
           </span>
-          <h2 className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
+          <h2 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
             {t('common.sale')}
           </h2>
         </motion.div>
@@ -274,7 +274,7 @@ export function ProductCarousel({
   }
 
   return (
-    <section className="section-padding-sm bg-background">
+    <section className="section-padding-sm bg-white">
       <div className="container mx-auto">
         {title && (
           <motion.div
@@ -283,10 +283,10 @@ export function ProductCarousel({
             viewport={{ once: true }}
             className="mb-8 flex items-center justify-between"
           >
-            <h2 className="font-display text-3xl font-light tracking-tight text-neutral-900">
+            <h2 className="font-display text-3xl font-light tracking-tight text-navy">
               {title}
             </h2>
-            <Button variant="ghost" className="group" asChild>
+            <Button variant="ghost" className="group text-primary hover:text-primary-600" asChild>
               <a href="/shop">
                 {t('common.viewAll')}
                 <ArrowRight className="ms-2 h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />

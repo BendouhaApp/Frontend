@@ -58,9 +58,9 @@ export function ProductCard({
   }
 
   const badgeColors = {
-    new: 'bg-primary text-primary-foreground',
-    sale: 'bg-red-500 text-white',
-    bestseller: 'bg-amber-500 text-white',
+    new: 'bg-cyan text-navy',
+    sale: 'bg-gold text-navy',
+    bestseller: 'bg-primary text-white',
   }
 
   if (variant === 'compact') {
@@ -97,11 +97,11 @@ export function ProductCard({
       aria-label={`${product.name} - $${product.price.toFixed(2)}`}
     >
       {/* Image Container */}
-      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-lg bg-neutral-100 sm:mb-4 sm:rounded-xl">
+      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-lg bg-navy-50 sm:mb-4 sm:rounded-xl">
         {/* Loading skeleton with shimmer effect */}
         {!imageLoaded && (
-          <div className="absolute inset-0 overflow-hidden bg-neutral-200">
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200" />
+          <div className="absolute inset-0 overflow-hidden bg-navy-100">
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-navy-100 via-navy-50 to-navy-100" />
           </div>
         )}
 
@@ -134,8 +134,8 @@ export function ProductCard({
 
         {/* Out of Stock Overlay */}
         {product.inStock === false && (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 backdrop-blur-[2px]">
-            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-neutral-900 sm:px-4 sm:py-2 sm:text-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-navy/40 backdrop-blur-[2px]">
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-navy sm:px-4 sm:py-2 sm:text-sm">
               {t('common.outOfStock')}
             </span>
           </div>
@@ -151,8 +151,8 @@ export function ProductCard({
             'absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm transition-colors sm:end-3 sm:top-3 sm:h-9 sm:w-9',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
             isWishlisted
-              ? 'text-red-500'
-              : 'text-neutral-600 hover:text-neutral-900'
+              ? 'text-gold'
+              : 'text-navy-600 hover:text-navy'
           )}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           aria-pressed={isWishlisted}
@@ -198,22 +198,22 @@ export function ProductCard({
       {/* Product Info */}
       <div className="space-y-1 sm:space-y-2">
         {/* Category */}
-        <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 sm:text-xs">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-navy-500 sm:text-xs">
           {product.category}
         </span>
 
         {/* Name */}
-        <h3 className="line-clamp-2 text-sm font-medium leading-tight text-neutral-900 transition-colors group-hover:text-neutral-600 sm:text-base md:text-lg">
+        <h3 className="line-clamp-2 text-sm font-medium leading-tight text-navy transition-colors group-hover:text-primary sm:text-base md:text-lg">
           {product.name}
         </h3>
 
         {/* Price */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-sm font-medium text-neutral-900 sm:text-base md:text-lg">
+          <span className="text-sm font-medium text-navy sm:text-base md:text-lg">
             ${product.price.toFixed(2)}
           </span>
           {product.originalPrice && (
-            <span className="text-xs text-neutral-400 line-through sm:text-sm">
+            <span className="text-xs text-navy-400 line-through sm:text-sm">
               ${product.originalPrice.toFixed(2)}
             </span>
           )}
@@ -222,12 +222,12 @@ export function ProductCard({
         {/* Rating - Hidden on very small screens */}
         {product.rating && (
           <div className="hidden items-center gap-1 xs:flex">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 sm:h-4 sm:w-4" aria-hidden="true" />
-            <span className="text-xs font-medium text-neutral-700 sm:text-sm">
+            <Star className="h-3.5 w-3.5 fill-gold text-gold sm:h-4 sm:w-4" aria-hidden="true" />
+            <span className="text-xs font-medium text-navy-700 sm:text-sm">
               {product.rating}
             </span>
             {product.reviewCount && (
-              <span className="text-sm text-neutral-500">
+              <span className="text-sm text-navy-500">
                 ({product.reviewCount})
               </span>
             )}
@@ -263,7 +263,7 @@ function CompactProductCard({
       )}
     >
       {/* Image */}
-      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-navy-50">
         <img
           src={product.image}
           alt={product.name}
@@ -273,12 +273,12 @@ function CompactProductCard({
 
       {/* Info */}
       <div className="flex flex-1 flex-col justify-center">
-        <span className="text-xs text-neutral-500">{product.category}</span>
-        <h3 className="font-medium text-neutral-900 group-hover:text-neutral-600">
+        <span className="text-xs text-navy-500">{product.category}</span>
+        <h3 className="font-medium text-navy group-hover:text-primary">
           {product.name}
         </h3>
         <div className="mt-1 flex items-center justify-between">
-          <span className="font-medium text-neutral-900">
+          <span className="font-medium text-navy">
             ${product.price.toFixed(2)}
           </span>
           {product.inStock !== false && (
@@ -286,7 +286,7 @@ function CompactProductCard({
               onClick={handleAddToCart}
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 text-primary hover:text-primary-600"
             >
               <ShoppingBag className="h-4 w-4" />
             </Button>
@@ -326,9 +326,9 @@ function DetailedProductCard({
   }
 
   const badgeColors = {
-    new: 'bg-primary text-primary-foreground',
-    sale: 'bg-red-500 text-white',
-    bestseller: 'bg-amber-500 text-white',
+    new: 'bg-cyan text-navy',
+    sale: 'bg-gold text-navy',
+    bestseller: 'bg-primary text-white',
   }
 
   return (
@@ -342,7 +342,7 @@ function DetailedProductCard({
       transition={{ duration: 0.3 }}
     >
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-neutral-100">
+      <div className="relative aspect-square overflow-hidden bg-navy-50">
         <img
           src={product.image}
           alt={product.name}
@@ -370,7 +370,7 @@ function DetailedProductCard({
           onClick={handleWishlist}
           className={cn(
             'absolute end-4 top-4 rounded-full bg-white/90 p-2.5 backdrop-blur-sm transition-colors',
-            isWishlisted ? 'text-red-500' : 'text-neutral-600 hover:text-neutral-900'
+            isWishlisted ? 'text-gold' : 'text-navy-600 hover:text-navy'
           )}
         >
           <Heart className={cn('h-5 w-5', isWishlisted && 'fill-current')} />
@@ -381,26 +381,26 @@ function DetailedProductCard({
       <div className="p-5">
         <div className="mb-3 flex items-start justify-between">
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+            <span className="text-xs font-medium uppercase tracking-wider text-navy-500">
               {product.category}
             </span>
-            <h3 className="mt-1 text-lg font-medium text-neutral-900">
+            <h3 className="mt-1 text-lg font-medium text-navy">
               {product.name}
             </h3>
           </div>
 
           {/* Rating */}
           {product.rating && (
-            <div className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-sm font-medium">{product.rating}</span>
+            <div className="flex items-center gap-1 rounded-full bg-gold-50 px-2 py-1">
+              <Star className="h-3.5 w-3.5 fill-gold text-gold" />
+              <span className="text-sm font-medium text-navy">{product.rating}</span>
             </div>
           )}
         </div>
 
         {/* Description */}
         {product.description && (
-          <p className="mb-4 text-sm text-neutral-600 line-clamp-2">
+          <p className="mb-4 text-sm text-navy-600 line-clamp-2">
             {product.description}
           </p>
         )}
@@ -408,11 +408,11 @@ function DetailedProductCard({
         {/* Price & Action */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-medium text-neutral-900">
+            <span className="text-xl font-medium text-navy">
               ${product.price.toFixed(2)}
             </span>
             {product.originalPrice && (
-              <span className="text-sm text-neutral-400 line-through">
+              <span className="text-sm text-navy-400 line-through">
                 ${product.originalPrice.toFixed(2)}
               </span>
             )}
@@ -422,7 +422,7 @@ function DetailedProductCard({
             onClick={handleAddToCart}
             disabled={product.inStock === false}
             size="sm"
-            className="rounded-full"
+            className="rounded-full bg-primary hover:bg-primary-600"
           >
             <ShoppingBag className="me-2 h-4 w-4" />
             {product.inStock === false ? t('common.outOfStock') : t('common.addToCart')}

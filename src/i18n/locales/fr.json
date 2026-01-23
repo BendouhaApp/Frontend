@@ -24,7 +24,8 @@
     "sale": "Soldes",
     "outOfStock": "Rupture de stock",
     "inStock": "En stock",
-    "language": "Langue"
+    "language": "Langue",
+    "subscribe": "S'abonner"
   },
   "nav": {
     "shop": "Boutique",
@@ -63,7 +64,15 @@
     "textilesDesc": "Des touches douces de luxe",
     "decor": "Décoration",
     "decorDesc": "Les détails qui font la différence",
-    "outdoor": "Extérieur"
+    "outdoor": "Extérieur",
+    "newArrivals": "Nouveautés",
+    "bestSellers": "Meilleures ventes",
+    "theLivingCollection": "La Collection Salon",
+    "theLivingCollectionDesc": "Des pièces conçues avec soin pour votre espace de vie",
+    "theBedroomEdit": "L'Édition Chambre",
+    "theBedroomEditDesc": "Créez votre sanctuaire parfait",
+    "discoverLiving": "Découvrir le Salon",
+    "shopBedroom": "Acheter Chambre"
   },
   "products": {
     "featured": "Produits vedettes",
@@ -76,7 +85,26 @@
     "priceRange": "Fourchette de prix",
     "color": "Couleur",
     "size": "Taille",
-    "material": "Matériau"
+    "material": "Matériau",
+    "allCategories": "Toutes les catégories",
+    "allPrices": "Tous les prix",
+    "underPrice": "Moins de {{price}}",
+    "priceRangeBetween": "{{min}} - {{max}}",
+    "overPrice": "Plus de {{price}}",
+    "sortFeatured": "En vedette",
+    "sortNewest": "Nouveautés",
+    "sortPriceLow": "Prix : croissant",
+    "sortPriceHigh": "Prix : décroissant",
+    "sortRating": "Mieux notés",
+    "clearFilters": "Effacer les filtres",
+    "filters": "Filtres",
+    "showResults": "Afficher les résultats",
+    "tryAgain": "Réessayer",
+    "somethingWentWrong": "Une erreur s'est produite",
+    "failedToLoad": "Impossible de charger les produits",
+    "activeFilters": "Filtres actifs :",
+    "clearAll": "Tout effacer",
+    "noProductsFound": "Aucun produit trouvé"
   },
   "footer": {
     "brandDescription": "Une expérience e-commerce premium, créée avec une attention aux détails.",
@@ -93,7 +121,17 @@
     "followUs": "Suivez-nous",
     "copyright": "© {{year}} Bendouha. Tous droits réservés.",
     "privacyPolicy": "Politique de confidentialité",
-    "termsOfService": "Conditions d'utilisation"
+    "termsOfService": "Conditions d'utilisation",
+    "cookieSettings": "Paramètres des cookies",
+    "support": "Support",
+    "faq": "FAQ",
+    "shippingInfo": "Info livraison",
+    "returns": "Retours",
+    "sizeGuide": "Guide des tailles",
+    "newsletter": "Newsletter",
+    "newsletterDesc": "Abonnez-vous pour des offres exclusives et les nouveautés.",
+    "emailPlaceholder": "Entrez votre email",
+    "privacyConsent": "En vous abonnant, vous acceptez notre Politique de confidentialité."
   },
   "about": {
     "title": "À propos de nous",
