@@ -1,10 +1,154 @@
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
+import { ArrowRight } from 'lucide-react'
+import { staggerContainer, staggerItem, fadeInUp, DURATION, EASE, hoverLift } from '@/lib/motion'
+
+const collections = [
+  {
+    id: 'living-room',
+    name: 'Living Room',
+    description: 'Elegant comfort for everyday moments',
+    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80',
+    itemCount: 24,
+  },
+  {
+    id: 'bedroom',
+    name: 'Bedroom',
+    description: 'Peaceful retreats for restful nights',
+    image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800&q=80',
+    itemCount: 18,
+  },
+  {
+    id: 'lighting',
+    name: 'Lighting',
+    description: 'Illuminate with intention',
+    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
+    itemCount: 32,
+  },
+  {
+    id: 'textiles',
+    name: 'Textiles',
+    description: 'Soft touches of luxury',
+    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
+    itemCount: 45,
+  },
+  {
+    id: 'decor',
+    name: 'Decor',
+    description: 'The details that make the difference',
+    image: 'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=800&q=80',
+    itemCount: 56,
+  },
+  {
+    id: 'kitchen',
+    name: 'Kitchen',
+    description: 'Where culinary art begins',
+    image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&q=80',
+    itemCount: 28,
+  },
+]
+
 export function Collections() {
+  const { t } = useTranslation()
+
   return (
-    <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
-      <h1 className="mb-8 text-4xl font-light tracking-tight text-neutral-900">
-        Collections
-      </h1>
-      <p className="text-neutral-600">Collections page content coming soon...</p>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <motion.section
+        initial="initial"
+        animate="animate"
+        variants={fadeInUp}
+        className="border-b border-neutral-200 bg-neutral-50/50"
+      >
+        <div className="container mx-auto px-4 py-16 md:px-6 md:py-24">
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-4 inline-block text-sm font-medium uppercase tracking-wider text-neutral-500"
+          >
+            Explore
+          </motion.span>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: DURATION.slow, ease: EASE.out }}
+            className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl lg:text-6xl"
+          >
+            {t('nav.collections')}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: DURATION.slow, ease: EASE.out }}
+            className="mt-4 max-w-xl text-lg text-neutral-600"
+          >
+            Discover our thoughtfully curated collections, each designed to transform your space.
+          </motion.p>
+        </div>
+      </motion.section>
+
+      {/* Collections Grid */}
+      <section className="container mx-auto px-4 py-16 md:px-6 md:py-24">
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: '-50px' }}
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {collections.map((collection) => (
+            <motion.div key={collection.id} variants={staggerItem}>
+              <Link to={`/shop?collection=${collection.id}`} className="group block">
+                <motion.div
+                  whileHover={hoverLift}
+                  className="overflow-hidden rounded-2xl bg-neutral-100"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <motion.img
+                      src={collection.image}
+                      alt={collection.name}
+                      className="h-full w-full object-cover"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.5 }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    
+                    {/* Content Overlay */}
+                    <div className="absolute inset-x-0 bottom-0 p-6">
+                      <span className="mb-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                        {collection.itemCount} items
+                      </span>
+                      <h3 className="text-2xl font-medium text-white">
+                        {collection.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-white/80">
+                        {collection.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between bg-white p-4">
+                    <span className="text-sm font-medium text-neutral-900">
+                      Explore Collection
+                    </span>
+                    <motion.span
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600"
+                      whileHover={{ x: 4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </motion.span>
+                  </div>
+                </motion.div>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
     </div>
   )
 }
