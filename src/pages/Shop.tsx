@@ -8,24 +8,28 @@ import {
   SlidersHorizontal,
   X,
   ChevronDown,
+  AlertCircle,
 } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
-import { products, type Product } from '@/data/products'
+import { SkeletonProductGrid } from '@/components/ui/skeleton'
+import { useProducts } from '@/services/products'
+import { useAddToCart } from '@/services/cart'
+import type { Product } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 type ViewMode = 'grid' | 'large' | 'list'
 type CardVariant = 'default' | 'compact' | 'detailed'
 
-// Mock filter data
+// Filter options
 const categories = [
-  { id: 'all', label: 'All Categories', count: 8 },
-  { id: 'lighting', label: 'Lighting', count: 2 },
-  { id: 'textiles', label: 'Textiles', count: 2 },
-  { id: 'living-room', label: 'Living Room', count: 1 },
-  { id: 'decor', label: 'Decor', count: 1 },
-  { id: 'storage', label: 'Storage', count: 1 },
-  { id: 'kitchen', label: 'Kitchen', count: 1 },
+  { id: 'all', label: 'All Categories' },
+  { id: 'lighting', label: 'Lighting' },
+  { id: 'textiles', label: 'Textiles' },
+  { id: 'living-room', label: 'Living Room' },
+  { id: 'decor', label: 'Decor' },
+  { id: 'storage', label: 'Storage' },
+  { id: 'kitchen', label: 'Kitchen' },
 ]
 
 const priceRanges = [
@@ -97,16 +101,6 @@ function FilterSidebar({
                 )}
               >
                 <span>{category.label}</span>
-                <span
-                  className={cn(
-                    'text-xs',
-                    selectedCategory === category.id
-                      ? 'text-primary-foreground/70'
-                      : 'text-neutral-400'
-                  )}
-                >
-                  {category.count}
-                </span>
               </button>
             </li>
           ))}
@@ -172,7 +166,6 @@ function MobileFilterDrawer({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -180,8 +173,6 @@ function MobileFilterDrawer({
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           />
-
-          {/* Drawer */}
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
@@ -190,15 +181,12 @@ function MobileFilterDrawer({
             className="fixed inset-y-0 start-0 z-50 w-80 max-w-[85vw] bg-background shadow-xl lg:hidden"
           >
             <div className="flex h-full flex-col">
-              {/* Header */}
               <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
                 <h2 className="text-lg font-medium">Filters</h2>
                 <Button variant="ghost" size="icon" onClick={onClose}>
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-
-              {/* Content */}
               <div className="flex-1 overflow-y-auto p-6">
                 <FilterSidebar
                   selectedCategory={selectedCategory}
@@ -207,8 +195,6 @@ function MobileFilterDrawer({
                   setSelectedPrice={setSelectedPrice}
                 />
               </div>
-
-              {/* Footer */}
               <div className="border-t border-neutral-200 p-4">
                 <Button className="w-full" onClick={onClose}>
                   Show Results
@@ -222,20 +208,49 @@ function MobileFilterDrawer({
   )
 }
 
+// Error State Component
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
+      <h3 className="mb-2 text-lg font-medium text-neutral-900">
+        Something went wrong
+      </h3>
+      <p className="mb-6 max-w-md text-neutral-600">{message}</p>
+      <Button onClick={onRetry}>Try Again</Button>
+    </div>
+  )
+}
+
 export function Shop() {
   const { t } = useTranslation()
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
 
-  // Filter state (UI only - no actual filtering logic)
+  // Filter state
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedPrice, setSelectedPrice] = useState('all')
   const [selectedSort, setSelectedSort] = useState('featured')
 
-  // UI only - no actual cart logic
+  // Build filters for API
+  const filters = {
+    category: selectedCategory !== 'all' ? selectedCategory : undefined,
+    sortBy: selectedSort,
+  }
+
+  // Fetch products from API
+  const { data, isLoading, isError, error, refetch } = useProducts(filters)
+  const products = data?.products || []
+
+  // Cart mutation
+  const addToCart = useAddToCart()
+
   const handleAddToCart = (product: Product) => {
-    console.log('Add to cart:', product.name)
+    addToCart.mutate({
+      productId: product.id,
+      quantity: 1,
+    })
   }
 
   const handleQuickView = (product: Product) => {
@@ -274,7 +289,6 @@ export function Shop() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Filter Drawer */}
       <MobileFilterDrawer
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
@@ -304,7 +318,6 @@ export function Shop() {
       {/* Toolbar */}
       <div className="sticky top-0 z-20 border-b border-neutral-200 bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4 md:px-6">
-          {/* Left: Filter Button (mobile) + Product Count */}
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -321,11 +334,10 @@ export function Shop() {
               )}
             </Button>
             <p className="text-sm text-neutral-600">
-              {products.length} {t('common.items')}
+              {isLoading ? '...' : `${products.length} ${t('common.items')}`}
             </p>
           </div>
 
-          {/* Right: Sort + View Toggles */}
           <div className="flex items-center gap-3">
             {/* Sort Dropdown */}
             <div className="relative">
@@ -476,25 +488,47 @@ export function Shop() {
               </motion.div>
             )}
 
-            <motion.div
-              key={viewMode}
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className={cn('grid gap-6', gridClass)}
-            >
-              {products.map((product) => (
-                <motion.div key={product.id} variants={itemVariants}>
-                  <ProductCard
-                    product={product}
-                    variant={variant}
-                    onAddToCart={handleAddToCart}
-                    onQuickView={handleQuickView}
-                    onWishlist={handleWishlist}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
+            {/* Loading State */}
+            {isLoading && <SkeletonProductGrid count={8} />}
+
+            {/* Error State */}
+            {isError && (
+              <ErrorState
+                message={error?.message || 'Failed to load products'}
+                onRetry={() => refetch()}
+              />
+            )}
+
+            {/* Products Grid */}
+            {!isLoading && !isError && (
+              <>
+                {products.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <p className="text-neutral-600">No products found</p>
+                  </div>
+                ) : (
+                  <motion.div
+                    key={viewMode}
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className={cn('grid gap-6', gridClass)}
+                  >
+                    {products.map((product) => (
+                      <motion.div key={product.id} variants={itemVariants}>
+                        <ProductCard
+                          product={product}
+                          variant={variant}
+                          onAddToCart={handleAddToCart}
+                          onQuickView={handleQuickView}
+                          onWishlist={handleWishlist}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -13,10 +13,60 @@ import {
   Truck,
   Shield,
   RotateCcw,
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getProductById } from '@/data/products'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useProduct } from '@/services/products'
+import { useAddToCart } from '@/services/cart'
 import { cn } from '@/lib/utils'
+
+// Loading Skeleton for Product Detail
+function ProductDetailSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-8 md:px-6 md:py-12 lg:py-16">
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+        {/* Image Gallery Skeleton */}
+        <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
+          <div className="flex gap-3 lg:flex-col">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-20 w-20 rounded-lg lg:h-24 lg:w-24" />
+            ))}
+          </div>
+          <Skeleton className="aspect-square flex-1 rounded-2xl lg:aspect-[4/5]" />
+        </div>
+
+        {/* Product Info Skeleton */}
+        <div className="space-y-6">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-12 w-3/4" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <Skeleton className="h-px w-full" />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-20" />
+            <div className="flex gap-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-10 w-10 rounded-full" />
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Skeleton className="h-12 flex-1 rounded-full" />
+            <Skeleton className="h-12 w-12 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Image Gallery Component
 function ImageGallery({ images, productName }: { images: string[]; productName: string }) {
@@ -24,7 +74,6 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
 
   return (
     <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
-      {/* Thumbnails */}
       <div className="flex gap-3 lg:flex-col">
         {images.map((image, index) => (
           <motion.button
@@ -46,7 +95,6 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
         ))}
       </div>
 
-      {/* Main Image */}
       <div className="relative flex-1 overflow-hidden rounded-2xl bg-neutral-100">
         <AnimatePresence mode="wait">
           <motion.img
@@ -218,22 +266,57 @@ function ProductFeatures() {
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
-  const product = getProductById(id || '1')
+  
+  // Fetch product from API
+  const { data: product, isLoading, isError, error } = useProduct(id)
+  
+  // Cart mutation
+  const addToCart = useAddToCart()
 
-  // UI State (no actual logic)
-  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '')
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name || '')
+  // UI State
+  const [selectedSize, setSelectedSize] = useState('')
+  const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
 
-  // Fallback for missing product
-  if (!product) {
+  // Set initial selections when product loads
+  useEffect(() => {
+    if (product) {
+      if (product.sizes?.length) setSelectedSize(product.sizes[0])
+      if (product.colors?.length) setSelectedColor(product.colors[0].name)
+    }
+  }, [product])
+
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center px-4 py-16">
-        <h1 className="mb-4 text-2xl font-medium text-neutral-900">Product not found</h1>
-        <Button asChild>
-          <Link to="/shop">Back to Shop</Link>
-        </Button>
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-neutral-100 bg-neutral-50/50">
+          <div className="container mx-auto px-4 py-4 md:px-6">
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <ProductDetailSkeleton />
+      </div>
+    )
+  }
+
+  // Error state
+  if (isError || !product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center px-4 py-16">
+          <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
+          <h1 className="mb-2 text-2xl font-medium text-neutral-900">
+            {isError ? 'Error loading product' : 'Product not found'}
+          </h1>
+          <p className="mb-6 text-neutral-600">
+            {error?.message || 'The product you are looking for does not exist.'}
+          </p>
+          <Button asChild>
+            <Link to="/shop">Back to Shop</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -243,19 +326,17 @@ export function ProductDetail() {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-  // UI only handlers
   const handleAddToCart = () => {
-    console.log('Add to cart:', {
-      product: product.name,
-      size: selectedSize,
-      color: selectedColor,
+    addToCart.mutate({
+      productId: product.id,
       quantity,
+      size: selectedSize || undefined,
+      color: selectedColor || undefined,
     })
   }
 
   const handleWishlist = () => {
     setIsWishlisted(!isWishlisted)
-    console.log('Wishlist:', product.name)
   }
 
   return (
@@ -289,7 +370,7 @@ export function ProductDetail() {
             <ImageGallery images={images} productName={product.name} />
           </motion.div>
 
-          {/* Right: Product Info (Sticky on Desktop) */}
+          {/* Right: Product Info */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -396,10 +477,14 @@ export function ProductDetail() {
                   size="lg"
                   className="flex-1 rounded-full"
                   onClick={handleAddToCart}
-                  disabled={product.inStock === false}
+                  disabled={product.inStock === false || addToCart.isPending}
                 >
                   <ShoppingBag className="me-2 h-5 w-5" />
-                  {product.inStock === false ? t('common.outOfStock') : t('common.addToCart')}
+                  {addToCart.isPending
+                    ? 'Adding...'
+                    : product.inStock === false
+                      ? t('common.outOfStock')
+                      : t('common.addToCart')}
                 </Button>
                 <Button
                   size="lg"
