@@ -51,8 +51,8 @@ export function Header() {
       className={cn(
         'sticky top-0 z-50 w-full border-b transition-all duration-300',
         isScrolled
-          ? 'border-neutral-200 bg-background/95 shadow-sm backdrop-blur-md'
-          : 'border-transparent bg-background/80 backdrop-blur-sm'
+          ? 'border-navy-200 bg-white/95 shadow-sm backdrop-blur-md'
+          : 'border-transparent bg-white/80 backdrop-blur-sm'
       )}
     >
       <div className="container mx-auto">
@@ -68,8 +68,8 @@ export function Header() {
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.2 }}
             >
-              <span className="font-display text-xl font-light tracking-tight text-neutral-900 sm:text-2xl md:text-3xl">
-                Bendouha
+              <span className="font-display text-xl font-semibold tracking-tight text-navy sm:text-2xl md:text-3xl">
+                Bendouha<span className="text-primary">.</span>
               </span>
             </motion.div>
           </Link>
@@ -79,9 +79,9 @@ export function Header() {
             className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:block"
             aria-label="Main navigation"
           >
-            <ul className="flex items-center gap-6 xl:gap-8" role="list">
+            <ul className="flex items-baseline gap-6 xl:gap-8" role="list">
               {navLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.href} className="flex">
                   <NavigationLink 
                     href={link.href}
                     isActive={location.pathname === link.href}
@@ -102,7 +102,7 @@ export function Header() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
               aria-label={t('common.search')}
               type="button"
             >
@@ -113,7 +113,7 @@ export function Header() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
               aria-label={t('common.account')}
               type="button"
             >
@@ -129,7 +129,7 @@ export function Header() {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
                   aria-label={isMobileMenuOpen ? t('common.close') : t('common.menu')}
                   aria-expanded={isMobileMenuOpen}
                   type="button"
@@ -169,9 +169,9 @@ function NavigationLink({
     <Link
       to={href}
       className={cn(
-        'relative rounded-sm px-1 py-0.5 text-sm font-medium transition-colors',
+        'relative inline-flex h-8 items-center rounded-sm px-1 text-sm font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-        isActive ? 'text-neutral-900' : 'text-neutral-600 hover:text-neutral-900'
+        isActive ? 'text-navy' : 'text-navy-600 hover:text-primary'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -179,7 +179,7 @@ function NavigationLink({
     >
       {children}
       <motion.span
-        className="absolute -bottom-1 start-0 h-[2px] w-full bg-neutral-900"
+        className="absolute -bottom-0.5 start-0 h-[2px] w-full bg-primary"
         initial={{ scaleX: isActive ? 1 : 0 }}
         animate={{ scaleX: isHovered || isActive ? 1 : 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -217,8 +217,8 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
                   'block rounded-lg px-4 py-3 text-lg font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                   isActive
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                    ? 'bg-primary-50 text-primary'
+                    : 'text-navy-700 hover:bg-navy-50 hover:text-primary'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -230,13 +230,13 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
       </ul>
 
       {/* Mobile Actions */}
-      <div className="mt-8 space-y-2 border-t border-neutral-200 pt-6">
+      <div className="mt-8 space-y-2 border-t border-navy-200 pt-6">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.3 }}
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <Search className="h-5 w-5" aria-hidden="true" />
           <span className="font-medium">{t('common.search')}</span>
@@ -247,7 +247,7 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <User className="h-5 w-5" aria-hidden="true" />
           <span className="font-medium">{t('common.account')}</span>
@@ -259,7 +259,7 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.6, duration: 0.3 }}
-        className="mt-6 border-t border-neutral-200 pt-6"
+        className="mt-6 border-t border-navy-200 pt-6"
       >
         <LanguageSwitcherMobile />
       </motion.div>

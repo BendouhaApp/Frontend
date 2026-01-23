@@ -21,32 +21,10 @@ import { cn } from '@/lib/utils'
 type ViewMode = 'grid' | 'large' | 'list'
 type CardVariant = 'default' | 'compact' | 'detailed'
 
-// Filter options
-const categories = [
-  { id: 'all', label: 'All Categories' },
-  { id: 'lighting', label: 'Lighting' },
-  { id: 'textiles', label: 'Textiles' },
-  { id: 'living-room', label: 'Living Room' },
-  { id: 'decor', label: 'Decor' },
-  { id: 'storage', label: 'Storage' },
-  { id: 'kitchen', label: 'Kitchen' },
-]
-
-const priceRanges = [
-  { id: 'all', label: 'All Prices' },
-  { id: 'under-100', label: 'Under $100' },
-  { id: '100-250', label: '$100 - $250' },
-  { id: '250-500', label: '$250 - $500' },
-  { id: 'over-500', label: 'Over $500' },
-]
-
-const sortOptions = [
-  { id: 'featured', label: 'Featured' },
-  { id: 'newest', label: 'Newest' },
-  { id: 'price-low', label: 'Price: Low to High' },
-  { id: 'price-high', label: 'Price: High to Low' },
-  { id: 'rating', label: 'Highest Rated' },
-]
+// Filter options - labels are translation keys
+const categoryIds = ['all', 'lighting', 'textiles', 'living-room', 'decor', 'storage', 'kitchen']
+const priceRangeIds = ['all', 'under-100', '100-250', '250-500', 'over-500']
+const sortOptionIds = ['featured', 'newest', 'price-low', 'price-high', 'rating']
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -63,6 +41,47 @@ const itemVariants = {
     y: 0,
     transition: { duration: 0.4 },
   },
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TFn = (key: string, opts?: any) => string
+
+// Helper to get category label
+function getCategoryLabel(t: TFn, id: string): string {
+  const labels: Record<string, string> = {
+    'all': t('products.allCategories'),
+    'lighting': t('categories.lighting'),
+    'textiles': t('categories.textiles'),
+    'living-room': t('categories.livingRoom'),
+    'decor': t('categories.decor'),
+    'storage': t('categories.decor'),
+    'kitchen': t('categories.kitchen'),
+  }
+  return labels[id] || id
+}
+
+// Helper to get price range label
+function getPriceLabel(t: TFn, id: string): string {
+  const labels: Record<string, string> = {
+    'all': t('products.allPrices'),
+    'under-100': t('products.underPrice', { price: '$100' }),
+    '100-250': t('products.priceRangeBetween', { min: '$100', max: '$250' }),
+    '250-500': t('products.priceRangeBetween', { min: '$250', max: '$500' }),
+    'over-500': t('products.overPrice', { price: '$500' }),
+  }
+  return labels[id] || id
+}
+
+// Helper to get sort label
+function getSortLabel(t: TFn, id: string): string {
+  const labels: Record<string, string> = {
+    'featured': t('products.sortFeatured'),
+    'newest': t('products.sortNewest'),
+    'price-low': t('products.sortPriceLow'),
+    'price-high': t('products.sortPriceHigh'),
+    'rating': t('products.sortRating'),
+  }
+  return labels[id] || id
 }
 
 // Filter Sidebar Component
@@ -85,22 +104,22 @@ function FilterSidebar({
     <aside className={cn('space-y-8', className)}>
       {/* Categories */}
       <div>
-        <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+        <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-navy-500">
           {t('products.filterBy')}
         </h3>
         <ul className="space-y-2">
-          {categories.map((category) => (
-            <li key={category.id}>
+          {categoryIds.map((id) => (
+            <li key={id}>
               <button
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(id)}
                 className={cn(
                   'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
-                  selectedCategory === category.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  selectedCategory === id
+                    ? 'bg-primary text-white'
+                    : 'text-navy-700 hover:bg-navy-50'
                 )}
               >
-                <span>{category.label}</span>
+                <span>{getCategoryLabel(t, id)}</span>
               </button>
             </li>
           ))}
@@ -109,22 +128,22 @@ function FilterSidebar({
 
       {/* Price Range */}
       <div>
-        <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+        <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-navy-500">
           {t('products.priceRange')}
         </h3>
         <ul className="space-y-2">
-          {priceRanges.map((range) => (
-            <li key={range.id}>
+          {priceRangeIds.map((id) => (
+            <li key={id}>
               <button
-                onClick={() => setSelectedPrice(range.id)}
+                onClick={() => setSelectedPrice(id)}
                 className={cn(
                   'flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors',
-                  selectedPrice === range.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-neutral-700 hover:bg-neutral-100'
+                  selectedPrice === id
+                    ? 'bg-primary text-white'
+                    : 'text-navy-700 hover:bg-navy-50'
                 )}
               >
-                {range.label}
+                {getPriceLabel(t, id)}
               </button>
             </li>
           ))}
@@ -134,13 +153,13 @@ function FilterSidebar({
       {/* Clear Filters */}
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full border-primary text-primary hover:bg-primary hover:text-white"
         onClick={() => {
           setSelectedCategory('all')
           setSelectedPrice('all')
         }}
       >
-        Clear Filters
+        {t('products.clearFilters')}
       </Button>
     </aside>
   )
@@ -162,6 +181,8 @@ function MobileFilterDrawer({
   selectedPrice: string
   setSelectedPrice: (id: string) => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -171,18 +192,18 @@ function MobileFilterDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-navy/50 backdrop-blur-sm lg:hidden"
           />
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-y-0 start-0 z-50 w-80 max-w-[85vw] bg-background shadow-xl lg:hidden"
+            className="fixed inset-y-0 start-0 z-50 w-80 max-w-[85vw] bg-white shadow-xl lg:hidden"
           >
             <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-                <h2 className="text-lg font-medium">Filters</h2>
+              <div className="flex items-center justify-between border-b border-navy-200 px-6 py-4">
+                <h2 className="text-lg font-medium text-navy">{t('products.filters')}</h2>
                 <Button variant="ghost" size="icon" onClick={onClose}>
                   <X className="h-5 w-5" />
                 </Button>
@@ -195,9 +216,9 @@ function MobileFilterDrawer({
                   setSelectedPrice={setSelectedPrice}
                 />
               </div>
-              <div className="border-t border-neutral-200 p-4">
-                <Button className="w-full" onClick={onClose}>
-                  Show Results
+              <div className="border-t border-navy-200 p-4">
+                <Button className="w-full bg-primary hover:bg-primary-600" onClick={onClose}>
+                  {t('products.showResults')}
                 </Button>
               </div>
             </div>
@@ -209,15 +230,15 @@ function MobileFilterDrawer({
 }
 
 // Error State Component
-function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+function ErrorState({ message, onRetry, retryText, errorTitle }: { message: string; onRetry: () => void; retryText: string; errorTitle: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
-      <h3 className="mb-2 text-lg font-medium text-neutral-900">
-        Something went wrong
+      <AlertCircle className="mb-4 h-12 w-12 text-gold" />
+      <h3 className="mb-2 text-lg font-medium text-navy">
+        {errorTitle}
       </h3>
-      <p className="mb-6 max-w-md text-neutral-600">{message}</p>
-      <Button onClick={onRetry}>Try Again</Button>
+      <p className="mb-6 max-w-md text-navy-600">{message}</p>
+      <Button onClick={onRetry} className="bg-primary hover:bg-primary-600">{retryText}</Button>
     </div>
   )
 }
@@ -288,7 +309,7 @@ export function Shop() {
     (selectedCategory !== 'all' ? 1 : 0) + (selectedPrice !== 'all' ? 1 : 0)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <MobileFilterDrawer
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
@@ -303,37 +324,37 @@ export function Shop() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="border-b border-neutral-200 bg-neutral-50/50"
+        className="border-b border-navy-200 bg-navy-50"
       >
         <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
-          <h1 className="font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
+          <h1 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
             {t('nav.shop')}
           </h1>
-          <p className="mt-4 max-w-2xl text-lg text-neutral-600">
+          <p className="mt-4 max-w-2xl text-lg text-navy-600">
             {t('products.featuredSubtitle')}
           </p>
         </div>
       </motion.div>
 
       {/* Toolbar */}
-      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-background/95 backdrop-blur-sm">
+      <div className="sticky top-0 z-20 border-b border-navy-200 bg-white/95 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4 md:px-6">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
-              className="lg:hidden"
+              className="border-primary text-primary lg:hidden"
               onClick={() => setShowFilters(true)}
             >
               <SlidersHorizontal className="me-2 h-4 w-4" />
-              Filters
+              {t('products.filters')}
               {activeFiltersCount > 0 && (
-                <span className="ms-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                <span className="ms-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white">
                   {activeFiltersCount}
                 </span>
               )}
             </Button>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-navy-600">
               {isLoading ? '...' : `${products.length} ${t('common.items')}`}
             </p>
           </div>
@@ -344,12 +365,12 @@ export function Shop() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="hidden gap-2 sm:flex"
+                className="hidden gap-2 text-navy sm:flex"
                 onClick={() => setSortOpen(!sortOpen)}
               >
                 {t('products.sortBy')}:{' '}
-                <span className="font-normal text-neutral-600">
-                  {sortOptions.find((o) => o.id === selectedSort)?.label}
+                <span className="font-normal text-navy-600">
+                  {getSortLabel(t, selectedSort)}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -373,23 +394,23 @@ export function Shop() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute end-0 top-full z-20 mt-2 w-48 rounded-lg border border-neutral-200 bg-background py-1 shadow-lg"
+                      className="absolute end-0 top-full z-20 mt-2 w-48 rounded-lg border border-navy-200 bg-white py-1 shadow-lg"
                     >
-                      {sortOptions.map((option) => (
+                      {sortOptionIds.map((id) => (
                         <button
-                          key={option.id}
+                          key={id}
                           onClick={() => {
-                            setSelectedSort(option.id)
+                            setSelectedSort(id)
                             setSortOpen(false)
                           }}
                           className={cn(
                             'flex w-full items-center px-4 py-2 text-sm transition-colors',
-                            selectedSort === option.id
-                              ? 'bg-neutral-100 text-neutral-900'
-                              : 'text-neutral-700 hover:bg-neutral-50'
+                            selectedSort === id
+                              ? 'bg-primary-50 text-primary'
+                              : 'text-navy-700 hover:bg-navy-50'
                           )}
                         >
-                          {option.label}
+                          {getSortLabel(t, id)}
                         </button>
                       ))}
                     </motion.div>
@@ -399,11 +420,11 @@ export function Shop() {
             </div>
 
             {/* View Mode Toggles */}
-            <div className="flex items-center gap-1 rounded-lg bg-neutral-100 p-1">
+            <div className="flex items-center gap-1 rounded-lg bg-navy-100 p-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className={cn('h-8 w-8 p-0', viewMode === 'grid' && 'bg-primary text-white')}
                 onClick={() => setViewMode('grid')}
                 aria-label="Grid view"
               >
@@ -412,7 +433,7 @@ export function Shop() {
               <Button
                 variant={viewMode === 'large' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className={cn('h-8 w-8 p-0', viewMode === 'large' && 'bg-primary text-white')}
                 onClick={() => setViewMode('large')}
                 aria-label="Large grid view"
               >
@@ -421,7 +442,7 @@ export function Shop() {
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className={cn('h-8 w-8 p-0', viewMode === 'list' && 'bg-primary text-white')}
                 onClick={() => setViewMode('list')}
                 aria-label="List view"
               >
@@ -453,24 +474,24 @@ export function Shop() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 flex flex-wrap items-center gap-2"
               >
-                <span className="text-sm text-neutral-500">Active filters:</span>
+                <span className="text-sm text-navy-500">{t('products.activeFilters')}</span>
                 {selectedCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm">
-                    {categories.find((c) => c.id === selectedCategory)?.label}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
+                    {getCategoryLabel(t, selectedCategory)}
                     <button
                       onClick={() => setSelectedCategory('all')}
-                      className="ms-1 rounded-full p-0.5 hover:bg-neutral-200"
+                      className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 )}
                 {selectedPrice !== 'all' && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm">
-                    {priceRanges.find((p) => p.id === selectedPrice)?.label}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
+                    {getPriceLabel(t, selectedPrice)}
                     <button
                       onClick={() => setSelectedPrice('all')}
-                      className="ms-1 rounded-full p-0.5 hover:bg-neutral-200"
+                      className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -481,9 +502,9 @@ export function Shop() {
                     setSelectedCategory('all')
                     setSelectedPrice('all')
                   }}
-                  className="text-sm text-neutral-500 underline hover:text-neutral-700"
+                  className="text-sm text-navy-500 underline hover:text-primary"
                 >
-                  Clear all
+                  {t('products.clearAll')}
                 </button>
               </motion.div>
             )}
@@ -494,8 +515,10 @@ export function Shop() {
             {/* Error State */}
             {isError && (
               <ErrorState
-                message={error?.message || 'Failed to load products'}
+                message={error?.message || t('products.failedToLoad')}
                 onRetry={() => refetch()}
+                retryText={t('products.tryAgain')}
+                errorTitle={t('products.somethingWentWrong')}
               />
             )}
 
@@ -504,7 +527,7 @@ export function Shop() {
               <>
                 {products.length === 0 ? (
                   <div className="py-16 text-center">
-                    <p className="text-neutral-600">No products found</p>
+                    <p className="text-navy-600">{t('products.noProductsFound')}</p>
                   </div>
                 ) : (
                   <motion.div

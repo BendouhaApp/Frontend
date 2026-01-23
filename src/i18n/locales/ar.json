@@ -24,7 +24,8 @@
     "sale": "تخفيضات",
     "outOfStock": "نفذت الكمية",
     "inStock": "متوفر",
-    "language": "اللغة"
+    "language": "اللغة",
+    "subscribe": "اشترك"
   },
   "nav": {
     "shop": "المتجر",
@@ -63,7 +64,15 @@
     "textilesDesc": "لمسات ناعمة من الفخامة",
     "decor": "الديكور",
     "decorDesc": "التفاصيل النهائية المهمة",
-    "outdoor": "الخارجية"
+    "outdoor": "الخارجية",
+    "newArrivals": "وصل حديثاً",
+    "bestSellers": "الأكثر مبيعاً",
+    "theLivingCollection": "مجموعة غرفة المعيشة",
+    "theLivingCollectionDesc": "قطع مصممة بعناية لمساحة معيشتك",
+    "theBedroomEdit": "تشكيلة غرفة النوم",
+    "theBedroomEditDesc": "أنشئ ملاذك المثالي",
+    "discoverLiving": "اكتشف غرفة المعيشة",
+    "shopBedroom": "تسوق غرفة النوم"
   },
   "products": {
     "featured": "منتجات مميزة",
@@ -76,7 +85,26 @@
     "priceRange": "نطاق السعر",
     "color": "اللون",
     "size": "الحجم",
-    "material": "المادة"
+    "material": "المادة",
+    "allCategories": "جميع الفئات",
+    "allPrices": "جميع الأسعار",
+    "underPrice": "أقل من {{price}}",
+    "priceRangeBetween": "{{min}} - {{max}}",
+    "overPrice": "أكثر من {{price}}",
+    "sortFeatured": "مميز",
+    "sortNewest": "الأحدث",
+    "sortPriceLow": "السعر: من الأقل للأعلى",
+    "sortPriceHigh": "السعر: من الأعلى للأقل",
+    "sortRating": "الأعلى تقييماً",
+    "clearFilters": "مسح الفلاتر",
+    "filters": "الفلاتر",
+    "showResults": "عرض النتائج",
+    "tryAgain": "حاول مرة أخرى",
+    "somethingWentWrong": "حدث خطأ ما",
+    "failedToLoad": "فشل في تحميل المنتجات",
+    "activeFilters": "الفلاتر النشطة:",
+    "clearAll": "مسح الكل",
+    "noProductsFound": "لا توجد منتجات"
   },
   "footer": {
     "brandDescription": "تجربة تسوق إلكتروني فاخرة، صُنعت باهتمام بالتفاصيل.",
@@ -93,7 +121,17 @@
     "followUs": "تابعنا",
     "copyright": "© {{year}} بن دوحة. جميع الحقوق محفوظة.",
     "privacyPolicy": "سياسة الخصوصية",
-    "termsOfService": "شروط الخدمة"
+    "termsOfService": "شروط الخدمة",
+    "cookieSettings": "إعدادات ملفات تعريف الارتباط",
+    "support": "الدعم",
+    "faq": "الأسئلة الشائعة",
+    "shippingInfo": "معلومات الشحن",
+    "returns": "الإرجاع",
+    "sizeGuide": "دليل المقاسات",
+    "newsletter": "النشرة الإخبارية",
+    "newsletterDesc": "اشترك للحصول على عروض حصرية والمنتجات الجديدة.",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "privacyConsent": "بالاشتراك، فإنك توافق على سياسة الخصوصية الخاصة بنا."
   },
   "about": {
     "title": "من نحن",
