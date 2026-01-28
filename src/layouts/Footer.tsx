@@ -135,7 +135,7 @@ export function Footer() {
             <div className="mt-8 space-y-3">
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <MapPin className="h-4 w-4 shrink-0 text-cyan" />
-                <span>123 rue Design, Alger, Algérie</span>
+                <span>Boulevard des 20 mètres, Blida, Algérie</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <Phone className="h-4 w-4 shrink-0 text-cyan" />
