@@ -1,10 +1,17 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
-import { Instagram, Facebook, Twitter, Youtube, ArrowRight, MapPin, Phone, Mail } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  MapPin,
+  Phone,
+  Mail,
+  Instagram,
+  Facebook,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { BendouhaLogo } from "@/components/logo/BrandLogo";
 
 // Social link component with hover animation
 function SocialLink({
@@ -12,9 +19,9 @@ function SocialLink({
   icon: Icon,
   label,
 }: {
-  href: string
-  icon: React.ElementType
-  label: string
+  href: string;
+  icon: React.ElementType;
+  label: string;
 }) {
   return (
     <motion.a
@@ -22,17 +29,17 @@ function SocialLink({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        'flex h-11 w-11 items-center justify-center rounded-full bg-navy-100 text-navy-600 transition-colors',
-        'hover:bg-primary hover:text-white',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+        "flex h-11 w-11 items-center justify-center rounded-full bg-navy-100 text-navy-600 transition-colors",
+        "hover:bg-primary hover:text-white",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
       )}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
-      aria-label={`Follow us on ${label}`}
+      aria-label={`Suivez-nous sur ${label}`}
     >
       <Icon className="h-5 w-5" aria-hidden="true" />
     </motion.a>
-  )
+  );
 }
 
 // Footer link component
@@ -40,110 +47,110 @@ function FooterLink({
   to,
   children,
 }: {
-  to: string
-  children: React.ReactNode
+  to: string;
+  children: React.ReactNode;
 }) {
   return (
     <li>
       <Link
         to={to}
         className={cn(
-          'group inline-flex items-center gap-1 py-1 text-sm text-navy-300 transition-colors',
-          'hover:text-cyan',
-          'focus-visible:outline-none focus-visible:text-cyan focus-visible:underline'
+          "group inline-flex items-center gap-1 py-1 text-sm text-navy-300 transition-colors",
+          "hover:text-cyan",
+          "focus-visible:outline-none focus-visible:text-cyan focus-visible:underline",
         )}
       >
         <span>{children}</span>
-        <ArrowRight className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+        <ArrowRight
+          className="h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+          aria-hidden="true"
+        />
       </Link>
     </li>
-  )
+  );
 }
 
 export function Footer() {
-  const { t } = useTranslation()
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState("");
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
-  // Shop links
-  const shopLinks = [
-    { to: '/shop', label: t('footer.allProducts') },
-    { to: '/collections', label: t('footer.collections') },
-    { to: '/shop?filter=new', label: t('footer.newArrivals') },
-    { to: '/shop?filter=sale', label: t('footer.sale') },
-  ]
-
-  // Company links
-  const companyLinks = [
-    { to: '/about', label: t('footer.aboutUs') },
-    { to: '/contact', label: t('footer.contact') },
-    { to: '/careers', label: t('footer.careers') },
-    { to: '/press', label: t('footer.press') },
-  ]
+  // Quick links
+  const quickLinks = [
+    { to: "/shop", label: "Boutique" },
+    { to: "/collections", label: "Collections" },
+    { to: "/about", label: "À propos" },
+    { to: "/contact", label: "Contact" },
+  ];
 
   // Support links
   const supportLinks = [
-    { to: '/faq', label: t('footer.faq') },
-    { to: '/shipping', label: t('footer.shippingInfo') },
-    { to: '/returns', label: t('footer.returns') },
-    { to: '/size-guide', label: t('footer.sizeGuide') },
-  ]
+    { to: "/faq", label: "FAQ" },
+    { to: "/shipping", label: "Livraison" },
+    { to: "/returns", label: "Retours" },
+  ];
 
-  // Social links
+  // Social links - Only Instagram and Facebook
   const socialLinks = [
-    { href: 'https://instagram.com', icon: Instagram, label: 'Instagram' },
-    { href: 'https://facebook.com', icon: Facebook, label: 'Facebook' },
-    { href: 'https://twitter.com', icon: Twitter, label: 'Twitter' },
-    { href: 'https://youtube.com', icon: Youtube, label: 'YouTube' },
-  ]
+    {
+      href: "https://instagram.com/bendouha",
+      icon: Instagram,
+      label: "Instagram",
+    },
+    {
+      href: "https://facebook.com/bendouha",
+      icon: Facebook,
+      label: "Facebook",
+    },
+  ];
 
   // Newsletter submit handler (UI only)
   const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Newsletter signup:', email)
-    setEmail('')
-  }
+    e.preventDefault();
+    console.log("Inscription newsletter:", email);
+    setEmail("");
+  };
 
   return (
     <footer className="border-t border-navy-800 bg-navy" role="contentinfo">
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:px-6 md:py-20 lg:py-24">
-        <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-12 lg:gap-8">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:px-6 md:py-20">
+        <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-3 lg:gap-16">
           {/* Brand Section */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-1">
             <Link to="/" className="inline-block">
-              <motion.h2
-                className="font-display text-3xl font-semibold tracking-tight text-white"
+              <motion.div
                 whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
               >
-                Bendouha<span className="text-primary">.</span>
-              </motion.h2>
+                <BendouhaLogo className="h-20 w-auto text-white" />
+              </motion.div>
             </Link>
             <p className="mt-4 max-w-sm text-base leading-relaxed text-navy-300">
-              {t('footer.brandDescription')}
+              Votre destination pour des équipements électriques de qualité
+              supérieure.
             </p>
 
             {/* Contact Info */}
             <div className="mt-8 space-y-3">
               <div className="flex items-center gap-3 text-sm text-navy-300">
-                <MapPin className="h-4 w-4 flex-shrink-0 text-cyan" />
-                <span>123 Design Street, Algiers, Algeria</span>
+                <MapPin className="h-4 w-4 shrink-0 text-cyan" />
+                <span>123 rue Design, Alger, Algérie</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
-                <Phone className="h-4 w-4 flex-shrink-0 text-cyan" />
+                <Phone className="h-4 w-4 shrink-0 text-cyan" />
                 <span>+213 555 123 456</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
-                <Mail className="h-4 w-4 flex-shrink-0 text-cyan" />
-                <span>hello@bendouha.com</span>
+                <Mail className="h-4 w-4 shrink-0 text-cyan" />
+                <span>bonjour@bendouha.com</span>
               </div>
             </div>
 
             {/* Social Links */}
             <div className="mt-8">
               <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-gold">
-                {t('footer.followUs')}
+                Suivez-nous
               </h3>
               <div className="flex gap-3">
                 {socialLinks.map((social) => (
@@ -154,28 +161,14 @@ export function Footer() {
           </div>
 
           {/* Navigation Links */}
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-5 lg:gap-12">
-            {/* Shop */}
+          <div className="grid grid-cols-2 gap-8 lg:col-span-1">
+            {/* Quick Links */}
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-                {t('footer.shop')}
+                Liens Rapides
               </h3>
               <ul className="space-y-3">
-                {shopLinks.map((link) => (
-                  <FooterLink key={link.to} to={link.to}>
-                    {link.label}
-                  </FooterLink>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-                {t('footer.company')}
-              </h3>
-              <ul className="space-y-3">
-                {companyLinks.map((link) => (
+                {quickLinks.map((link) => (
                   <FooterLink key={link.to} to={link.to}>
                     {link.label}
                   </FooterLink>
@@ -186,7 +179,7 @@ export function Footer() {
             {/* Support */}
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-                {t('footer.support')}
+                Support
               </h3>
               <ul className="space-y-3">
                 {supportLinks.map((link) => (
@@ -199,12 +192,12 @@ export function Footer() {
           </div>
 
           {/* Newsletter Section */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-1">
             <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-              {t('footer.newsletter')}
+              Newsletter
             </h3>
             <p className="mb-4 text-sm text-navy-300">
-              {t('footer.newsletterDesc')}
+              Inscrivez-vous pour recevoir nos offres exclusives et nouveautés.
             </p>
             <form onSubmit={handleNewsletterSubmit} className="space-y-3">
               <div className="relative">
@@ -212,22 +205,26 @@ export function Footer() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('footer.emailPlaceholder')}
+                  placeholder="Votre adresse email"
                   className={cn(
-                    'w-full rounded-full border border-navy-600 bg-navy-800 px-4 py-3 text-sm text-white',
-                    'placeholder:text-navy-400',
-                    'focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20'
+                    "w-full rounded-full border border-navy-600 bg-navy-800 px-4 py-3 text-sm text-white",
+                    "placeholder:text-navy-400",
+                    "focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20",
                   )}
                   required
                 />
               </div>
-              <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary-600">
-                {t('common.subscribe')}
+              <Button
+                type="submit"
+                className="w-full rounded-full bg-primary hover:bg-primary-600"
+              >
+                S'inscrire
                 <ArrowRight className="ms-2 h-4 w-4 rtl:rotate-180" />
               </Button>
             </form>
             <p className="mt-3 text-xs text-navy-400">
-              {t('footer.privacyConsent')}
+              En vous inscrivant, vous acceptez notre politique de
+              confidentialité.
             </p>
           </div>
         </div>
@@ -239,7 +236,7 @@ export function Footer() {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             {/* Copyright */}
             <p className="text-sm text-navy-400">
-              {t('footer.copyright', { year: currentYear })}
+              © {currentYear} Bendouha. Tous droits réservés.
             </p>
 
             {/* Legal Links */}
@@ -248,36 +245,18 @@ export function Footer() {
                 to="/privacy"
                 className="text-sm text-navy-400 transition-colors hover:text-cyan"
               >
-                {t('footer.privacyPolicy')}
+                Confidentialité
               </Link>
               <Link
                 to="/terms"
                 className="text-sm text-navy-400 transition-colors hover:text-cyan"
               >
-                {t('footer.termsOfService')}
+                Conditions d'utilisation
               </Link>
-              <Link
-                to="/cookies"
-                className="text-sm text-navy-400 transition-colors hover:text-cyan"
-              >
-                {t('footer.cookieSettings')}
-              </Link>
-            </div>
-
-            {/* Payment Methods (visual only) */}
-            <div className="flex items-center gap-2">
-              {['Visa', 'MC', 'Amex', 'PayPal'].map((method) => (
-                <div
-                  key={method}
-                  className="flex h-8 w-12 items-center justify-center rounded bg-navy-800 text-[10px] font-medium text-navy-300 shadow-sm"
-                >
-                  {method}
-                </div>
-              ))}
             </div>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }

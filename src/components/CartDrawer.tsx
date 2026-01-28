@@ -1,20 +1,20 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
-import { ShoppingBag, Minus, Plus, X, ArrowRight } from 'lucide-react'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { ShoppingBag, Minus, Plus, X, ArrowRight } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useCart, useRemoveFromCart } from '@/services/cart'
-import type { CartItem } from '@/types/api'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCart, useRemoveFromCart } from "@/services/cart";
+import type { CartItem } from "@/types/api";
+import { cn } from "@/lib/utils";
 
 // Cart Item Component
 function CartItemRow({
@@ -23,10 +23,10 @@ function CartItemRow({
   onRemove,
   isUpdating,
 }: {
-  item: CartItem
-  onUpdateQuantity: (id: string, quantity: number) => void
-  onRemove: (id: string) => void
-  isUpdating?: boolean
+  item: CartItem;
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemove: (id: string) => void;
+  isUpdating?: boolean;
 }) {
   return (
     <motion.div
@@ -35,12 +35,12 @@ function CartItemRow({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className={cn('flex gap-4 py-4', isUpdating && 'opacity-50')}
+      className={cn("flex gap-4 py-4", isUpdating && "opacity-50")}
     >
       {/* Product Image */}
       <Link
         to={`/product/${item.productId}`}
-        className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100"
+        className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100"
       >
         <img
           src={item.product.image}
@@ -101,13 +101,13 @@ function CartItemRow({
       <button
         onClick={() => onRemove(item.id)}
         disabled={isUpdating}
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 disabled:cursor-not-allowed"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 disabled:cursor-not-allowed"
         aria-label="Remove item"
       >
         <X className="h-4 w-4" />
       </button>
     </motion.div>
-  )
+  );
 }
 
 // Loading Skeleton
@@ -128,12 +128,12 @@ function CartSkeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 // Empty Cart Component
 function EmptyCart() {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
   return (
     <motion.div
@@ -147,65 +147,65 @@ function EmptyCart() {
       <h3 className="mb-2 text-lg font-medium text-neutral-900">
         Your cart is empty
       </h3>
-      <p className="mb-6 max-w-[200px] text-sm text-neutral-500">
+      <p className="mb-6 max-w-50 text-sm text-neutral-500">
         Looks like you haven't added any items to your cart yet.
       </p>
       <Button asChild className="rounded-full">
         <Link to="/shop">
-          {t('nav.shop')}
+          {t("nav.shop")}
           <ArrowRight className="ms-2 h-4 w-4" />
         </Link>
       </Button>
     </motion.div>
-  )
+  );
 }
 
 // Cart Drawer Component
 interface CartDrawerProps {
-  trigger?: React.ReactNode
-  className?: string
+  trigger?: React.ReactNode;
+  className?: string;
 }
 
 export function CartDrawer({ trigger, className }: CartDrawerProps) {
-  const { t } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
-  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
   // Fetch cart from API
-  const { data: cart, isLoading, isError } = useCart()
-  
+  const { data: cart, isLoading, isError } = useCart();
+
   // Mutations
-  const removeFromCart = useRemoveFromCart()
+  const removeFromCart = useRemoveFromCart();
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
-    if (quantity < 1) return
-    setUpdatingItemId(itemId)
+    if (quantity < 1) return;
+    setUpdatingItemId(itemId);
     try {
       // This would call the actual API
       // For now, using the postAction hook directly
-      console.log('Update quantity:', itemId, quantity)
+      console.log("Update quantity:", itemId, quantity);
     } finally {
-      setUpdatingItemId(null)
+      setUpdatingItemId(null);
     }
-  }
+  };
 
   const handleRemoveItem = (itemId: string) => {
     removeFromCart.mutate({
-      method: 'delete',
+      method: "delete",
       path: `cart/items/${itemId}`,
-    })
-  }
+    });
+  };
 
   // Calculate totals from cart data
-  const items = cart?.items || []
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cart?.subtotal || 0
-  const shipping = cart?.shipping || (subtotal >= 150 ? 0 : 15)
-  const total = cart?.total || subtotal + shipping
+  const items = cart?.items || [];
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cart?.subtotal || 0;
+  const shipping = cart?.shipping || (subtotal >= 150 ? 0 : 15);
+  const total = cart?.total || subtotal + shipping;
 
   const handleCheckout = () => {
-    console.log('Checkout:', { items, subtotal, shipping, total })
-  }
+    console.log("Checkout:", { items, subtotal, shipping, total });
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -215,10 +215,10 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={cn(
-              'relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900',
-              className
+              "relative rounded-full p-2 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900",
+              className,
             )}
-            aria-label={t('common.cart')}
+            aria-label={t("common.cart")}
           >
             <ShoppingBag className="h-5 w-5" />
             <AnimatePresence>
@@ -245,10 +245,10 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
         <SheetHeader className="border-b border-neutral-200 px-6 py-4">
           <SheetTitle className="flex items-center gap-3 font-display text-xl font-light tracking-tight">
             <ShoppingBag className="h-5 w-5" />
-            {t('common.cart')}
+            {t("common.cart")}
             {itemCount > 0 && (
               <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-sm font-medium text-neutral-600">
-                {itemCount} {itemCount === 1 ? 'item' : t('common.items')}
+                {itemCount} {itemCount === 1 ? "item" : t("common.items")}
               </span>
             )}
           </SheetTitle>
@@ -275,12 +275,18 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                 <div className="flex-1 overflow-y-auto px-6">
                   <AnimatePresence mode="popLayout">
                     {items.map((item) => (
-                      <div key={item.id} className="border-b border-neutral-100">
+                      <div
+                        key={item.id}
+                        className="border-b border-neutral-100"
+                      >
                         <CartItemRow
                           item={item}
                           onUpdateQuantity={handleUpdateQuantity}
                           onRemove={handleRemoveItem}
-                          isUpdating={updatingItemId === item.id || removeFromCart.isPending}
+                          isUpdating={
+                            updatingItemId === item.id ||
+                            removeFromCart.isPending
+                          }
                         />
                       </div>
                     ))}
@@ -292,16 +298,22 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                   {/* Order Summary */}
                   <div className="mb-6 space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-600">{t('common.subtotal')}</span>
+                      <span className="text-neutral-600">
+                        {t("common.subtotal")}
+                      </span>
                       <span className="font-medium text-neutral-900">
                         ${subtotal.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-neutral-600">{t('common.shipping')}</span>
+                      <span className="text-neutral-600">
+                        {t("common.shipping")}
+                      </span>
                       <span className="font-medium text-neutral-900">
                         {shipping === 0 ? (
-                          <span className="text-green-600">{t('common.free')}</span>
+                          <span className="text-green-600">
+                            {t("common.free")}
+                          </span>
                         ) : (
                           `$${shipping.toFixed(2)}`
                         )}
@@ -315,7 +327,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                     <div className="border-t border-neutral-200 pt-3">
                       <div className="flex items-center justify-between">
                         <span className="text-base font-medium text-neutral-900">
-                          {t('common.total')}
+                          {t("common.total")}
                         </span>
                         <span className="text-lg font-medium text-neutral-900">
                           ${total.toFixed(2)}
@@ -351,5 +363,5 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
         )}
       </SheetContent>
     </Sheet>
-  )
+  );
 }
