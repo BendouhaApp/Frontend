@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCart, useRemoveFromCart } from "@/services/cart";
-import type { CartItem } from "@/types/api";
+import { useGet } from "@/hooks/useGet";
+import { usePostAction } from "@/hooks/usePostAction";
+import type { Cart, CartItem } from "@/types/api";
 import { cn } from "@/lib/utils";
 
 // Cart Item Component
@@ -172,10 +173,15 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
   // Fetch cart from API
-  const { data: cart, isLoading, isError } = useCart();
+  const { data: cart, isLoading, isError } = useGet<Cart>({
+    path: "cart",
+    options: {
+      staleTime: 1000 * 60, // 1 minute
+    },
+  });
 
   // Mutations
-  const removeFromCart = useRemoveFromCart();
+  const removeFromCart = usePostAction<CartItem>();
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     if (quantity < 1) return;

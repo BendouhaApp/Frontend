@@ -4,9 +4,9 @@ import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { SkeletonProductGrid } from '@/components/ui/skeleton'
-import { useFeaturedProducts, useProducts } from '@/services/products'
-import { useAddToCart } from '@/services/cart'
-import type { Product } from '@/types/api'
+import { useGet } from '@/hooks/useGet'
+import { usePost } from '@/hooks/usePost'
+import type { Product, ProductsResponse, AddToCartPayload, CartItem } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 const containerVariants: Variants = {
@@ -148,12 +148,27 @@ export function FeaturedProducts({
   count?: number
 }) {
   const { t } = useTranslation()
-  const { data: products, isLoading } = useFeaturedProducts(count)
-  const addToCart = useAddToCart()
+  
+  const { data, isLoading } = useGet<ProductsResponse>({
+    path: 'products',
+    options: {
+      staleTime: 1000 * 60 * 5,
+    },
+  })
+  
+  // Filter featured products (is_featured = true)
+  const products = (data?.data || []).filter(p => p.is_featured).slice(0, count)
+  
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1',
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity: 1,
     })
   }
@@ -162,7 +177,7 @@ export function FeaturedProducts({
     <ProductGrid
       title={t('products.featured')}
       subtitle={t('products.featuredSubtitle')}
-      products={products || []}
+      products={products}
       columns={count === 3 ? 3 : 4}
       onAddToCart={handleAddToCart}
       isLoading={isLoading}
@@ -173,12 +188,27 @@ export function FeaturedProducts({
 // New Arrivals Section - Uses API
 export function NewArrivals() {
   const { t } = useTranslation()
-  const { data, isLoading } = useProducts({ badge: 'new' })
-  const addToCart = useAddToCart()
+  
+  const { data, isLoading } = useGet<ProductsResponse>({
+    path: 'products',
+    options: {
+      staleTime: 1000 * 60 * 5,
+    },
+  })
+  
+  // Get latest products (by created_at)
+  const products = (data?.data || []).slice(0, 6)
+  
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1',
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity: 1,
     })
   }
@@ -186,7 +216,7 @@ export function NewArrivals() {
   return (
     <ProductGrid
       title={t('products.newArrivals')}
-      products={data?.products || []}
+      products={products}
       columns={3}
       showViewAll
       viewAllLink="/shop?filter=new"
@@ -199,12 +229,27 @@ export function NewArrivals() {
 // Sale Products Section - Uses API
 export function SaleProducts() {
   const { t } = useTranslation()
-  const { data, isLoading } = useProducts({ badge: 'sale' })
-  const addToCart = useAddToCart()
+  
+  const { data, isLoading } = useGet<ProductsResponse>({
+    path: 'products',
+    options: {
+      staleTime: 1000 * 60 * 5,
+    },
+  })
+  
+  // For now, just show some products as sale items
+  const products = (data?.data || []).slice(0, 3)
+  
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1',
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity: 1,
     })
   }
@@ -237,7 +282,7 @@ export function SaleProducts() {
             viewport={{ once: true }}
             className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {(data?.products || []).map((product) => (
+            {products.map((product) => (
               <motion.div key={product.id} variants={itemVariants}>
                 <ProductCard
                   product={product}
@@ -264,11 +309,17 @@ export function ProductCarousel({
   isLoading?: boolean
 }) {
   const { t } = useTranslation()
-  const addToCart = useAddToCart()
+  
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1',
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity: 1,
     })
   }

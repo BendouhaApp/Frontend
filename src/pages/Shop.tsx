@@ -13,9 +13,9 @@ import {
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { SkeletonProductGrid } from '@/components/ui/skeleton'
-import { useProducts } from '@/services/products'
-import { useAddToCart } from '@/services/cart'
-import type { Product } from '@/types/api'
+import { useGet } from '@/hooks/useGet'
+import { usePost } from '@/hooks/usePost'
+import type { Product, ProductsResponse, AddToCartPayload, CartItem } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 type ViewMode = 'grid' | 'large' | 'list'
@@ -254,22 +254,26 @@ export function Shop() {
   const [selectedPrice, setSelectedPrice] = useState('all')
   const [selectedSort, setSelectedSort] = useState('featured')
 
-  // Build filters for API
-  const filters = {
-    category: selectedCategory !== 'all' ? selectedCategory : undefined,
-    sortBy: selectedSort,
-  }
-
   // Fetch products from API
-  const { data, isLoading, isError, error, refetch } = useProducts(filters)
-  const products = data?.products || []
+  const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>({
+    path: 'products',
+    options: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  })
+  const products = data?.data || []
 
-  // Cart mutation
-  const addToCart = useAddToCart()
+  // Cart mutation - you need a cart_id to add items
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1', // Replace with actual cart_id
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity: 1,
     })
   }

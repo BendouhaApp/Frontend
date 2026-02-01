@@ -13,8 +13,10 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/services/products'
-import type { Product, CreateProductPayload } from '@/types/api'
+import { useGet } from '@/hooks/useGet'
+import { usePost } from '@/hooks/usePost'
+import { usePostAction } from '@/hooks/usePostAction'
+import type { Product, ProductsResponse, ProductResponse, CreateProductPayload } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 // Product Form Component
@@ -585,13 +587,30 @@ export function Admin() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Fetch products
-  const { data, isLoading, isError, refetch } = useProducts()
-  const products = data?.products || []
+  const { data, isLoading, isError, refetch } = useGet<ProductsResponse>({
+    path: 'products',
+    options: {
+      staleTime: 1000 * 60 * 5,
+    },
+  })
+  const products = data?.data || []
 
   // Mutations
-  const createProduct = useCreateProduct()
-  const updateProduct = useUpdateProduct(editingProduct?.id || '')
-  const deleteProduct = useDeleteProduct()
+  const createProduct = usePost<CreateProductPayload, ProductResponse>({
+    path: 'products',
+    method: 'post',
+    successMessage: 'Produit créé avec succès',
+    errorMessage: 'Erreur lors de la création du produit',
+  })
+  
+  const updateProduct = usePost<Partial<CreateProductPayload>, ProductResponse>({
+    path: `products/${editingProduct?.id || ''}`,
+    method: 'put',
+    successMessage: 'Produit mis à jour avec succès',
+    errorMessage: 'Erreur lors de la mise à jour du produit',
+  })
+  
+  const deleteProduct = usePostAction<ProductResponse>()
 
   // Filter products by search query
   const filteredProducts = products.filter(

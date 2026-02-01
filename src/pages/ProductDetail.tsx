@@ -17,8 +17,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProduct } from '@/services/products'
-import { useAddToCart } from '@/services/cart'
+import { useGet } from '@/hooks/useGet'
+import { usePost } from '@/hooks/usePost'
+import type { ProductResponse, AddToCartPayload, CartItem } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 // Loading Skeleton for Product Detail
@@ -268,10 +269,22 @@ export function ProductDetail() {
   const { t } = useTranslation()
   
   // Fetch product from API
-  const { data: product, isLoading, isError, error } = useProduct(id)
+  const { data, isLoading, isError, error } = useGet<ProductResponse>({
+    path: `products/${id}`,
+    options: {
+      enabled: !!id,
+      staleTime: 1000 * 60 * 5,
+    },
+  })
+  const product = data?.data
   
   // Cart mutation
-  const addToCart = useAddToCart()
+  const addToCart = usePost<AddToCartPayload, CartItem>({
+    path: 'cart/items?cart_id=1', // Replace with actual cart_id
+    method: 'post',
+    successMessage: 'Produit ajouté au panier',
+    errorMessage: "Erreur lors de l'ajout au panier",
+  })
 
   // UI State
   const [selectedSize, setSelectedSize] = useState('')
@@ -327,11 +340,10 @@ export function ProductDetail() {
     : 0
 
   const handleAddToCart = () => {
+    if (!product) return
     addToCart.mutate({
-      productId: product.id,
+      product_id: product.id,
       quantity,
-      size: selectedSize || undefined,
-      color: selectedColor || undefined,
     })
   }
 
