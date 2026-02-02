@@ -1,12 +1,18 @@
-import { Routes, Route } from 'react-router-dom'
-import { MainLayout } from './layouts/MainLayout'
-import { Home } from './pages/Home'
-import { Shop } from './pages/Shop'
-import { ProductDetail } from './pages/ProductDetail'
-import { Collections } from './pages/Collections'
-import { About } from './pages/About'
-import { Contact } from './pages/Contact'
-import { Admin } from './pages/Admin'
+import { Routes, Route } from "react-router-dom";
+import { MainLayout } from "./layouts/MainLayout";
+import { Home } from "./pages/Home";
+import { Shop } from "./pages/Shop";
+import { ProductDetail } from "./pages/ProductDetail";
+import { Collections } from "./pages/Collections";
+import { About } from "./pages/About";
+import { Contact } from "./pages/Contact";
+import AdminLogin from "./pages/admins/AdminLogin";
+import AdminDashboard from "@/pages/admins/Admin";
+import AdminProducts from "@/pages/admins/AdminProducts";
+import { AdminCategory } from "@/pages/admins/AdminCategory";
+import AdminLogs from "@/pages/admins/AdminLogs";
+import { AdminOrders } from "@/pages/admins/AdminOrders";
+
 
 function App() {
   return (
@@ -19,10 +25,17 @@ function App() {
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
       </Route>
-      {/* Admin route without MainLayout header/footer */}
-      <Route path="admin" element={<Admin />} />
+
+      <Route path="/admin/login" element={<AdminLogin />} />
+       <Route path="/admin">
+        <Route index element={<AdminDashboard />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategory />} />
+        <Route path="logs" element={<AdminLogs />} />
+        <Route path="orders" element={<AdminOrders />} />
+      </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;
