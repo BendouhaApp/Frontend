@@ -101,7 +101,7 @@ export default function AdminDashboard() {
 
             <div className="flex items-center gap-2">
               <Button asChild variant="outline">
-                <Link to="/">
+                <Link to="/" target="_blank">
                   <Store className="me-2 h-4 w-4" />
                   Back to store
                 </Link>
