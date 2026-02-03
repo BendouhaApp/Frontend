@@ -1,90 +1,92 @@
-import { useEffect, useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Package,
   ShoppingCart,
   DollarSign,
   Clock,
   AlertCircle,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+  Store,
+  Tag,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type Stats = {
-  totalOrders: number
-  pendingOrders: number
-  totalProducts: number
-  totalRevenue: number
-}
+  totalOrders: number;
+  pendingOrders: number;
+  totalProducts: number;
+  totalRevenue: number;
+  totalCategories: number;
+};
 
 type Order = {
-  order_id: string
-  status: string
-  total_price: number
-}
+  order_id: string;
+  status: string;
+  total_price: number;
+};
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const token = localStorage.getItem("admin_token")
+        const token = localStorage.getItem("admin_token");
         if (!token) {
-          navigate("/admin/login", { replace: true })
-          return
+          navigate("/admin/login", { replace: true });
+          return;
         }
 
-        const headers = { Authorization: `Bearer ${token}` }
+        const headers = { Authorization: `Bearer ${token}` };
 
         const statsRes = await fetch(
           `${import.meta.env.VITE_API_URL}/admin/dashboard`,
-          { headers }
-        )
+          { headers },
+        );
 
         if (statsRes.status === 401) {
-          navigate("/admin/login", { replace: true })
-          return
+          navigate("/admin/login", { replace: true });
+          return;
         }
-        if (!statsRes.ok) throw new Error("Stats request failed")
+        if (!statsRes.ok) throw new Error("Stats request failed");
 
-        const statsData: Stats = await statsRes.json()
+        const statsData: Stats = await statsRes.json();
 
         const ordersRes = await fetch(
           `${import.meta.env.VITE_API_URL}/admin/dashboard/recent-orders`,
-          { headers }
-        )
+          { headers },
+        );
 
         if (ordersRes.status === 401) {
-          navigate("/admin/login", { replace: true })
-          return
+          navigate("/admin/login", { replace: true });
+          return;
         }
-        if (!ordersRes.ok) throw new Error("Orders request failed")
+        if (!ordersRes.ok) throw new Error("Orders request failed");
 
-        const ordersData: Order[] = await ordersRes.json()
+        const ordersData: Order[] = await ordersRes.json();
 
-        setStats(statsData)
-        setOrders(Array.isArray(ordersData) ? ordersData : [])
+        setStats(statsData);
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (err) {
-        console.error("Dashboard error:", err)
-        setError("Failed to load dashboard")
+        console.error("Dashboard error:", err);
+        setError("Failed to load dashboard");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadDashboard()
-  }, [navigate])
+    loadDashboard();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
       <div className="border-b border-neutral-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -99,9 +101,9 @@ export default function AdminDashboard() {
 
             <div className="flex items-center gap-2">
               <Button asChild variant="outline">
-                <Link to="/admin/products">
-                  <Package className="me-2 h-4 w-4" />
-                  Manage Products
+                <Link to="/">
+                  <Store className="me-2 h-4 w-4" />
+                  Back to store
                 </Link>
               </Button>
             </div>
@@ -139,9 +141,9 @@ export default function AdminDashboard() {
                 icon={<ShoppingCart className="h-5 w-5" />}
               />
               <StatCard
-                label="Revenue"
-                value={`${stats.totalRevenue} DZA`}
-                icon={<DollarSign className="h-5 w-5" />}
+                label="Categories"
+                value={stats.totalCategories}
+                icon={<Tag className="h-5 w-5" />}
               />
               <StatCard
                 label="Products"
@@ -152,6 +154,14 @@ export default function AdminDashboard() {
                 label="Pending Orders"
                 value={stats.pendingOrders}
                 icon={<Clock className="h-5 w-5" />}
+              />
+            </div>
+
+            <div className="mt-6">
+              <StatCard
+                label="Revenue"
+                value={`${stats.totalRevenue} DZA`}
+                icon={<DollarSign className="h-5 w-5" />}
               />
             </div>
 
@@ -201,7 +211,7 @@ export default function AdminDashboard() {
                                 order.status === "paid" &&
                                   "bg-emerald-100 text-emerald-700",
                                 order.status === "cancelled" &&
-                                  "bg-rose-100 text-rose-700"
+                                  "bg-rose-100 text-rose-700",
                               )}
                             >
                               {order.status}
@@ -221,7 +231,7 @@ export default function AdminDashboard() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function StatCard({
@@ -229,21 +239,19 @@ function StatCard({
   value,
   icon,
 }: {
-  label: string
-  value: string | number
-  icon: React.ReactNode
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
 }) {
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-neutral-500">
-          {label}
-        </span>
+        <span className="text-sm font-medium text-neutral-500">{label}</span>
         <div className="text-neutral-400">{icon}</div>
       </div>
       <div className="mt-3 text-2xl font-semibold text-neutral-900">
         {value}
       </div>
     </div>
-  )
+  );
 }
