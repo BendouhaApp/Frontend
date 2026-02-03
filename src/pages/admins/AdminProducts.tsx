@@ -45,7 +45,7 @@ const getErrMsg = (data: any, fallback = "Something went wrong") => {
 };
 
 //type Category = {
- // id: string;
+// id: string;
 //  category_name: string;
 //  parent_id: string | null;
 //};
@@ -55,11 +55,20 @@ async function api<T>(
   opts: RequestInit & { auth?: boolean } = { auth: true },
 ): Promise<T> {
   const token = localStorage.getItem("admin_token");
+
+  const isFormData = opts.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(opts.headers as any),
   };
-  if (opts.auth !== false && token) headers.Authorization = `Bearer ${token}`;
+
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (opts.auth !== false && token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   const res = await fetch(`${API_BASE}/${path}`, {
     ...opts,
@@ -224,7 +233,10 @@ function ProductForm({
   isLoading,
 }: {
   product?: DbProduct;
-  onSubmit: (data: ProductPayload) => void;
+  onSubmit: (
+    data: ProductPayload,
+    files: { thumbnail?: File | null; images?: File[] },
+  ) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }) {
@@ -253,9 +265,8 @@ function ProductForm({
   );
   const [note, setNote] = useState(product?.note ?? "");
 
-  const [thumbnail, setThumbnail] = useState(product?.thumbnail ?? "");
-  const [newImage, setNewImage] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   //const [mainCategories, setMainCategories] = useState<Category[]>([]);
   //const [subCategories, setSubCategories] = useState<Category[]>([]);
@@ -267,7 +278,8 @@ function ProductForm({
     setSlug(slugify(productName));
   }, [productName, autoSlug]);
 
- {/* useEffect(() => {
+  {
+    /* useEffect(() => {
     api<Category[]>("categories/main")
       .then(setMainCategories)
       .catch(() => {});
@@ -284,19 +296,8 @@ function ProductForm({
       .then(setSubCategories)
       .catch(() => {});
   }, [mainCategory]);
-*/}
-
-  const addImage = () => {
-    const v = newImage.trim();
-    if (!v) return;
-    if (images.includes(v)) return;
-    setImages((p) => [...p, v]);
-    setNewImage("");
-  };
-
-  const removeImage = (img: string) => {
-    setImages((p) => p.filter((x) => x !== img));
-  };
+*/
+  }
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,13 +315,17 @@ function ProductForm({
       published,
       disable_out_of_stock: disableOos,
       note: note.trim() ? note.trim() : null,
-      thumbnail: thumbnail.trim() ? thumbnail.trim() : null,
-      images,
+      thumbnail: undefined,
+      images: undefined,
+
       //main_category_id: mainCategory,
       //sub_category_id: subCategory || null,
     };
 
-    onSubmit(payload);
+    onSubmit(payload, {
+      thumbnail: thumbnailFile,
+      images: imageFiles,
+    });
   };
 
   return (
@@ -436,7 +441,7 @@ function ProductForm({
           />
         </div>
 
-      {/* ===== Categories ===== 
+        {/* ===== Categories ===== 
         <div>
           <FieldLabel icon={<Tag className="h-4 w-4" />}>
             Main category *
@@ -526,53 +531,118 @@ function ProductForm({
         </div>
 
         <div className="md:col-span-2">
-          <FieldLabel>Thumbnail URL (optional)</FieldLabel>
-          <Input
-            type="url"
-            value={thumbnail}
-            onChange={(e) => setThumbnail(e.target.value)}
-            placeholder="https://..."
-          />
+          <FieldLabel>Thumbnail (optional)</FieldLabel>
+
+          <label
+            className={cn(
+              "flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-sm transition",
+              thumbnailFile
+                ? "border-primary bg-primary/5"
+                : "border-neutral-300 hover:bg-neutral-50",
+            )}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setThumbnailFile(file);
+              }}
+            />
+
+            {thumbnailFile ? (
+              <>
+                <Check className="h-5 w-5 text-primary" />
+                <span className="font-medium text-primary">
+                  Thumbnail selected
+                </span>
+              </>
+            ) : (
+              <>
+                <Package className="h-5 w-5 text-neutral-400" />
+                <span className="text-neutral-600">
+                  Click to upload thumbnail
+                </span>
+              </>
+            )}
+          </label>
+
+          {(thumbnailFile || product?.thumbnail) && (
+            <div className="mt-3">
+              <img
+                src={
+                  thumbnailFile
+                    ? URL.createObjectURL(thumbnailFile)
+                    : (product?.thumbnail ?? "")
+                }
+                alt="Thumbnail preview"
+                className="h-24 w-24 rounded-xl object-cover border"
+              />
+            </div>
+          )}
         </div>
       </div>
 
       <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-        <div className="mb-3 text-sm font-medium text-neutral-800">
+        <div className="mb-2 text-sm font-medium text-neutral-800">
           Gallery images (optional)
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            type="url"
-            value={newImage}
-            onChange={(e) => setNewImage(e.target.value)}
-            placeholder="https://..."
-            className="flex-1 bg-white"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addImage}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" /> Add
-          </Button>
-        </div>
 
-        {images.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {images.map((img) => (
+        <label
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-sm transition",
+            imageFiles.length > 0
+              ? "border-primary bg-primary/5"
+              : "border-neutral-300 hover:bg-neutral-100",
+          )}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              setImageFiles(files);
+            }}
+          />
+
+          {imageFiles.length > 0 ? (
+            <>
+              <Check className="h-5 w-5 text-primary" />
+              <span className="font-medium text-primary">
+                {imageFiles.length} image(s) selected
+              </span>
+              <span className="text-xs text-neutral-500">
+                Click to change images
+              </span>
+            </>
+          ) : (
+            <>
+              <Package className="h-5 w-5 text-neutral-400" />
+              <span className="text-neutral-600">
+                Click to upload gallery images
+              </span>
+              <span className="text-xs text-neutral-400">
+                You can select multiple images
+              </span>
+            </>
+          )}
+        </label>
+
+        {imageFiles.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {imageFiles.map((file, i) => (
               <div
-                key={img}
-                className="group relative h-16 w-16 overflow-hidden rounded-xl bg-white shadow-sm"
+                key={i}
+                className="h-20 w-20 overflow-hidden rounded-xl border bg-white shadow-sm"
               >
-                <img src={img} alt="" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(img)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100"
-                >
-                  <X className="h-4 w-4 text-white" />
-                </button>
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               </div>
             ))}
           </div>
@@ -597,9 +667,6 @@ function ProductForm({
   );
 }
 
-// ==============================
-// Row
-// ==============================
 function BadgePill({ published }: { published: boolean }) {
   return (
     <span
@@ -858,14 +925,34 @@ export default function AdminProductsPage() {
     setEditing(null);
   };
 
-  const create = async (payload: ProductPayload) => {
+  const create = async (
+    payload: ProductPayload,
+    files?: { thumbnail?: File | null; images?: File[] },
+  ) => {
     setSaving(true);
     setError("");
+
     try {
+      const fd = new FormData();
+
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        fd.append(key, String(value));
+      });
+
+      if (files?.thumbnail) {
+        fd.append("thumbnail", files.thumbnail);
+      }
+
+      files?.images?.forEach((file) => {
+        fd.append("images", file);
+      });
+
       await api("products", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: fd,
       });
+
       await load();
       closeForm();
     } catch (e: any) {
@@ -875,15 +962,36 @@ export default function AdminProductsPage() {
     }
   };
 
-  const update = async (payload: ProductPayload) => {
+  const update = async (
+    payload: ProductPayload,
+    files?: { thumbnail?: File | null; images?: File[] },
+  ) => {
     if (!editing) return;
+
     setSaving(true);
     setError("");
+
     try {
+      const fd = new FormData();
+
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        fd.append(key, String(value));
+      });
+
+      if (files?.thumbnail) {
+        fd.append("thumbnail", files.thumbnail);
+      }
+
+      files?.images?.forEach((file) => {
+        fd.append("images", file);
+      });
+
       await api(`products/${editing.id}`, {
         method: "PATCH",
-        body: JSON.stringify(payload),
+        body: fd,
       });
+
       await load();
       closeForm();
     } catch (e: any) {
