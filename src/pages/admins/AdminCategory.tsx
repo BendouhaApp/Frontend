@@ -55,10 +55,13 @@ function CategoryForm({
 }) {
   const [name, setName] = useState(category?.category_name ?? "");
   const [desc, setDesc] = useState(category?.category_description ?? "");
-  const [parentId, setParentId] = useState<string | "">(
-    category?.parent_id ?? "",
+  const [parentId, setParentId] = useState<string | null>(
+    category?.parent_id ?? null,
   );
+
   const [active, setActive] = useState(category?.active ?? true);
+  const [query, setQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +73,17 @@ function CategoryForm({
     });
   };
 
+  const filteredParents = useMemo(() => {
+    if (!query) return [];
+    return categories.filter(
+      (c) =>
+        c.id !== category?.id &&
+        c.category_name.toLowerCase().includes(query.toLowerCase()),
+    );
+  }, [query, categories, category?.id]);
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-6">
       <div>
         <label className="text-sm font-medium">Category name *</label>
         <input
@@ -94,21 +105,66 @@ function CategoryForm({
       </div>
 
       <div>
-        <label className="text-sm font-medium">Parent category</label>
-        <select
-          value={parentId}
-          onChange={(e) => setParentId(e.target.value)}
-          className="mt-1 w-full rounded-xl border px-4 py-2"
-        >
-          <option value="">— None —</option>
-          {categories
-            .filter((c) => c.id !== category?.id)
-            .map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.category_name}
-              </option>
-            ))}
-        </select>
+        <label className="text-sm font-medium">
+          {parentId ? "Change parent category" : "Parent category"}
+        </label>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShowResults(true);
+            }}
+            placeholder={
+              parentId ? "Change parent category..." : "Search category..."
+            }
+            className="w-full rounded-xl border py-2 pl-9 pr-9"
+          />
+
+          {parentId && (
+            <button
+              type="button"
+              onClick={() => {
+                setParentId(null);
+                setQuery("");
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-red-500"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+
+          {showResults && filteredParents.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full rounded-xl border bg-white shadow-lg max-h-48 overflow-auto">
+              {filteredParents.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setParentId(c.id);
+                    setQuery(c.category_name);
+                    setShowResults(false);
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm hover:bg-neutral-100"
+                >
+                  {c.category_name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {parentId && (
+          <p className="mt-1 text-xs text-neutral-500">
+            Selected parent:{" "}
+            <span className="font-medium">
+              {categories.find((c) => c.id === parentId)?.category_name}
+            </span>
+          </p>
+        )}
       </div>
 
       <label className="flex items-center gap-2 text-sm">
@@ -121,7 +177,12 @@ function CategoryForm({
       </label>
 
       <div className="flex gap-3 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="flex-1"
+        >
           Cancel
         </Button>
         <Button type="submit" className="flex-1" disabled={loading}>
@@ -157,6 +218,11 @@ export function AdminCategory() {
   useEffect(() => {
     load();
   }, []);
+
+  const getParentName = (parentId?: string | null) => {
+    if (!parentId) return "No parent category";
+    return items.find((c) => c.id === parentId)?.category_name ?? "Unknown";
+  };
 
   const filtered = useMemo(() => {
     if (!query) return items;
@@ -253,8 +319,16 @@ export function AdminCategory() {
             >
               <div>
                 <p className="font-medium">{c.category_name}</p>
+
+                <p className="text-xs text-neutral-500">
+                  Parent:{" "}
+                  <span className="font-medium">
+                    {getParentName(c.parent_id)}
+                  </span>
+                </p>
+
                 {c.category_description && (
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-neutral-400">
                     {c.category_description}
                   </p>
                 )}
@@ -327,7 +401,11 @@ export function AdminCategory() {
                 <h2 className="text-lg font-semibold">
                   {editing ? "Edit category" : "New category"}
                 </h2>
-                <Button size="icon" variant="ghost" onClick={() => setShowForm(false)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowForm(false)}
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
