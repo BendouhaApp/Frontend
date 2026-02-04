@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, ShoppingCart, Check, X } from "lucide-react";
+import { Loader2, Search, ShoppingCart, Check, X, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -77,7 +79,7 @@ export function AdminOrders() {
   const [query, setQuery] = useState("");
 
   const loadOrders = async () => {
-    const res = await api<OrdersResponse>("orders/admin"); 
+    const res = await api<OrdersResponse>("orders/admin");
     setOrders(res.data ?? []);
   };
 
@@ -138,11 +140,83 @@ export function AdminOrders() {
   const calcTotal = (items: OrderItem[]) =>
     items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
+/* ===== Loading ===== */
+
+type DbOrderItem = {
+  id: string;
+  price: string; // Decimal
+  quantity: number;
+};
+
+type DbOrder = {
+  id: string;
+  created_at: string;
+  customers?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  order_statuses?: {
+    status_name: string;
+    color: string;
+  };
+  order_items: DbOrderItem[];
+};
+
+type OrdersDbResponse = {
+  message: string;
+  data: DbOrder[];
+};
+
+const load = async () => {
+  setLoading(true);
+  setError("");
+
+  try {
+    const res = await api<OrdersDbResponse>("orders/admin");
+
+    const mapped: Order[] = res.data.map((o) => ({
+      ...o,
+      order_items: o.order_items.map((i) => ({
+        ...i,
+        price: Number(i.price), // 🔥 FIX
+      })),
+    }));
+
+    setOrders(mapped);
+  } catch (e: any) {
+    setError(e?.message || "Failed to load orders");
+    setOrders([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   /* ===== UI ===== */
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-1 text-3xl font-semibold">Orders</h1>
-      <p className="mb-6 text-neutral-500">Manage customer orders</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="mb-1 text-3xl font-semibold">Orders</h1>
+              <p className="mb-6 text-neutral-500">Manage customer orders</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={load}
+                className="gap-2"
+                disabled={loading}
+              >
+                <RefreshCcw
+                  className={cn("h-4 w-4", loading && "animate-spin")}
+                />
+                Refresh
+              </Button>
+            </div>
+          </div>
 
       <div className="relative mb-4 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
@@ -206,9 +280,7 @@ export function AdminOrders() {
                   <td className="px-4 py-3 flex gap-2">
                     <button
                       disabled={!confirmedStatusId}
-                      onClick={() =>
-                        updateStatus(order.id, confirmedStatusId)
-                      }
+                      onClick={() => updateStatus(order.id, confirmedStatusId)}
                       className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40"
                       title="Confirm order"
                     >
@@ -217,9 +289,7 @@ export function AdminOrders() {
 
                     <button
                       disabled={!canceledStatusId}
-                      onClick={() =>
-                        updateStatus(order.id, canceledStatusId)
-                      }
+                      onClick={() => updateStatus(order.id, canceledStatusId)}
                       className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40"
                       title="Cancel order"
                     >

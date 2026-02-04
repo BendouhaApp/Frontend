@@ -1025,8 +1025,7 @@ export default function AdminProductsPage() {
                 Products
               </h1>
               <p className="mt-1 text-neutral-600">
-                Search, create, edit and delete products synced with your
-                database.
+                Manage your store products.
               </p>
             </div>
 
