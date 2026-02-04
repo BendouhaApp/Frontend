@@ -107,6 +107,7 @@ type DbProduct = {
   created_at?: string;
   updated_at?: string;
   thumbnail?: string | null;
+  gallery?: string[];
 };
 
 type ListResponse = { message?: string; data: DbProduct[] } | DbProduct[];
@@ -235,7 +236,11 @@ function ProductForm({
   product?: DbProduct;
   onSubmit: (
     data: ProductPayload,
-    files: { thumbnail?: File | null; images?: File[] },
+    files: {
+      thumbnail?: File | null;
+      images?: File[];
+      removedImages?: string[];
+    },
   ) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -266,7 +271,16 @@ function ProductForm({
   const [note, setNote] = useState(product?.note ?? "");
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  type NewImage = {
+    file: File;
+    preview: string;
+  };
+  const [newImages, setNewImages] = useState<NewImage[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    product?.gallery ?? [],
+  );
+  const [removedImages, setRemovedImages] = useState<string[]>([]);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
   //const [mainCategories, setMainCategories] = useState<Category[]>([]);
   //const [subCategories, setSubCategories] = useState<Category[]>([]);
@@ -274,9 +288,42 @@ function ProductForm({
   //const [subCategory, setSubCategory] = useState("");
 
   useEffect(() => {
+    setProductName(product?.product_name ?? "");
+    setSlug(product?.slug ?? "");
+    setAutoSlug(!product?.slug);
+    setSku(product?.sku ?? "");
+    setSalePrice(Number(product?.sale_price ?? 0));
+    setComparePrice(
+      product?.compare_price != null ? String(product.compare_price) : "",
+    );
+    setBuyingPrice(
+      product?.buying_price != null ? String(product.buying_price) : "",
+    );
+    setQuantity(product?.quantity ?? 0);
+    setShortDesc(product?.short_description ?? "");
+    setDesc(product?.product_description ?? "");
+    setType(product?.product_type ?? "");
+    setPublished(Boolean(product?.published ?? false));
+    setDisableOos(Boolean(product?.disable_out_of_stock ?? true));
+    setNote(product?.note ?? "");
+
+    setExistingImages(product?.gallery ?? []);
+    setRemovedImages([]);
+    setNewImages([]);
+    setThumbnailFile(null);
+  }, [product?.id]);
+
+  useEffect(() => {
     if (!autoSlug) return;
     setSlug(slugify(productName));
   }, [productName, autoSlug]);
+
+  useEffect(() => {
+    return () => {
+      newImages.forEach((img) => URL.revokeObjectURL(img.preview));
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    };
+  }, [newImages, thumbnailPreview]);
 
   {
     /* useEffect(() => {
@@ -324,7 +371,8 @@ function ProductForm({
 
     onSubmit(payload, {
       thumbnail: thumbnailFile,
-      images: imageFiles,
+      images: newImages.map((img) => img.file),
+      removedImages,
     });
   };
 
@@ -548,6 +596,7 @@ function ProductForm({
               onChange={(e) => {
                 const file = e.target.files?.[0] || null;
                 setThumbnailFile(file);
+                setThumbnailPreview(file ? URL.createObjectURL(file) : null);
               }}
             />
 
@@ -571,11 +620,7 @@ function ProductForm({
           {(thumbnailFile || product?.thumbnail) && (
             <div className="mt-3">
               <img
-                src={
-                  thumbnailFile
-                    ? URL.createObjectURL(thumbnailFile)
-                    : (product?.thumbnail ?? "")
-                }
+                src={thumbnailPreview ?? product?.thumbnail ?? ""}
                 alt="Thumbnail preview"
                 className="h-24 w-24 rounded-xl object-cover border"
               />
@@ -585,64 +630,75 @@ function ProductForm({
       </div>
 
       <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-        <div className="mb-2 text-sm font-medium text-neutral-800">
+        <div className="mb-3 text-sm font-medium text-neutral-800">
           Gallery images (optional)
         </div>
 
-        <label
-          className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-sm transition",
-            imageFiles.length > 0
-              ? "border-primary bg-primary/5"
-              : "border-neutral-300 hover:bg-neutral-100",
-          )}
-        >
+        {/* Upload */}
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 p-6 text-sm transition hover:bg-neutral-100">
           <input
             type="file"
             accept="image/*"
             multiple
             className="hidden"
             onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              setImageFiles(files);
+              const files = Array.from(e.target.files ?? []).map((file) => ({
+                file,
+                preview: URL.createObjectURL(file),
+              }));
+              setNewImages((prev) => [...prev, ...files]);
             }}
           />
-
-          {imageFiles.length > 0 ? (
-            <>
-              <Check className="h-5 w-5 text-primary" />
-              <span className="font-medium text-primary">
-                {imageFiles.length} image(s) selected
-              </span>
-              <span className="text-xs text-neutral-500">
-                Click to change images
-              </span>
-            </>
-          ) : (
-            <>
-              <Package className="h-5 w-5 text-neutral-400" />
-              <span className="text-neutral-600">
-                Click to upload gallery images
-              </span>
-              <span className="text-xs text-neutral-400">
-                You can select multiple images
-              </span>
-            </>
-          )}
+          <Plus className="h-5 w-5 text-neutral-400" />
+          <span className="text-neutral-600">Add images</span>
         </label>
 
-        {imageFiles.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-3">
-            {imageFiles.map((file, i) => (
-              <div
-                key={i}
-                className="h-20 w-20 overflow-hidden rounded-xl border bg-white shadow-sm"
-              >
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+        {(existingImages.length > 0 || newImages.length > 0) && (
+          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+            {/* Existing images */}
+            {existingImages.map((url) => (
+              <div key={url} className="relative group h-24 w-24">
+                <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
+                  <img
+                    src={url}
+                    alt="Gallery preview"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExistingImages((imgs) => imgs.filter((i) => i !== url));
+                    setRemovedImages((r) => [...r, url]);
+                  }}
+                  className="absolute right-2 top-2 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+
+            {/* New images */}
+            {newImages.map((img, i) => (
+              <div key={i} className="relative group h-24 w-24">
+                <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
+                  <img
+                    src={img.preview}
+                    alt="Gallery preview"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNewImages((imgs) => imgs.filter((_, x) => x !== i))
+                  }
+                  className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -908,10 +964,17 @@ export default function AdminProductsPage() {
     setSaving(true);
     try {
       const res = await api<OneResponse>(`products/${p.id}`, { method: "GET" });
-      const full = (
-        "data" in (res as any) ? (res as any).data : res
-      ) as DbProduct;
-      setEditing(full);
+      const raw = "data" in (res as any) ? (res as any).data : res;
+
+      const normalized: DbProduct = {
+        ...raw,
+        thumbnail: raw.thumbnail ?? null,
+        gallery: Array.isArray(raw.gallery)
+          ? raw.gallery.map((g: any) => g.image ?? g)
+          : [],
+      };
+      setEditing(normalized);
+
       setShowForm(true);
     } catch (e: any) {
       setError(e?.message || "Failed to load product");
@@ -927,7 +990,11 @@ export default function AdminProductsPage() {
 
   const create = async (
     payload: ProductPayload,
-    files?: { thumbnail?: File | null; images?: File[] },
+    files?: {
+      thumbnail?: File | null;
+      images?: File[];
+      removedImages?: string[];
+    },
   ) => {
     setSaving(true);
     setError("");
@@ -948,6 +1015,10 @@ export default function AdminProductsPage() {
         fd.append("images", file);
       });
 
+      files?.removedImages?.forEach((url) => {
+        fd.append("removed_images", url);
+      });
+
       await api("products", {
         method: "POST",
         body: fd,
@@ -964,7 +1035,11 @@ export default function AdminProductsPage() {
 
   const update = async (
     payload: ProductPayload,
-    files?: { thumbnail?: File | null; images?: File[] },
+    files?: {
+      thumbnail?: File | null;
+      images?: File[];
+      removedImages?: string[];
+    },
   ) => {
     if (!editing) return;
 
@@ -985,6 +1060,10 @@ export default function AdminProductsPage() {
 
       files?.images?.forEach((file) => {
         fd.append("images", file);
+      });
+
+      files?.removedImages?.forEach((url) => {
+        fd.append("removed_images", url);
       });
 
       await api(`products/${editing.id}`, {
