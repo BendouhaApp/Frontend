@@ -256,7 +256,7 @@ export function Shop() {
 
   // Fetch products from API
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>({
-    path: 'products',
+    path: 'products/public',
     options: {
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
