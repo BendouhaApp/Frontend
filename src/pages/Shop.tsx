@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import {
@@ -261,7 +261,7 @@ export function Shop() {
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
   })
-  const products = data?.data || []
+  const allProducts = data?.data || []
 
   // Cart mutation - you need a cart_id to add items
   const addToCart = usePost<AddToCartPayload, CartItem>({
@@ -270,6 +270,32 @@ export function Shop() {
     successMessage: 'Produit ajouté au panier',
     errorMessage: "Erreur lors de l'ajout au panier",
   })
+
+  // Filter products by price range
+  const products = useMemo(() => {
+    let filtered = [...allProducts]
+
+    if (selectedPrice !== 'all') {
+      filtered = filtered.filter((product) => {
+        const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price
+
+        switch (selectedPrice) {
+          case 'under-100':
+            return price < 100
+          case '100-250':
+            return price >= 100 && price < 250
+          case '250-500':
+            return price >= 250 && price < 500
+          case 'over-500':
+            return price >= 500
+          default:
+            return true
+        }
+      })
+    }
+
+    return filtered
+  }, [allProducts, selectedCategory, selectedPrice])
 
   const handleAddToCart = (product: Product) => {
     addToCart.mutate({
