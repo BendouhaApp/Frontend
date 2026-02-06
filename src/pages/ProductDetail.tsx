@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   ShoppingBag,
   Heart,
@@ -14,13 +14,13 @@ import {
   Shield,
   RotateCcw,
   AlertCircle,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useGet } from '@/hooks/useGet'
-import { usePost } from '@/hooks/usePost'
-import type { ProductResponse, AddToCartPayload, CartItem } from '@/types/api'
-import { cn } from '@/lib/utils'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGet } from "@/hooks/useGet";
+import { usePost } from "@/hooks/usePost";
+import type { ProductResponse, AddToCartPayload, CartItem } from "@/types/api";
+import { cn } from "@/lib/utils";
 
 // Loading Skeleton for Product Detail
 function ProductDetailSkeleton() {
@@ -31,7 +31,10 @@ function ProductDetailSkeleton() {
         <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
           <div className="flex gap-3 lg:flex-col">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-20 w-20 rounded-lg lg:h-24 lg:w-24" />
+              <Skeleton
+                key={i}
+                className="h-20 w-20 rounded-lg lg:h-24 lg:w-24"
+              />
             ))}
           </div>
           <Skeleton className="aspect-square flex-1 rounded-2xl lg:aspect-[4/5]" />
@@ -66,12 +69,18 @@ function ProductDetailSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // Image Gallery Component
-function ImageGallery({ images, productName }: { images: string[]; productName: string }) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
+function ImageGallery({
+  images,
+  productName,
+}: {
+  images: string[];
+  productName: string;
+}) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   return (
     <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-6">
@@ -81,8 +90,8 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
             key={index}
             onClick={() => setSelectedIndex(index)}
             className={cn(
-              'relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100 lg:h-24 lg:w-24',
-              selectedIndex === index && 'ring-2 ring-primary ring-offset-2'
+              "relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100 lg:h-24 lg:w-24",
+              selectedIndex === index && "ring-2 ring-primary ring-offset-2",
             )}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -111,7 +120,7 @@ function ImageGallery({ images, productName }: { images: string[]; productName: 
         </AnimatePresence>
       </div>
     </div>
-  )
+  );
 }
 
 // Size Selector Component
@@ -120,9 +129,9 @@ function SizeSelector({
   selected,
   onSelect,
 }: {
-  sizes: string[]
-  selected: string
-  onSelect: (size: string) => void
+  sizes: string[];
+  selected: string;
+  onSelect: (size: string) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -138,10 +147,10 @@ function SizeSelector({
             key={size}
             onClick={() => onSelect(size)}
             className={cn(
-              'rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              "rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-colors",
               selected === size
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-neutral-200 text-neutral-700 hover:border-neutral-300",
             )}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -151,7 +160,7 @@ function SizeSelector({
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // Color Selector Component
@@ -160,9 +169,9 @@ function ColorSelector({
   selected,
   onSelect,
 }: {
-  colors: { name: string; value: string }[]
-  selected: string
-  onSelect: (color: string) => void
+  colors: { name: string; value: string }[];
+  selected: string;
+  onSelect: (color: string) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -176,8 +185,8 @@ function ColorSelector({
             key={color.name}
             onClick={() => onSelect(color.name)}
             className={cn(
-              'relative h-10 w-10 rounded-full',
-              selected === color.name && 'ring-2 ring-primary ring-offset-2'
+              "relative h-10 w-10 rounded-full",
+              selected === color.name && "ring-2 ring-primary ring-offset-2",
             )}
             style={{ backgroundColor: color.value }}
             whileHover={{ scale: 1.1 }}
@@ -192,10 +201,12 @@ function ColorSelector({
               >
                 <Check
                   className={cn(
-                    'h-5 w-5',
-                    color.value === '#FFFFF0' || color.value === '#F5F5F0' || color.value === '#E8E4DC'
-                      ? 'text-neutral-900'
-                      : 'text-white'
+                    "h-5 w-5",
+                    color.value === "#FFFFF0" ||
+                      color.value === "#F5F5F0" ||
+                      color.value === "#E8E4DC"
+                      ? "text-neutral-900"
+                      : "text-white",
                   )}
                 />
               </motion.span>
@@ -204,16 +215,18 @@ function ColorSelector({
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // Quantity Selector Component
 function QuantitySelector({
   quantity,
   onQuantityChange,
+  maxQuantity,
 }: {
-  quantity: number
-  onQuantityChange: (quantity: number) => void
+  quantity: number;
+  onQuantityChange: (quantity: number) => void;
+  maxQuantity?: number;
 }) {
   return (
     <div className="space-y-3">
@@ -236,69 +249,96 @@ function QuantitySelector({
           size="icon"
           className="h-10 w-10 rounded-s-none"
           onClick={() => onQuantityChange(quantity + 1)}
+          disabled={maxQuantity ? quantity >= maxQuantity : false}
         >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
+      {maxQuantity !== undefined && (
+        <p
+          className={cn(
+            "text-xs",
+            maxQuantity === 0 ? "text-red-500" : "text-green-600",
+          )}
+        >
+          {maxQuantity === 0
+            ? "Out of stock"
+            : `${maxQuantity} available in stock`}
+        </p>
+      )}
     </div>
-  )
+  );
 }
 
 // Product Info Features
 function ProductFeatures() {
   const features = [
-    { icon: Truck, text: 'Free shipping over $150' },
-    { icon: Shield, text: '2-year warranty' },
-    { icon: RotateCcw, text: '30-day returns' },
-  ]
+    { icon: Truck, text: "Fast shipping over 69 wilaya" },
+    { icon: Shield, text: "2-year warranty" },
+    { icon: RotateCcw, text: "30-day returns" },
+  ];
 
   return (
     <div className="grid grid-cols-3 gap-4 rounded-xl bg-neutral-50 p-4">
       {features.map(({ icon: Icon, text }) => (
-        <div key={text} className="flex flex-col items-center gap-2 text-center">
+        <div
+          key={text}
+          className="flex flex-col items-center gap-2 text-center"
+        >
           <Icon className="h-5 w-5 text-neutral-600" />
           <span className="text-xs text-neutral-600">{text}</span>
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function ProductDetail() {
-  const { id } = useParams<{ id: string }>()
-  const { t } = useTranslation()
-  
-  // Fetch product from API
+  const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
+
+  // Fetch product from public API endpoint
   const { data, isLoading, isError, error } = useGet<ProductResponse>({
-    path: `products/${id}`,
+    path: `products/public/${id}`,
     options: {
       enabled: !!id,
       staleTime: 1000 * 60 * 5,
     },
-  })
-  const product = data?.data
-  
-  // Cart mutation
+  });
+  const product = data?.data;
+
+  // Get cart ID from localStorage or create new one
+  const getCartId = () => {
+    const cartId = localStorage.getItem("cart_id");
+    if (cartId) return cartId;
+
+    // Generate a unique cart ID
+    const newCartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem("cart_id", newCartId);
+    return newCartId;
+  };
+
+  // Cart mutation with dynamic cart_id
   const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: 'cart/items?cart_id=1', // Replace with actual cart_id
-    method: 'post',
-    successMessage: 'Produit ajouté au panier',
-    errorMessage: "Erreur lors de l'ajout au panier",
-  })
+    path: `cart/items?cart_id=${getCartId()}`,
+    method: "post",
+    successMessage: "Product added to cart",
+    errorMessage: "Error adding to cart",
+  });
 
   // UI State
-  const [selectedSize, setSelectedSize] = useState('')
-  const [selectedColor, setSelectedColor] = useState('')
-  const [quantity, setQuantity] = useState(1)
-  const [isWishlisted, setIsWishlisted] = useState(false)
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Set initial selections when product loads
   useEffect(() => {
     if (product) {
-      if (product.sizes?.length) setSelectedSize(product.sizes[0])
-      if (product.colors?.length) setSelectedColor(product.colors[0].name)
+      if (product.sizes?.length) setSelectedSize(product.sizes[0]);
+      if (product.colors?.length) setSelectedColor(product.colors[0].name);
     }
-  }, [product])
+  }, [product]);
 
   // Loading state
   if (isLoading) {
@@ -311,7 +351,7 @@ export function ProductDetail() {
         </div>
         <ProductDetailSkeleton />
       </div>
-    )
+    );
   }
 
   // Error state
@@ -321,35 +361,38 @@ export function ProductDetail() {
         <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center px-4 py-16">
           <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
           <h1 className="mb-2 text-2xl font-medium text-neutral-900">
-            {isError ? 'Error loading product' : 'Product not found'}
+            {isError ? "Error loading product" : "Product not found"}
           </h1>
           <p className="mb-6 text-neutral-600">
-            {error?.message || 'The product you are looking for does not exist.'}
+            {error?.message ||
+              "The product you are looking for does not exist."}
           </p>
           <Button asChild>
             <Link to="/shop">Back to Shop</Link>
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
-  const images = product.images || [product.image]
+  const images = product.images || product.gallery || [product.image];
   const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100,
+      )
+    : 0;
 
   const handleAddToCart = () => {
-    if (!product) return
+    if (!product) return;
     addToCart.mutate({
       product_id: product.id,
       quantity,
-    })
-  }
+    });
+  };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted)
-  }
+    setIsWishlisted(!isWishlisted);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -398,17 +441,19 @@ export function ProductDetail() {
                 {product.badge && (
                   <span
                     className={cn(
-                      'rounded-full px-3 py-1 text-xs font-medium',
-                      product.badge === 'new' && 'bg-primary text-primary-foreground',
-                      product.badge === 'sale' && 'bg-red-500 text-white',
-                      product.badge === 'bestseller' && 'bg-amber-500 text-white'
+                      "rounded-full px-3 py-1 text-xs font-medium",
+                      product.badge === "new" &&
+                        "bg-primary text-primary-foreground",
+                      product.badge === "sale" && "bg-red-500 text-white",
+                      product.badge === "bestseller" &&
+                        "bg-amber-500 text-white",
                     )}
                   >
-                    {product.badge === 'sale'
+                    {product.badge === "sale"
                       ? `-${discount}%`
-                      : product.badge === 'new'
-                        ? t('common.newArrival')
-                        : t('common.bestSeller')}
+                      : product.badge === "new"
+                        ? t("common.newArrival")
+                        : t("common.bestSeller")}
                   </span>
                 )}
               </div>
@@ -426,10 +471,10 @@ export function ProductDetail() {
                       <Star
                         key={i}
                         className={cn(
-                          'h-4 w-4',
+                          "h-4 w-4",
                           i < Math.floor(product.rating!)
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'fill-neutral-200 text-neutral-200'
+                            ? "fill-amber-400 text-amber-400"
+                            : "fill-neutral-200 text-neutral-200",
                         )}
                       />
                     ))}
@@ -481,7 +526,11 @@ export function ProductDetail() {
               )}
 
               {/* Quantity */}
-              <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
+              <QuantitySelector
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+                maxQuantity={product.quantity}
+              />
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
@@ -493,22 +542,23 @@ export function ProductDetail() {
                 >
                   <ShoppingBag className="me-2 h-5 w-5" />
                   {addToCart.isPending
-                    ? 'Adding...'
+                    ? "Adding..."
                     : product.inStock === false
-                      ? t('common.outOfStock')
-                      : t('common.addToCart')}
+                      ? t("common.outOfStock")
+                      : t("common.addToCart")}
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
                   className={cn(
-                    'rounded-full',
-                    isWishlisted && 'border-red-200 bg-red-50 text-red-500 hover:bg-red-100'
+                    "rounded-full",
+                    isWishlisted &&
+                      "border-red-200 bg-red-50 text-red-500 hover:bg-red-100",
                   )}
                   onClick={handleWishlist}
                 >
                   <Heart
-                    className={cn('h-5 w-5', isWishlisted && 'fill-current')}
+                    className={cn("h-5 w-5", isWishlisted && "fill-current")}
                   />
                 </Button>
               </div>
@@ -530,13 +580,15 @@ export function ProductDetail() {
                   <div className="flex justify-between border-b border-neutral-100 pb-3">
                     <span className="text-sm text-neutral-500">Materials</span>
                     <span className="text-sm font-medium text-neutral-900">
-                      {product.materials.join(', ')}
+                      {product.materials.join(", ")}
                     </span>
                   </div>
                 )}
                 {product.care && (
                   <div className="space-y-2">
-                    <span className="text-sm text-neutral-500">Care Instructions</span>
+                    <span className="text-sm text-neutral-500">
+                      Care Instructions
+                    </span>
                     <ul className="space-y-1">
                       {product.care.map((instruction, index) => (
                         <li
@@ -556,5 +608,5 @@ export function ProductDetail() {
         </div>
       </div>
     </div>
-  )
+  );
 }
