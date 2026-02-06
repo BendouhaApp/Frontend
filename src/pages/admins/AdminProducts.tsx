@@ -44,11 +44,13 @@ const getErrMsg = (data: any, fallback = "Something went wrong") => {
   return msg || fallback;
 };
 
-//type Category = {
-// id: string;
-//  category_name: string;
-//  parent_id: string | null;
-//};
+const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL;
+
+const img = (url?: string | null) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${PUBLIC_URL}${url.startsWith("/") ? url : `/${url}`}`;
+};
 
 async function api<T>(
   path: string,
@@ -110,7 +112,7 @@ type DbProduct = {
   gallery?: string[];
 };
 
-type ListResponse = { message?: string; data: DbProduct[] } | DbProduct[];
+//type ListResponse = { message?: string; data: DbProduct[] } | DbProduct[];
 type OneResponse = { message?: string; data: DbProduct } | DbProduct;
 
 type ProductPayload = {
@@ -282,11 +284,6 @@ function ProductForm({
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
-  //const [mainCategories, setMainCategories] = useState<Category[]>([]);
-  //const [subCategories, setSubCategories] = useState<Category[]>([]);
-  //const [mainCategory, setMainCategory] = useState("");
-  //const [subCategory, setSubCategory] = useState("");
-
   useEffect(() => {
     setProductName(product?.product_name ?? "");
     setSlug(product?.slug ?? "");
@@ -325,27 +322,6 @@ function ProductForm({
     };
   }, [newImages, thumbnailPreview]);
 
-  {
-    /* useEffect(() => {
-    api<Category[]>("categories/main")
-      .then(setMainCategories)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!mainCategory) {
-      setSubCategories([]);
-      setSubCategory("");
-      return;
-    }
-
-    api<Category[]>(`categories/sub/${mainCategory}`)
-      .then(setSubCategories)
-      .catch(() => {});
-  }, [mainCategory]);
-*/
-  }
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload: ProductPayload = {
@@ -364,9 +340,6 @@ function ProductForm({
       note: note.trim() ? note.trim() : null,
       thumbnail: undefined,
       images: undefined,
-
-      //main_category_id: mainCategory,
-      //sub_category_id: subCategory || null,
     };
 
     onSubmit(payload, {
@@ -489,45 +462,6 @@ function ProductForm({
           />
         </div>
 
-        {/* ===== Categories ===== 
-        <div>
-          <FieldLabel icon={<Tag className="h-4 w-4" />}>
-            Main category *
-          </FieldLabel>
-          <select
-            value={mainCategory}
-            onChange={(e) => setMainCategory(e.target.value)}
-            //required
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm"
-          >
-            <option value="">Select main category</option>
-            {mainCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.category_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <FieldLabel icon={<Tag className="h-4 w-4" />}>
-            Sub category
-          </FieldLabel>
-          <select
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-            disabled={!mainCategory}
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm disabled:opacity-60"
-          >
-            <option value="">Select sub category</option>
-            {subCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.category_name}
-              </option>
-            ))}
-          </select>
-        </div>*/}
-
         <div className="md:col-span-2">
           <FieldLabel icon={<FileText className="h-4 w-4" />}>
             Short description *
@@ -620,7 +554,7 @@ function ProductForm({
           {(thumbnailFile || product?.thumbnail) && (
             <div className="mt-3">
               <img
-                src={thumbnailPreview ?? product?.thumbnail ?? ""}
+                src={thumbnailPreview ?? img(product?.thumbnail)}
                 alt="Thumbnail preview"
                 className="h-24 w-24 rounded-xl object-cover border"
               />
@@ -660,7 +594,7 @@ function ProductForm({
               <div key={url} className="relative group h-24 w-24">
                 <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
                   <img
-                    src={url}
+                    src={img(url)}
                     alt="Gallery preview"
                     className="h-full w-full object-cover"
                   />
@@ -794,7 +728,7 @@ function ProductRow({
           <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100">
             {thumb ? (
               <img
-                src={thumb}
+                src={img(thumb)}
                 alt={product.product_name}
                 className="h-full w-full object-cover"
               />
@@ -892,6 +826,10 @@ export default function AdminProductsPage() {
   const [editing, setEditing] = useState<DbProduct | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [items, setItems] = useState<DbProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -906,9 +844,18 @@ export default function AdminProductsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await api<ListResponse>("products", { method: "GET" });
-      const list = Array.isArray(res) ? res : (res as any).data;
-      setItems(list ?? []);
+      const res = await api<{
+        data: DbProduct[];
+        meta: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>(`products?page=${page}&limit=${limit}`, { method: "GET" });
+
+      setItems(res.data);
+      setTotalPages(res.meta.totalPages);
     } catch (e: any) {
       setError(e?.message || "Failed to load products");
     } finally {
@@ -918,7 +865,17 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    if (items.length === 0 && page > 1) {
+      setPage((p) => p - 1);
+    }
+  }, [items]);
 
   const normalized = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1203,10 +1160,13 @@ export default function AdminProductsPage() {
                 <div className="mb-6 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold text-neutral-900">
-                      {editing ? "Edit product" : "Add new product"}
+                      {editing ? "Update product" : "Add new product"}
                     </h2>
                     <p className="text-sm text-neutral-500">
-                      Fields mapped to your database schema.
+                      Editing{" "}
+                      <span className="font-medium">
+                        {editing?.product_name}
+                      </span>
                     </p>
                   </div>
                   <Button
@@ -1327,6 +1287,33 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-4 border-t border-neutral-200">
+          <span className="text-sm text-neutral-500">
+            Page {page} of {totalPages}
+          </span>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, ShoppingCart, Check, X, RefreshCcw } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  ShoppingCart,
+  Check,
+  X,
+  RefreshCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -61,11 +68,6 @@ type OrderStatus = {
   color: string;
 };
 
-type OrdersResponse = {
-  message: string;
-  data: Order[];
-};
-
 type StatusesResponse = {
   message: string;
   data: OrderStatus[];
@@ -78,30 +80,50 @@ export function AdminOrders() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
 
-  const loadOrders = async () => {
-    const res = await api<OrdersResponse>("orders/admin");
-    setOrders(res.data ?? []);
-  };
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadStatuses = async () => {
-    const res = await api<StatusesResponse>("orders/statuses");
-    setStatuses(res.data ?? []);
-  };
+const loadOrders = async () => {
+  setLoading(true);
+  setError("");
+
+  try {
+    const res = await api<OrdersDbResponse>(
+      `orders/admin?page=${page}&limit=${limit}`,
+    );
+
+    const mapped: Order[] = res.data.map((o) => ({
+      ...o,
+      order_items: o.order_items.map((i) => ({
+        ...i,
+        price: Number(i.price),
+      })),
+    }));
+
+    setOrders(mapped);
+    setTotalPages(res.meta.totalPages);
+  } catch (e: any) {
+    setError(e?.message || "Failed to load orders");
+    setOrders([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const loadStatuses = async () => {
+  const res = await api<StatusesResponse>("orders/statuses");
+  setStatuses(res.data ?? []);
+};
+
+useEffect(() => {
+  loadOrders();
+  loadStatuses();
+}, [page]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setError("");
-        await Promise.all([loadOrders(), loadStatuses()]);
-      } catch (e: any) {
-        setError(e.message);
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    setPage(1);
+  }, [query]);
 
   /* ===== STATUS IDS ===== */
   const confirmedStatusId = statuses.find(
@@ -140,83 +162,61 @@ export function AdminOrders() {
   const calcTotal = (items: OrderItem[]) =>
     items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-/* ===== Loading ===== */
+  /* ===== Loading ===== */
 
-type DbOrderItem = {
-  id: string;
-  price: string; // Decimal
-  quantity: number;
-};
-
-type DbOrder = {
-  id: string;
-  created_at: string;
-  customers?: {
-    first_name: string;
-    last_name: string;
-    email: string;
+  type DbOrderItem = {
+    id: string;
+    price: string; // Decimal
+    quantity: number;
   };
-  order_statuses?: {
-    status_name: string;
-    color: string;
+
+  type DbOrder = {
+    id: string;
+    created_at: string;
+    customers?: {
+      first_name: string;
+      last_name: string;
+      email: string;
+    };
+    order_statuses?: {
+      status_name: string;
+      color: string;
+    };
+    order_items: DbOrderItem[];
   };
-  order_items: DbOrderItem[];
-};
 
-type OrdersDbResponse = {
-  message: string;
-  data: DbOrder[];
-};
-
-const load = async () => {
-  setLoading(true);
-  setError("");
-
-  try {
-    const res = await api<OrdersDbResponse>("orders/admin");
-
-    const mapped: Order[] = res.data.map((o) => ({
-      ...o,
-      order_items: o.order_items.map((i) => ({
-        ...i,
-        price: Number(i.price), // 🔥 FIX
-      })),
-    }));
-
-    setOrders(mapped);
-  } catch (e: any) {
-    setError(e?.message || "Failed to load orders");
-    setOrders([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  type OrdersDbResponse = {
+    data: DbOrder[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
 
 
   /* ===== UI ===== */
   return (
     <div className="mx-auto max-w-7xl p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="mb-1 text-3xl font-semibold">Orders</h1>
-              <p className="mb-6 text-neutral-500">Manage customer orders</p>
-            </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="mb-1 text-3xl font-semibold">Orders</h1>
+          <p className="mb-6 text-neutral-500">Manage customer orders</p>
+        </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={load}
-                className="gap-2"
-                disabled={loading}
-              >
-                <RefreshCcw
-                  className={cn("h-4 w-4", loading && "animate-spin")}
-                />
-                Refresh
-              </Button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={loadOrders}
+            className="gap-2"
+            disabled={loading}
+          >
+            <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      </div>
 
       <div className="relative mb-4 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
@@ -300,6 +300,33 @@ const load = async () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-neutral-500">
+            Page {page} of {totalPages}
+          </span>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>

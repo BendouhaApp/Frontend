@@ -51,9 +51,15 @@ export type AdminLog = {
 };
 
 type LogsResponse = {
-  message?: string;
-  data?: AdminLog[];
+  data: AdminLog[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
+
 
 export default function AdminLogs() {
   const [logs, setLogs] = useState<AdminLog[]>([]);
@@ -62,28 +68,21 @@ export default function AdminLogs() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
 
-  const normalizeLogs = (res: unknown): AdminLog[] => {
-    // API might return:
-    // 1) { message, data: [...] }
-    // 2) [...]
-    // 3) { data: { data: [...] } } (some wrappers)
-    if (Array.isArray(res)) return res as AdminLog[];
-
-    const r = res as any;
-    if (Array.isArray(r?.data)) return r.data as AdminLog[];
-    if (Array.isArray(r?.data?.data)) return r.data.data as AdminLog[];
-
-    return [];
-  };
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
 
   const load = async (isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     setError("");
 
     try {
-      const res = await api<LogsResponse | AdminLog[]>(LOGS_ENDPOINT);
-      const list = normalizeLogs(res);
-      setLogs(list);
+      const res = await api<LogsResponse>(
+        `${LOGS_ENDPOINT}?page=${page}&limit=${limit}`,
+      );
+
+      setLogs(res.data);
+      setTotalPages(res.meta.totalPages);
     } catch (e: any) {
       setError(e?.message || "Failed to load logs");
       setLogs([]);
@@ -94,8 +93,11 @@ export default function AdminLogs() {
 
   useEffect(() => {
     load(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -118,7 +120,9 @@ export default function AdminLogs() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Admin Logs</h1>
-          <p className="text-neutral-500">Track all admin actions in the system</p>
+          <p className="text-neutral-500">
+            Track all admin actions in the system
+          </p>
         </div>
 
         <Button
@@ -186,8 +190,12 @@ export default function AdminLogs() {
                     </span>
                   </td>
                   <td className="px-4 py-3">{log.entity}</td>
-                  <td className="px-4 py-3 text-xs text-neutral-500">{log.entity_id}</td>
-                  <td className="px-4 py-3 text-neutral-600">{log.description ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs text-neutral-500">
+                    {log.entity_id}
+                  </td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    {log.description ?? "—"}
+                  </td>
                   <td className="px-4 py-3 text-xs text-neutral-500">
                     {new Date(log.created_at).toLocaleString()}
                   </td>
@@ -195,6 +203,33 @@ export default function AdminLogs() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-neutral-500">
+            Page {page} of {totalPages}
+          </span>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>

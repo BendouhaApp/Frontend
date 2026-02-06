@@ -47,9 +47,13 @@ export function ProductCard({
     onWishlist?.(product)
   }
 
-  const discount = product.originalPrice
+  // Calculate discount percentage
+  const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
+
+  // Determine which badge to show (priority: sale > new > bestseller)
+  const displayBadge = discount > 0 ? 'sale' : product.badge
 
   const badgeText = {
     new: t('common.newArrival'),
@@ -120,15 +124,14 @@ export function ProductCard({
           transition={{ duration: 0.5 }}
         />
 
-        {/* Badge */}
-        {product.badge && (
+        {displayBadge && (
           <span
             className={cn(
               'absolute start-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium sm:start-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs',
-              badgeColors[product.badge]
+              badgeColors[displayBadge]
             )}
           >
-            {badgeText[product.badge]}
+            {badgeText[displayBadge]}
           </span>
         )}
 
@@ -248,11 +251,17 @@ function CompactProductCard({
   onAddToCart?: (product: Product) => void
   className?: string
 }) {
+  const { t } = useTranslation()
+  
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     onAddToCart?.(product)
   }
+
+  const discount = product.originalPrice && product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0
 
   return (
     <a
@@ -269,6 +278,11 @@ function CompactProductCard({
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {discount > 0 && (
+          <span className="absolute start-1 top-1 rounded-full bg-gold px-2 py-0.5 text-[10px] font-medium text-navy">
+            -{discount}%
+          </span>
+        )}
       </div>
 
       {/* Info */}
@@ -278,9 +292,16 @@ function CompactProductCard({
           {product.name}
         </h3>
         <div className="mt-1 flex items-center justify-between">
-          <span className="font-medium text-navy">
-            ${product.price.toFixed(2)}
-          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-medium text-navy">
+              ${product.price.toFixed(2)}
+            </span>
+            {product.originalPrice && (
+              <span className="text-xs text-navy-400 line-through">
+                ${product.originalPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
           {product.inStock !== false && (
             <Button
               onClick={handleAddToCart}
@@ -325,10 +346,22 @@ function DetailedProductCard({
     onWishlist?.(product)
   }
 
+  const discount = product.originalPrice && product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0
+
+  const displayBadge = discount > 0 ? 'sale' : product.badge
+
   const badgeColors = {
     new: 'bg-cyan text-navy',
     sale: 'bg-gold text-navy',
     bestseller: 'bg-primary text-white',
+  }
+
+  const badgeText = {
+    new: t('common.newArrival'),
+    sale: `-${discount}%`,
+    bestseller: t('common.bestSeller'),
   }
 
   return (
@@ -350,18 +383,14 @@ function DetailedProductCard({
         />
 
         {/* Badge */}
-        {product.badge && (
+        {displayBadge && (
           <span
             className={cn(
               'absolute start-4 top-4 rounded-full px-3 py-1 text-xs font-medium',
-              badgeColors[product.badge]
+              badgeColors[displayBadge]
             )}
           >
-            {product.badge === 'sale'
-              ? `-${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}%`
-              : product.badge === 'new'
-                ? t('common.newArrival')
-                : t('common.bestSeller')}
+            {badgeText[displayBadge]}
           </span>
         )}
 
