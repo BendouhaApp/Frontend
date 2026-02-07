@@ -13,6 +13,7 @@ import { AdminCategory } from "@/pages/admins/AdminCategory";
 import AdminLogs from "@/pages/admins/AdminLogs";
 import { AdminOrders } from "@/pages/admins/AdminOrders";
 import AdminLayout from "@/layouts/AdminLayout";
+import AdminWilaya from "@/pages/admins/AdminWilaya";
 
 function App() {
   return (
@@ -31,8 +32,9 @@ function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="products" element={<AdminProducts />} />
         <Route path="categories" element={<AdminCategory />} />
-        <Route path="logs" element={<AdminLogs />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="shipping-zones" element={<AdminWilaya />} />
+        <Route path="logs" element={<AdminLogs />} />
       </Route>
     </Routes>
   );

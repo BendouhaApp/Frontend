@@ -7,6 +7,7 @@ import {
   Tag,
   FileText,
   LogOut,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +39,6 @@ export default function AdminSidebar() {
   return (
     <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white p-4">
       <div className="mb-6 px-2">
-        {/*<div className="text-xs text-neutral-500">Logged in as</div>*/}
         <div className="mb-6 px-2 border-b border-neutral-200 pb-4">
           <div className="text-xs uppercase tracking-wide text-neutral-500">
             Admin
@@ -68,6 +68,11 @@ export default function AdminSidebar() {
         <NavLink to="/admin/orders" className={linkClass}>
           <ShoppingCart className="h-4 w-4" />
           Orders
+        </NavLink>
+
+        <NavLink to="/admin/shipping-zones" className={linkClass}>
+          <MapPin className="h-4 w-4" />
+          Wilayas
         </NavLink>
 
         <NavLink to="/admin/logs" className={linkClass}>

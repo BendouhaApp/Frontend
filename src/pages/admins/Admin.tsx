@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,9 @@ type Stats = {
   lowStockProducts: number;
   mainCategories: number;
   subCategories: number;
+  totalWilayas: number;
+  activeWilayas: number;
+  inactiveWilayas: number;
 };
 
 type Order = {
@@ -200,7 +204,7 @@ export default function AdminDashboard() {
 
             <div className="flex items-center gap-2">
               <Button asChild variant="outline">
-                <Link to="/" target="_blank">
+                <Link to="/shop" target="_blank">
                   <Store className="me-2 h-4 w-4" />
                   View Store
                 </Link>
@@ -234,36 +238,12 @@ export default function AdminDashboard() {
           <>
             <div className="grid gap-6 md:grid-cols-4">
               <StatCard
-                label="Total Orders"
-                value={stats.totalOrders}
-                icon={<ShoppingCart className="h-5 w-5" />}
-              />
-              <StatCard
                 label="Total Revenue"
                 value={`${stats.totalRevenue.toLocaleString()} DZA`}
                 icon={<DollarSign className="h-5 w-5" />}
               />
               <StatCard
-                label="Pending Orders"
-                value={stats.pendingOrders}
-                icon={<Clock className="h-5 w-5" />}
-                alert={
-                  stats.pendingOrders > 0 ? "Needs attention" : "All clear"
-                }
-                isWarning={stats.pendingOrders > 0}
-              />
-              <StatCard
-                label="Out of Stock"
-                value={stats.outOfStockProducts}
-                icon={<AlertTriangle className="h-5 w-5" />}
-                alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
-                isWarning={stats.outOfStockProducts > 0}
-              />
-            </div>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-3">
-              <StatCard
-                label="Total Products"
+                label="Products"
                 value={stats.totalProducts}
                 icon={<Package className="h-5 w-5" />}
                 subtext={`${stats.publishedProducts || 0} published • ${stats.draftProducts || 0} drafts`}
@@ -275,6 +255,26 @@ export default function AdminDashboard() {
                 subtext={`${stats.mainCategories || 0} main • ${stats.subCategories || 0} sub`}
               />
               <StatCard
+                label="Wilayas"
+                value={stats.totalWilayas}
+                icon={<MapPin className="h-5 w-5" />}
+                subtext={`${stats.activeWilayas} active • ${stats.inactiveWilayas} inactive`}
+              />
+              <StatCard
+                label="Total Orders"
+                value={stats.totalOrders}
+                icon={<ShoppingCart className="h-5 w-5" />}
+              />
+              <StatCard
+                label="Pending Orders"
+                value={stats.pendingOrders}
+                icon={<Clock className="h-5 w-5" />}
+                alert={
+                  stats.pendingOrders > 0 ? "Needs attention" : "All clear"
+                }
+                isWarning={stats.pendingOrders > 0}
+              />
+              <StatCard
                 label="Low Stock Alert"
                 value={stats.lowStockProducts || 0}
                 icon={<AlertCircle className="h-5 w-5" />}
@@ -284,6 +284,13 @@ export default function AdminDashboard() {
                     : "Healthy"
                 }
                 isWarning={(stats.lowStockProducts || 0) > 0}
+              />
+              <StatCard
+                label="Out of Stock"
+                value={stats.outOfStockProducts}
+                icon={<AlertTriangle className="h-5 w-5" />}
+                alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
+                isWarning={stats.outOfStockProducts > 0}
               />
             </div>
 

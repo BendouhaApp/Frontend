@@ -112,7 +112,6 @@ type DbProduct = {
   gallery?: string[];
 };
 
-//type ListResponse = { message?: string; data: DbProduct[] } | DbProduct[];
 type OneResponse = { message?: string; data: DbProduct } | DbProduct;
 
 type ProductPayload = {
@@ -131,8 +130,6 @@ type ProductPayload = {
   note?: string | null;
   thumbnail?: string | null;
   images?: string[];
-  //main_category_id?: string;
-  //sub_category_id?: string | null;
 };
 
 function FieldLabel({
@@ -696,7 +693,7 @@ function StockPill({ qty, disableOos }: { qty: number; disableOos: boolean }) {
       ) : (
         <X className="h-3.5 w-3.5" />
       )}
-      {inStock ? `In stock (${qty})` : "Out of stock"}
+      {inStock ? `Stock (${qty})` : "Out"}
     </span>
   );
 }
@@ -733,7 +730,7 @@ function ProductRow({
       )}
     >
       {/* Checkbox column */}
-      <td className="w-12 px-4 align-middle">
+      <td className="w-10 px-3 align-middle">
         <div className="flex items-center justify-center">
           <label className="relative inline-flex cursor-pointer items-center justify-center">
             <input
@@ -750,7 +747,6 @@ function ProductRow({
                 selected ? "border-primary bg-primary" : "border-neutral-300",
                 "peer-hover:border-primary/60",
                 "peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20 peer-focus-visible:ring-offset-2",
-                "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
               )}
             >
               {selected && (
@@ -762,9 +758,9 @@ function ProductRow({
       </td>
 
       {/* Product column */}
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-neutral-200">
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200">
             {thumb ? (
               <img
                 src={img(thumb)}
@@ -773,13 +769,13 @@ function ProductRow({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-neutral-400">
-                <Package className="h-6 w-6" />
+                <Package className="h-5 w-5" />
               </div>
             )}
           </div>
 
-          <div className="min-w-0">
-            <p className="truncate font-medium text-neutral-900">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium text-neutral-900 text-sm">
               {product.product_name}
             </p>
             <p className="truncate text-xs text-neutral-500">
@@ -793,10 +789,10 @@ function ProductRow({
       </td>
 
       {/* Pricing */}
-      <td className="px-4 py-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-neutral-900">
+      <td className="px-3 py-3">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-neutral-900 text-sm">
               ${money(product.sale_price)}
             </span>
             {product.compare_price != null &&
@@ -813,27 +809,27 @@ function ProductRow({
       </td>
 
       {/* Status */}
-      <td className="px-4 py-4">
-        <div className="flex flex-col gap-2">
+      <td className="px-3 py-3">
+        <div className="flex flex-col gap-1.5">
           <BadgePill published={published} />
           <StockPill qty={product.quantity} disableOos={disableOos} />
         </div>
       </td>
 
       {/* Short description */}
-      <td className="px-4 py-4">
-        <div className="line-clamp-2 max-w-md text-sm text-neutral-600">
+      <td className="px-3 py-3 max-w-xs">
+        <div className="line-clamp-2 text-sm text-neutral-600">
           {product.short_description}
         </div>
       </td>
 
       {/* Actions */}
-      <td className="px-4 py-4">
-        <div className="flex items-center justify-end gap-2">
+      <td className="px-3 py-3">
+        <div className="flex items-center justify-end gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-8 w-8"
             onClick={() => onEdit(product)}
             disabled={isDeleting}
             aria-label="Edit product"
@@ -843,7 +839,7 @@ function ProductRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-red-500 hover:bg-red-50 hover:text-red-600"
+            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
             onClick={() => onRequestDelete(product)}
             disabled={isDeleting}
             aria-label="Delete product"
@@ -947,7 +943,6 @@ export default function AdminProductsPage() {
       if (sort === "price")
         return (Number(a.sale_price) - Number(b.sale_price)) * factor;
       if (sort === "stock") return (a.quantity - b.quantity) * factor;
-      // created fallback: use updated_at/created_at if present, else stable by name
       const at = (a.updated_at || a.created_at || "") as string;
       const bt = (b.updated_at || b.created_at || "") as string;
       if (at && bt) return at.localeCompare(bt) * factor;
@@ -1320,7 +1315,7 @@ export default function AdminProductsPage() {
         )}
 
         {!loading && items.length > 0 && (
-          <div className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-neutral-200 shadow-md hover:shadow-lg transition-shadow">
+          <div className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-neutral-200">
             {normalized.length === 0 ? (
               <div className="p-12 text-center">
                 <AlertCircle className="mx-auto mb-4 h-10 w-10 text-neutral-400" />
@@ -1330,11 +1325,11 @@ export default function AdminProductsPage() {
                 <p className="text-neutral-600">Try another search query.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto px-2 md:px-4">
-                <table className="min-w-[980px] w-full">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50">
-                      <th className="w-10 px-4">
+                      <th className="w-10 px-3">
                         <div className="flex items-center justify-center">
                           <label className="relative inline-flex cursor-pointer items-center justify-center">
                             <input
@@ -1371,19 +1366,19 @@ export default function AdminProductsPage() {
                           </label>
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">
+                      <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
                         Product
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">
+                      <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
                         Pricing
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">
+                      <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">
+                      <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
                         Short description
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-neutral-700">
+                      <th className="px-3 py-3 text-right text-sm font-semibold text-neutral-700">
                         Actions
                       </th>
                     </tr>
@@ -1513,7 +1508,7 @@ export default function AdminProductsPage() {
                 <p className="mt-2 text-sm text-neutral-600">
                   Are you sure you want to delete{" "}
                   <span className="font-medium text-neutral-900">
-                    “{confirmDelete.product_name}”
+                    "{confirmDelete.product_name}"
                   </span>
                   ?
                   <br />
