@@ -120,6 +120,8 @@ export default function AdminDashboard() {
     loadDashboard();
   }, [navigate]);
 
+  const recentOrders = orders.slice(0, 10);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -286,14 +288,24 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
-              <div className="border-b border-neutral-200 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
                   <ShoppingCart className="h-5 w-5" />
                   Recent Orders
                 </h3>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/admin/orders")}
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  View all
+                </Button>
               </div>
 
-              {orders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <div className="p-12 text-center">
                   <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-neutral-300" />
                   <p className="text-neutral-500">No recent orders yet.</p>
@@ -324,7 +336,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((order) => (
+                      {recentOrders.map((order) => (
                         <tr
                           key={order.id}
                           className="border-b border-neutral-100 transition-colors hover:bg-neutral-50"

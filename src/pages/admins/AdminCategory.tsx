@@ -40,6 +40,8 @@ export type DbCategory = {
   active?: boolean | null;
 };
 
+type CategoryView = "main" | "sub";
+
 function CategoryForm({
   category,
   categories,
@@ -77,6 +79,7 @@ function CategoryForm({
     if (!query) return [];
     return categories.filter(
       (c) =>
+        !c.parent_id &&
         c.id !== category?.id &&
         c.category_name.toLowerCase().includes(query.toLowerCase()),
     );
@@ -167,13 +170,27 @@ function CategoryForm({
         )}
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={active}
-          onChange={(e) => setActive(e.target.checked)}
-        />
-        Active
+      <label className="flex items-center justify-between rounded-xl border p-3">
+        <div>
+          <p className="text-sm font-medium">Status</p>
+          <p className="text-xs text-neutral-500">
+            Enable or disable this category
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setActive((v) => !v)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+            active ? "bg-blue-600" : "bg-neutral-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+              active ? "translate-x-5" : "translate-x-1"
+            }`}
+          />
+        </button>
       </label>
 
       <div className="flex gap-3 pt-4">
@@ -202,6 +219,10 @@ export function AdminCategory() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<DbCategory | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [view, setView] = useState<CategoryView>("main");
+  const [confirmDelete, setConfirmDelete] = useState<DbCategory | null>(null);
+
+  const hasChildren = (id: string) => items.some((c) => c.parent_id === id);
 
   const load = async () => {
     setLoading(true);
@@ -225,11 +246,22 @@ export function AdminCategory() {
   };
 
   const filtered = useMemo(() => {
-    if (!query) return items;
-    return items.filter((c) =>
-      c.category_name.toLowerCase().includes(query.toLowerCase()),
-    );
-  }, [items, query]);
+    let list = items;
+
+    if (view === "main") {
+      list = list.filter((c) => !c.parent_id);
+    } else {
+      list = list.filter((c) => !!c.parent_id);
+    }
+
+    if (query) {
+      list = list.filter((c) =>
+        c.category_name.toLowerCase().includes(query.toLowerCase()),
+      );
+    }
+
+    return list;
+  }, [items, query, view]);
 
   const submit = async (payload: Partial<DbCategory>) => {
     setSaving(true);
@@ -255,8 +287,7 @@ export function AdminCategory() {
     }
   };
 
-  const disable = async (id: string) => {
-    if (!confirm("Disable this category?")) return;
+  const deleteCategory = async (id: string) => {
     await api(`categories/${id}`, { method: "DELETE" });
     await load();
   };
@@ -285,14 +316,42 @@ export function AdminCategory() {
         </Button>
       </div>
 
-      <div className="relative mb-4 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search category..."
-          className="w-full rounded-xl border py-2 pl-9 pr-3"
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search category..."
+            className="w-full rounded-xl border py-2 pl-9 pr-3"
+          />
+        </div>
+
+        <div className="ml-auto flex overflow-hidden rounded-xl border border-blue-600 bg-white">
+          <button
+            onClick={() => setView("main")}
+            className={`px-5 py-2 text-sm font-medium transition ${
+              view === "main"
+                ? "bg-blue-600 text-white"
+                : "text-blue-600 hover:bg-blue-50"
+            }`}
+          >
+            Main category
+          </button>
+
+          <div className="w-px bg-blue-600/30" />
+
+          <button
+            onClick={() => setView("sub")}
+            className={`px-5 py-2 text-sm font-medium transition ${
+              view === "sub"
+                ? "bg-blue-600 text-white"
+                : "text-blue-600 hover:bg-blue-50"
+            }`}
+          >
+            Sub category
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -349,8 +408,22 @@ export function AdminCategory() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="text-red-500"
-                    onClick={() => disable(c.id)}
+                    className={`${
+                      hasChildren(c.id)
+                        ? "text-neutral-300 cursor-not-allowed"
+                        : "text-red-500"
+                    }`}
+                    disabled={hasChildren(c.id)}
+                    title={
+                      hasChildren(c.id)
+                        ? "Remove sub-categories first"
+                        : "Delete category"
+                    }
+                    onClick={() => {
+                      if (!hasChildren(c.id)) {
+                        setConfirmDelete(c);
+                      }
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -360,6 +433,7 @@ export function AdminCategory() {
                     variant="ghost"
                     className="text-emerald-600"
                     onClick={() => activate(c.id)}
+                    title="Activate category"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -417,6 +491,59 @@ export function AdminCategory() {
                 onCancel={() => setShowForm(false)}
                 loading={saving}
               />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {confirmDelete && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmDelete(null)}
+            />
+
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                <h3 className="text-lg font-semibold text-neutral-900">
+                  Delete category
+                </h3>
+
+                <p className="mt-2 text-sm text-neutral-600">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-neutral-900">
+                    “{confirmDelete.category_name}”
+                  </span>
+                  ? Once deleted, this product cannot be restored.
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setConfirmDelete(null)}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={async () => {
+                      await deleteCategory(confirmDelete.id);
+                      setConfirmDelete(null);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </>
         )}

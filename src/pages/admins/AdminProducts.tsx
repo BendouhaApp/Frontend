@@ -703,13 +703,17 @@ function StockPill({ qty, disableOos }: { qty: number; disableOos: boolean }) {
 
 function ProductRow({
   product,
+  selected,
+  onToggleSelect,
   onEdit,
-  onDelete,
+  onRequestDelete,
   isDeleting,
 }: {
   product: DbProduct;
+  selected: boolean;
+  onToggleSelect: (id: string, checked: boolean) => void;
   onEdit: (p: DbProduct) => void;
-  onDelete: (id: string) => void;
+  onRequestDelete: (p: DbProduct) => void;
   isDeleting?: boolean;
 }) {
   const published = Boolean(product.published ?? false);
@@ -721,11 +725,46 @@ function ProductRow({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={cn("border-b border-neutral-100", isDeleting && "opacity-50")}
+      className={cn(
+        "border-b border-neutral-100 transition-colors",
+        "hover:bg-neutral-50",
+        selected && "bg-primary/5",
+        isDeleting && "opacity-50",
+      )}
     >
+      {/* Checkbox column */}
+      <td className="w-12 px-4 align-middle">
+        <div className="flex items-center justify-center">
+          <label className="relative inline-flex cursor-pointer items-center justify-center">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => onToggleSelect(product.id, e.target.checked)}
+              className="peer sr-only"
+              aria-label="Select product"
+            />
+            <span
+              className={cn(
+                "flex h-5 w-5 items-center justify-center rounded-lg transition-all duration-200",
+                "border-2 bg-white",
+                selected ? "border-primary bg-primary" : "border-neutral-300",
+                "peer-hover:border-primary/60",
+                "peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20 peer-focus-visible:ring-offset-2",
+                "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+              )}
+            >
+              {selected && (
+                <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+              )}
+            </span>
+          </label>
+        </div>
+      </td>
+
+      {/* Product column */}
       <td className="px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-neutral-200">
             {thumb ? (
               <img
                 src={img(thumb)}
@@ -745,14 +784,15 @@ function ProductRow({
             </p>
             <p className="truncate text-xs text-neutral-500">
               <span className="font-mono">{product.slug}</span>
-              {product.sku ? (
+              {product.sku && (
                 <span className="ms-2">• SKU: {product.sku}</span>
-              ) : null}
+              )}
             </p>
           </div>
         </div>
       </td>
 
+      {/* Pricing */}
       <td className="px-4 py-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -772,6 +812,7 @@ function ProductRow({
         </div>
       </td>
 
+      {/* Status */}
       <td className="px-4 py-4">
         <div className="flex flex-col gap-2">
           <BadgePill published={published} />
@@ -779,12 +820,14 @@ function ProductRow({
         </div>
       </td>
 
+      {/* Short description */}
       <td className="px-4 py-4">
         <div className="line-clamp-2 max-w-md text-sm text-neutral-600">
           {product.short_description}
         </div>
       </td>
 
+      {/* Actions */}
       <td className="px-4 py-4">
         <div className="flex items-center justify-end gap-2">
           <Button
@@ -801,7 +844,7 @@ function ProductRow({
             variant="ghost"
             size="icon"
             className="h-9 w-9 text-red-500 hover:bg-red-50 hover:text-red-600"
-            onClick={() => onDelete(product.id)}
+            onClick={() => onRequestDelete(product)}
             disabled={isDeleting}
             aria-label="Delete product"
           >
@@ -834,6 +877,9 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
+  const [confirmDelete, setConfirmDelete] = useState<DbProduct | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const [sort, setSort] = useState<"created" | "name" | "price" | "stock">(
     "created",
@@ -910,6 +956,10 @@ export default function AdminProductsPage() {
 
     return sorted;
   }, [items, query, sort, dir]);
+
+  const hasSelection = selectedIds.length > 0;
+  const isAllSelected =
+    normalized.length > 0 && selectedIds.length === normalized.length;
 
   const openCreate = () => {
     setEditing(null);
@@ -1037,10 +1087,10 @@ export default function AdminProductsPage() {
     }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+  const deleteProduct = async (id: string) => {
     setDeletingId(id);
     setError("");
+
     try {
       await api(`products/${id}`, { method: "DELETE" });
       setItems((p) => p.filter((x) => x.id !== id));
@@ -1048,6 +1098,49 @@ export default function AdminProductsPage() {
       setError(e?.message || "Delete failed");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const bulkUpdateStatus = async (published: boolean) => {
+    try {
+      await api("products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          ids: selectedIds,
+          published,
+        }),
+      });
+
+      setItems((prev) =>
+        prev.map((p) => (selectedIds.includes(p.id) ? { ...p, published } : p)),
+      );
+
+      setSelectedIds([]);
+    } catch (e: any) {
+      setError(e?.message || "Bulk update failed");
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (!selectedIds.length) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      await api("products/bulk", {
+        method: "DELETE",
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      setItems((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
+
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+    } catch (e: any) {
+      setError(e?.message || "Bulk delete failed");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1227,7 +1320,7 @@ export default function AdminProductsPage() {
         )}
 
         {!loading && items.length > 0 && (
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-neutral-200 shadow-md hover:shadow-lg transition-shadow">
             {normalized.length === 0 ? (
               <div className="p-12 text-center">
                 <AlertCircle className="mx-auto mb-4 h-10 w-10 text-neutral-400" />
@@ -1237,10 +1330,47 @@ export default function AdminProductsPage() {
                 <p className="text-neutral-600">Try another search query.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto px-2 md:px-4">
                 <table className="min-w-[980px] w-full">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50">
+                      <th className="w-10 px-4">
+                        <div className="flex items-center justify-center">
+                          <label className="relative inline-flex cursor-pointer items-center justify-center">
+                            <input
+                              type="checkbox"
+                              checked={isAllSelected}
+                              onChange={(e) =>
+                                setSelectedIds(
+                                  e.target.checked
+                                    ? normalized.map((p) => p.id)
+                                    : [],
+                                )
+                              }
+                              className="peer sr-only"
+                              aria-label="Select all products"
+                            />
+                            <span
+                              className={cn(
+                                "flex h-5 w-5 items-center justify-center rounded-lg transition-all duration-200",
+                                "border-2 bg-white",
+                                isAllSelected
+                                  ? "border-primary bg-primary"
+                                  : "border-neutral-300",
+                                "peer-hover:border-primary/60",
+                                "peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20 peer-focus-visible:ring-offset-2",
+                              )}
+                            >
+                              {isAllSelected && (
+                                <Check
+                                  className="h-3.5 w-3.5 text-white"
+                                  strokeWidth={3}
+                                />
+                              )}
+                            </span>
+                          </label>
+                        </div>
+                      </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-neutral-700">
                         Product
                       </th>
@@ -1265,8 +1395,16 @@ export default function AdminProductsPage() {
                         <ProductRow
                           key={p.id}
                           product={p}
+                          selected={selectedIds.includes(p.id)}
+                          onToggleSelect={(id, checked) =>
+                            setSelectedIds((prev) =>
+                              checked
+                                ? [...prev, id]
+                                : prev.filter((x) => x !== id),
+                            )
+                          }
                           onEdit={openEdit}
-                          onDelete={remove}
+                          onRequestDelete={setConfirmDelete}
                           isDeleting={deletingId === p.id}
                         />
                       ))}
@@ -1275,6 +1413,39 @@ export default function AdminProductsPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {hasSelection && (
+          <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
+            <div className="flex items-center gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl">
+              <span className="text-sm text-neutral-600">
+                {selectedIds.length} selected
+              </span>
+
+              <Button
+                variant="destructive"
+                onClick={() => setConfirmBulkDelete(true)}
+              >
+                Delete selected
+              </Button>
+
+              <Button variant="outline" onClick={() => bulkUpdateStatus(true)}>
+                Activate
+              </Button>
+
+              <Button variant="outline" onClick={() => bulkUpdateStatus(false)}>
+                Disable
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="text-neutral-500"
+                onClick={() => setSelectedIds([])}
+              >
+                Clear
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1314,6 +1485,123 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+      <AnimatePresence>
+        {confirmDelete && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmDelete(null)}
+            />
+
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div
+                className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold text-neutral-900">
+                  Delete product
+                </h3>
+
+                <p className="mt-2 text-sm text-neutral-600">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-neutral-900">
+                    “{confirmDelete.product_name}”
+                  </span>
+                  ?
+                  <br />
+                  Once deleted, this product <strong>cannot be restored</strong>.
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setConfirmDelete(null)}
+                    disabled={deletingId === confirmDelete.id}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={deletingId === confirmDelete.id}
+                    onClick={async () => {
+                      await deleteProduct(confirmDelete.id);
+                      setConfirmDelete(null);
+                    }}
+                  >
+                    {deletingId === confirmDelete.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {confirmBulkDelete && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmBulkDelete(false)}
+            />
+
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div
+                className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold text-neutral-900">
+                  Delete {selectedIds.length} products
+                </h3>
+
+                <p className="mt-2 text-sm text-neutral-600">
+                  Are you sure you want to delete{" "}
+                  <span className="font-medium text-neutral-900">
+                    {selectedIds.length}
+                  </span>{" "}
+                  products?
+                  <br />
+                  Once deleted, all product <strong>cannot be restored</strong>.
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setConfirmBulkDelete(false)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={saving}
+                    onClick={bulkDelete}
+                  >
+                    {saving ? "Deleting..." : "Delete all"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
