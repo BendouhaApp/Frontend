@@ -18,6 +18,13 @@ import {
   Tag,
   DollarSign,
   FileText,
+  Lightbulb,
+  Zap,
+  Gauge,
+  Folder,
+  ChevronRight,
+  ChevronDown,
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -110,6 +117,29 @@ type DbProduct = {
   updated_at?: string;
   thumbnail?: string | null;
   gallery?: string[];
+  cct: number;
+  lumen: number;
+  cri: number;
+  power: string | number;
+  angle: number;
+  product_categories?: Array<{
+    category_id: string;
+    categories: {
+      id: string;
+      category_name: string;
+      parent_id: string | null;
+    };
+  }>;
+};
+
+type DbCategory = {
+  id: string;
+  category_name: string;
+  category_description?: string | null;
+  parent_id?: string | null;
+  active?: boolean | null;
+  image?: string | null;
+  other_categories?: DbCategory[];
 };
 
 type OneResponse = { message?: string; data: DbProduct } | DbProduct;
@@ -130,19 +160,28 @@ type ProductPayload = {
   note?: string | null;
   thumbnail?: string | null;
   images?: string[];
+  cct: number;
+  lumen: number;
+  cri: number;
+  power: number;
+  angle: number;
+  category_ids?: string[];
 };
 
 function FieldLabel({
   icon,
   children,
+  required,
 }: {
   icon?: React.ReactNode;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700">
       {icon}
       {children}
+      {required && <span className="text-red-500">*</span>}
     </label>
   );
 }
@@ -226,6 +265,420 @@ function Toggle({
   );
 }
 
+
+function CategorySelector({
+  categories,
+  selectedIds,
+  onChange,
+}: {
+  categories: DbCategory[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [mainFilterId, setMainFilterId] = useState<string>("all");
+
+  const activeCategories = useMemo(
+    () => categories.filter((c) => c.active !== false),
+    [categories],
+  );
+
+  const byId = useMemo(() => {
+    const m = new Map<string, DbCategory>();
+    activeCategories.forEach((c) => m.set(c.id, c));
+    return m;
+  }, [activeCategories]);
+
+  const mainCategories = useMemo(
+    () => activeCategories.filter((c) => !c.parent_id),
+    [activeCategories],
+  );
+
+  const subByParent = useMemo(() => {
+    const m = new Map<string, DbCategory[]>();
+    activeCategories.forEach((c) => {
+      if (!c.parent_id) return;
+      const arr = m.get(c.parent_id) ?? [];
+      arr.push(c);
+      m.set(c.parent_id, arr);
+    });
+    // stable sorting
+    m.forEach((arr) =>
+      arr.sort((a, b) => a.category_name.localeCompare(b.category_name)),
+    );
+    return m;
+  }, [activeCategories]);
+
+  useEffect(() => {
+    if (mainFilterId === "all") return;
+    // Auto-expand the filtered main category
+    setExpandedIds((prev) =>
+      prev.includes(mainFilterId) ? prev : [...prev, mainFilterId],
+    );
+  }, [mainFilterId]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const toggleCategory = (id: string) => {
+    const cat = byId.get(id);
+    if (!cat) return;
+
+    const isCurrentlySelected = selectedIds.includes(id);
+
+    // If this is a main category being deselected
+    if (!cat.parent_id && isCurrentlySelected) {
+      // Remove the main category AND all its subcategories
+      const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
+      onChange(selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)));
+      return;
+    }
+
+    // If this is a subcategory being selected
+    if (cat.parent_id && !isCurrentlySelected) {
+      // Check if parent is selected
+      if (!selectedIds.includes(cat.parent_id)) {
+        // Parent not selected, don't allow subcategory selection
+        return;
+      }
+    }
+
+    // Normal toggle
+    onChange(
+      isCurrentlySelected
+        ? selectedIds.filter((x) => x !== id)
+        : [...selectedIds, id],
+    );
+  };
+
+  const removeSelected = (id: string) => {
+    const cat = byId.get(id);
+    if (!cat) {
+      onChange(selectedIds.filter((x) => x !== id));
+      return;
+    }
+
+    // If removing a main category, also remove its subcategories
+    if (!cat.parent_id) {
+      const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
+      onChange(selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)));
+    } else {
+      onChange(selectedIds.filter((x) => x !== id));
+    }
+  };
+
+  const isSelected = (id: string) => selectedIds.includes(id);
+  const isExpanded = (id: string) => expandedIds.includes(id);
+
+  // Check if a subcategory can be selected (its parent must be selected)
+  const canSelectSubcategory = (parentId: string) => selectedIds.includes(parentId);
+
+  const filteredMain =
+    mainFilterId === "all"
+      ? mainCategories
+      : mainCategories.filter((m) => m.id === mainFilterId);
+
+  const selectedChips = useMemo(() => {
+    const items = selectedIds
+      .map((id) => byId.get(id))
+      .filter(Boolean) as DbCategory[];
+
+    const toBreadcrumb = (c: DbCategory) => {
+      if (!c.parent_id) return c.category_name;
+      const p = byId.get(c.parent_id);
+      return p ? `${p.category_name} / ${c.category_name}` : c.category_name;
+    };
+
+    return items
+      .map((c) => ({ id: c.id, label: toBreadcrumb(c), isSub: !!c.parent_id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [selectedIds, byId]);
+
+  const Checkbox = ({
+    checked,
+    onCheckedChange,
+    disabled,
+  }: {
+    checked: boolean;
+    onCheckedChange: () => void;
+    disabled?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={onCheckedChange}
+      disabled={disabled}
+      className={cn(
+        "group relative grid h-6 w-6 place-items-center rounded-lg border-2 transition-all",
+        checked ? "border-primary bg-primary" : "border-neutral-300 bg-white",
+        disabled
+          ? "cursor-not-allowed opacity-40 hover:border-neutral-300"
+          : "hover:border-primary/60",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2",
+      )}
+      aria-pressed={checked}
+      aria-label={checked ? "Unselect category" : "Select category"}
+      title={disabled ? "Select the main category first" : ""}
+    >
+      <Check
+        className={cn(
+          "h-4 w-4 text-white transition-opacity",
+          checked ? "opacity-100" : "opacity-0",
+        )}
+        strokeWidth={3}
+      />
+    </button>
+  );
+
+  return (
+    <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+      {/* Top controls */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600">
+            <Filter className="h-4 w-4" />
+          </span>
+
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-neutral-900">
+              Categories
+            </p>
+            <p className="text-xs text-neutral-500">
+              Select main categories first, then choose subcategories
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={mainFilterId}
+            onChange={(e) => setMainFilterId(e.target.value)}
+            className={cn(
+              "h-10 rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none transition",
+              "focus:border-primary focus:ring-2 focus:ring-primary/20",
+            )}
+          >
+            <option value="all">All main categories</option>
+            {mainCategories
+              .slice()
+              .sort((a, b) => a.category_name.localeCompare(b.category_name))
+              .map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.category_name}
+                </option>
+              ))}
+          </select>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMainFilterId("all")}
+            disabled={mainFilterId === "all"}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
+            Clear
+          </Button>
+        </div>
+      </div>
+
+      {/* Selected summary */}
+      <AnimatePresence initial={false}>
+        {selectedChips.length > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="mt-4 overflow-hidden"
+          >
+            <div className="flex flex-wrap gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              {selectedChips.map((c) => (
+                <span
+                  key={c.id}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+                    c.isSub
+                      ? "border-primary/20 bg-primary/10 text-primary"
+                      : "border-neutral-200 bg-white text-neutral-700",
+                  )}
+                >
+                  <span className="max-w-[240px] truncate">{c.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSelected(c.id)}
+                    className={cn(
+                      "grid h-5 w-5 place-items-center rounded-full transition",
+                      "hover:bg-black/5",
+                    )}
+                    aria-label="Remove category"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tree */}
+      <div className="mt-4 max-h-[26rem] overflow-y-auto pr-1">
+        {filteredMain.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-200 p-6 text-center">
+            <p className="text-sm font-medium text-neutral-800">
+              No categories available
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              Create categories first, then assign them to products.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredMain
+              .slice()
+              .sort((a, b) => a.category_name.localeCompare(b.category_name))
+              .map((main) => {
+                const subs = subByParent.get(main.id) ?? [];
+                const hasSubs = subs.length > 0;
+                const mainSelected = isSelected(main.id);
+
+                return (
+                  <div
+                    key={main.id}
+                    className={cn(
+                      "rounded-xl border transition",
+                      mainSelected
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-neutral-200 bg-white hover:border-neutral-300",
+                    )}
+                  >
+                    <div className="flex items-center gap-3 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => hasSubs && toggleExpand(main.id)}
+                        className={cn(
+                          "grid h-9 w-9 place-items-center rounded-lg transition",
+                          hasSubs
+                            ? "hover:bg-neutral-100 text-neutral-600"
+                            : "text-neutral-300 cursor-default",
+                        )}
+                        aria-label={hasSubs ? "Toggle sub-categories" : undefined}
+                      >
+                        {hasSubs ? (
+                          isExpanded(main.id) ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )
+                        ) : (
+                          <ChevronRight className="h-4 w-4 opacity-0" />
+                        )}
+                      </button>
+
+                      <Checkbox
+                        checked={mainSelected}
+                        onCheckedChange={() => toggleCategory(main.id)}
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Folder className={cn(
+                            "h-4 w-4",
+                            mainSelected ? "text-primary" : "text-neutral-400"
+                          )} />
+                          <p className={cn(
+                            "truncate text-sm font-semibold",
+                            mainSelected ? "text-primary" : "text-neutral-900"
+                          )}>
+                            {main.category_name}
+                          </p>
+
+                          {hasSubs && (
+                            <span className={cn(
+                              "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              mainSelected
+                                ? "bg-primary/20 text-primary"
+                                : "bg-neutral-100 text-neutral-600"
+                            )}>
+                              {subs.length} Sub Category
+                            </span>
+                          )}
+                        </div>
+
+                        {main.category_description ? (
+                          <p className="mt-0.5 truncate text-xs text-neutral-500">
+                            {main.category_description}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <AnimatePresence initial={false}>
+                      {hasSubs && isExpanded(main.id) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="relative pb-3">
+                            <div className={cn(
+                              "absolute left-7 top-0 h-full w-px",
+                              mainSelected ? "bg-primary/30" : "bg-neutral-200"
+                            )} />
+                            <div className="space-y-1 px-3 pb-2 pl-14">
+                              {!mainSelected && (
+                                <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-xs text-amber-700">
+                                  Select the main category "{main.category_name}" first to enable subcategories
+                                </div>
+                              )}
+                              {subs.map((sub) => {
+                                const canSelect = canSelectSubcategory(main.id);
+                                return (
+                                  <div
+                                    key={sub.id}
+                                    className={cn(
+                                      "relative flex items-center gap-3 rounded-lg px-2 py-2 transition",
+                                      canSelect ? "hover:bg-neutral-50" : "opacity-60",
+                                    )}
+                                  >
+                                    <div className={cn(
+                                      "absolute -left-7 top-1/2 h-px w-7",
+                                      mainSelected ? "bg-primary/30" : "bg-neutral-200"
+                                    )} />
+                                    <Checkbox
+                                      checked={isSelected(sub.id)}
+                                      onCheckedChange={() => toggleCategory(sub.id)}
+                                      disabled={!canSelect}
+                                    />
+                                    <p className={cn(
+                                      "min-w-0 truncate text-sm",
+                                      canSelect ? "text-neutral-700" : "text-neutral-400"
+                                    )}>
+                                      {sub.category_name}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function ProductForm({
   product,
   onSubmit,
@@ -269,6 +722,20 @@ function ProductForm({
   );
   const [note, setNote] = useState(product?.note ?? "");
 
+  // Lighting specifications
+  const [cct, setCct] = useState<number>(product?.cct ?? 3000);
+  const [lumen, setLumen] = useState<number>(product?.lumen ?? 800);
+  const [cri, setCri] = useState<number>(product?.cri ?? 80);
+  const [power, setPower] = useState<number>(Number(product?.power ?? 10));
+  const [angle, setAngle] = useState<number>(product?.angle ?? 120);
+
+  // Categories
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    product?.product_categories?.map((pc) => pc.category_id) ?? [],
+  );
+
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   type NewImage = {
     file: File;
@@ -280,6 +747,23 @@ function ProductForm({
   );
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+  // Load categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await api<{ message?: string; data: DbCategory[] }>(
+          "categories/admin",
+        );
+        setCategories(res.data ?? []);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     setProductName(product?.product_name ?? "");
@@ -301,6 +785,16 @@ function ProductForm({
     setDisableOos(Boolean(product?.disable_out_of_stock ?? true));
     setNote(product?.note ?? "");
 
+    setCct(product?.cct ?? 3000);
+    setLumen(product?.lumen ?? 800);
+    setCri(product?.cri ?? 80);
+    setPower(Number(product?.power ?? 10));
+    setAngle(product?.angle ?? 120);
+
+    setSelectedCategoryIds(
+      product?.product_categories?.map((pc) => pc.category_id) ?? [],
+    );
+
     setExistingImages(product?.gallery ?? []);
     setRemovedImages([]);
     setNewImages([]);
@@ -321,6 +815,29 @@ function ProductForm({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (cct < 1000 || cct > 10000) {
+      alert("CCT must be between 1000 and 10000 Kelvin");
+      return;
+    }
+    if (lumen < 1) {
+      alert("Lumen must be at least 1");
+      return;
+    }
+    if (cri < 0 || cri > 100) {
+      alert("CRI must be between 0 and 100");
+      return;
+    }
+    if (power < 0) {
+      alert("Power must be positive");
+      return;
+    }
+    if (angle < 1 || angle > 180) {
+      alert("Angle must be between 1 and 180 degrees");
+      return;
+    }
+
     const payload: ProductPayload = {
       product_name: productName.trim(),
       slug: slug.trim() || slugify(productName),
@@ -337,6 +854,12 @@ function ProductForm({
       note: note.trim() ? note.trim() : null,
       thumbnail: undefined,
       images: undefined,
+      cct: Number(cct),
+      lumen: Number(lumen),
+      cri: Number(cri),
+      power: Number(power),
+      angle: Number(angle),
+      category_ids: selectedCategoryIds,
     };
 
     onSubmit(payload, {
@@ -348,151 +871,297 @@ function ProductForm({
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <FieldLabel icon={<Package className="h-4 w-4" />}>
-            Product name *
-          </FieldLabel>
-          <Input
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            required
-          />
-        </div>
+      {/* Basic Information */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          Basic Information
+        </h3>
 
-        <div className="md:col-span-2">
-          <div className="flex items-center justify-between">
-            <FieldLabel icon={<Hash className="h-4 w-4" />}>Slug *</FieldLabel>
-            <button
-              type="button"
-              onClick={() => setAutoSlug((v) => !v)}
-              className={cn(
-                "text-xs font-medium",
-                autoSlug
-                  ? "text-primary"
-                  : "text-neutral-500 hover:text-neutral-700",
-              )}
-            >
-              {autoSlug ? "Auto" : "Manual"}
-            </button>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <FieldLabel icon={<Package className="h-4 w-4" />} required>
+              Product name
+            </FieldLabel>
+            <Input
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              required
+              placeholder="Enter product name"
+            />
           </div>
-          <Input
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
-            disabled={autoSlug}
-          />
-        </div>
 
-        <div>
-          <FieldLabel icon={<Tag className="h-4 w-4" />}>SKU</FieldLabel>
-          <Input
-            value={sku}
-            onChange={(e) => setSku(e.target.value)}
-            placeholder="Optional"
-          />
-        </div>
+          <div className="md:col-span-2">
+            <div className="flex items-center justify-between">
+              <FieldLabel icon={<Hash className="h-4 w-4" />} required>
+                Slug
+              </FieldLabel>
+              <button
+                type="button"
+                onClick={() => setAutoSlug((v) => !v)}
+                className={cn(
+                  "text-xs font-medium transition",
+                  autoSlug
+                    ? "text-primary"
+                    : "text-neutral-500 hover:text-neutral-700",
+                )}
+              >
+                {autoSlug ? "Auto" : "Manual"}
+              </button>
+            </div>
+            <Input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              required
+              disabled={autoSlug}
+              placeholder="product-slug"
+            />
+          </div>
 
-        <div>
-          <FieldLabel icon={<Package className="h-4 w-4" />}>
-            Quantity *
-          </FieldLabel>
-          <Input
-            type="number"
-            min={0}
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            required
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<Tag className="h-4 w-4" />}>SKU</FieldLabel>
+            <Input
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
 
-        <div>
-          <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-            Sale price *
-          </FieldLabel>
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            value={salePrice}
-            onChange={(e) => setSalePrice(Number(e.target.value))}
-            required
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<Package className="h-4 w-4" />} required>
+              Quantity
+            </FieldLabel>
+            <Input
+              type="number"
+              min={0}
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              required
+            />
+          </div>
 
-        <div>
-          <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-            Compare price
-          </FieldLabel>
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            value={comparePrice}
-            onChange={(e) => setComparePrice(e.target.value)}
-            placeholder="Optional"
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<DollarSign className="h-4 w-4" />} required>
+              Sale price
+            </FieldLabel>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              value={salePrice}
+              onChange={(e) => setSalePrice(Number(e.target.value))}
+              required
+            />
+          </div>
 
-        <div>
-          <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-            Buying price
-          </FieldLabel>
-          <Input
-            type="number"
-            step="0.01"
-            min={0}
-            value={buyingPrice}
-            onChange={(e) => setBuyingPrice(e.target.value)}
-            placeholder="Optional"
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
+              Compare price
+            </FieldLabel>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              value={comparePrice}
+              onChange={(e) => setComparePrice(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
 
-        <div>
-          <FieldLabel icon={<Tag className="h-4 w-4" />}>
-            Product type
-          </FieldLabel>
-          <Input
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            placeholder="Optional"
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
+              Buying price
+            </FieldLabel>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              value={buyingPrice}
+              onChange={(e) => setBuyingPrice(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
 
-        <div className="md:col-span-2">
-          <FieldLabel icon={<FileText className="h-4 w-4" />}>
-            Short description *
-          </FieldLabel>
-          <Textarea
-            rows={2}
-            value={shortDesc}
-            onChange={(e) => setShortDesc(e.target.value)}
-            required
-          />
-        </div>
+          <div>
+            <FieldLabel icon={<Tag className="h-4 w-4" />}>
+              Product type
+            </FieldLabel>
+            <Input
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              placeholder="Optional"
+            />
+          </div>
 
-        <div className="md:col-span-2">
-          <FieldLabel icon={<FileText className="h-4 w-4" />}>
-            Full description *
-          </FieldLabel>
-          <Textarea
-            rows={6}
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            required
-          />
-        </div>
+          <div className="md:col-span-2">
+            <FieldLabel icon={<FileText className="h-4 w-4" />} required>
+              Short description
+            </FieldLabel>
+            <Textarea
+              rows={2}
+              value={shortDesc}
+              onChange={(e) => setShortDesc(e.target.value)}
+              required
+              maxLength={165}
+              placeholder="Brief description (max 165 characters)"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              {shortDesc.length}/165 characters
+            </p>
+          </div>
 
-        <div className="md:col-span-2">
-          <FieldLabel>Note</FieldLabel>
-          <Textarea
-            rows={2}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </div>
+          <div className="md:col-span-2">
+            <FieldLabel icon={<FileText className="h-4 w-4" />} required>
+              Full description
+            </FieldLabel>
+            <Textarea
+              rows={6}
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              required
+              placeholder="Detailed product description"
+            />
+          </div>
 
-        <div className="md:col-span-2 grid gap-3 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <FieldLabel>Note</FieldLabel>
+            <Textarea
+              rows={2}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Internal notes (optional)"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Lighting Specifications */}
+      <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
+        <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-primary" />
+          Lighting Specifications
+        </h3>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+              CCT (Kelvin)
+            </FieldLabel>
+            <Input
+              type="number"
+              min={1000}
+              max={10000}
+              step={100}
+              value={cct}
+              onChange={(e) => setCct(Number(e.target.value))}
+              required
+              placeholder="e.g., 3000"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              Range: 1000-10000K
+            </p>
+          </div>
+
+          <div>
+            <FieldLabel icon={<Zap className="h-4 w-4" />} required>
+              Lumen (lm)
+            </FieldLabel>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={lumen}
+              onChange={(e) => setLumen(Number(e.target.value))}
+              required
+              placeholder="e.g., 800"
+            />
+            <p className="mt-1 text-xs text-neutral-500">Minimum: 1 lm</p>
+          </div>
+
+          <div>
+            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+              CRI
+            </FieldLabel>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={cri}
+              onChange={(e) => setCri(Number(e.target.value))}
+              required
+              placeholder="e.g., 80"
+            />
+            <p className="mt-1 text-xs text-neutral-500">Range: 0-100</p>
+          </div>
+
+          <div>
+            <FieldLabel icon={<Zap className="h-4 w-4" />} required>
+              Power (W)
+            </FieldLabel>
+            <Input
+              type="number"
+              min={0}
+              step={0.1}
+              value={power}
+              onChange={(e) => setPower(Number(e.target.value))}
+              required
+              placeholder="e.g., 10"
+            />
+            <p className="mt-1 text-xs text-neutral-500">In Watts</p>
+          </div>
+
+          <div className="md:col-span-2">
+            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+              Beam Angle (degrees)
+            </FieldLabel>
+            <Input
+              type="number"
+              min={1}
+              max={180}
+              step={1}
+              value={angle}
+              onChange={(e) => setAngle(Number(e.target.value))}
+              required
+              placeholder="e.g., 120"
+            />
+            <p className="mt-1 text-xs text-neutral-500">Range: 1-180°</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Categories */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+          <Folder className="h-5 w-5 text-primary" />
+          Categories
+        </h3>
+
+        {loadingCategories ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <CategorySelector
+              categories={categories}
+              selectedIds={selectedCategoryIds}
+              onChange={setSelectedCategoryIds}
+            />
+            {selectedCategoryIds.length > 0 && (
+              <p className="text-sm text-neutral-600">
+                Selected {selectedCategoryIds.length} categor
+                {selectedCategoryIds.length === 1 ? "y" : "ies"}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Status Toggles */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-neutral-900">Status</h3>
+        <div className="grid gap-3 md:grid-cols-2">
           <Toggle
             checked={published}
             onChange={setPublished}
@@ -508,8 +1177,13 @@ function ProductForm({
             iconOff={<Check className="h-4 w-4" />}
           />
         </div>
+      </div>
 
-        <div className="md:col-span-2">
+      {/* Images */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-neutral-900">Images</h3>
+
+        <div>
           <FieldLabel>Thumbnail (optional)</FieldLabel>
 
           <label
@@ -558,84 +1232,84 @@ function ProductForm({
             </div>
           )}
         </div>
-      </div>
 
-      <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-        <div className="mb-3 text-sm font-medium text-neutral-800">
-          Gallery images (optional)
-        </div>
-
-        {/* Upload */}
-        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 p-6 text-sm transition hover:bg-neutral-100">
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []).map((file) => ({
-                file,
-                preview: URL.createObjectURL(file),
-              }));
-              setNewImages((prev) => [...prev, ...files]);
-            }}
-          />
-          <Plus className="h-5 w-5 text-neutral-400" />
-          <span className="text-neutral-600">Add images</span>
-        </label>
-
-        {(existingImages.length > 0 || newImages.length > 0) && (
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {/* Existing images */}
-            {existingImages.map((url) => (
-              <div key={url} className="relative group h-24 w-24">
-                <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
-                  <img
-                    src={img(url)}
-                    alt="Gallery preview"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExistingImages((imgs) => imgs.filter((i) => i !== url));
-                    setRemovedImages((r) => [...r, url]);
-                  }}
-                  className="absolute right-2 top-2 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-
-            {/* New images */}
-            {newImages.map((img, i) => (
-              <div key={i} className="relative group h-24 w-24">
-                <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
-                  <img
-                    src={img.preview}
-                    alt="Gallery preview"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setNewImages((imgs) => imgs.filter((_, x) => x !== i))
-                  }
-                  className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+        <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+          <div className="mb-3 text-sm font-medium text-neutral-800">
+            Gallery images (optional)
           </div>
-        )}
+
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 p-6 text-sm transition hover:bg-neutral-100">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []).map((file) => ({
+                  file,
+                  preview: URL.createObjectURL(file),
+                }));
+                setNewImages((prev) => [...prev, ...files]);
+              }}
+            />
+            <Plus className="h-5 w-5 text-neutral-400" />
+            <span className="text-neutral-600">Add images</span>
+          </label>
+
+          {(existingImages.length > 0 || newImages.length > 0) && (
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+              {existingImages.map((url) => (
+                <div key={url} className="relative group h-24 w-24">
+                  <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
+                    <img
+                      src={img(url)}
+                      alt="Gallery preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExistingImages((imgs) =>
+                        imgs.filter((i) => i !== url),
+                      );
+                      setRemovedImages((r) => [...r, url]);
+                    }}
+                    className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              {newImages.map((img, i) => (
+                <div key={i} className="relative group h-24 w-24">
+                  <div className="h-full w-full overflow-hidden rounded-xl border bg-neutral-100">
+                    <img
+                      src={img.preview}
+                      alt="Gallery preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setNewImages((imgs) => imgs.filter((_, x) => x !== i))
+                    }
+                    className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Action Buttons */}
       <div className="flex gap-3 border-t border-neutral-200 pt-6">
         <Button
           type="button"
@@ -729,7 +1403,6 @@ function ProductRow({
         isDeleting && "opacity-50",
       )}
     >
-      {/* Checkbox column */}
       <td className="w-10 px-3 align-middle">
         <div className="flex items-center justify-center">
           <label className="relative inline-flex cursor-pointer items-center justify-center">
@@ -757,10 +1430,9 @@ function ProductRow({
         </div>
       </td>
 
-      {/* Product column */}
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200">
+          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200">
             {thumb ? (
               <img
                 src={img(thumb)}
@@ -780,15 +1452,11 @@ function ProductRow({
             </p>
             <p className="truncate text-xs text-neutral-500">
               <span className="font-mono">{product.slug}</span>
-              {product.sku && (
-                <span className="ms-2">• SKU: {product.sku}</span>
-              )}
             </p>
           </div>
         </div>
       </td>
 
-      {/* Pricing */}
       <td className="px-3 py-3">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
@@ -796,7 +1464,7 @@ function ProductRow({
               ${money(product.sale_price)}
             </span>
             {product.compare_price != null &&
-            Number(product.compare_price) > 0 ? (
+              Number(product.compare_price) > 0 ? (
               <span className="text-xs text-neutral-400 line-through">
                 ${money(product.compare_price)}
               </span>
@@ -808,7 +1476,6 @@ function ProductRow({
         </div>
       </td>
 
-      {/* Status */}
       <td className="px-3 py-3">
         <div className="flex flex-col gap-1.5">
           <BadgePill published={published} />
@@ -816,14 +1483,19 @@ function ProductRow({
         </div>
       </td>
 
-      {/* Short description */}
-      <td className="px-3 py-3 max-w-xs">
-        <div className="line-clamp-2 text-sm text-neutral-600">
-          {product.short_description}
+      <td className="px-3 py-3">
+        <div className="flex flex-col gap-1 text-xs text-neutral-600">
+          <div className="flex items-center gap-1">
+            <Lightbulb className="h-3 w-3" />
+            <span>{product.cct}K • {product.lumen}lm</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Zap className="h-3 w-3" />
+            <span>{money(product.power)}W • {product.angle}°</span>
+          </div>
         </div>
       </td>
 
-      {/* Actions */}
       <td className="px-3 py-3">
         <div className="flex items-center justify-end gap-1">
           <Button
@@ -856,9 +1528,6 @@ function ProductRow({
   );
 }
 
-// ==============================
-// Page
-// ==============================
 export default function AdminProductsPage() {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -866,8 +1535,20 @@ export default function AdminProductsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState<string>("1");
+
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    // Keep the "Go to page" input in sync with current page
+    setPageInput(String(page));
+  }, [page]);
+
+  useEffect(() => {
+    // Clamp current page if total pages changes (e.g. after filters/search)
+    setPage((p) => Math.min(Math.max(1, p), totalPages));
+  }, [totalPages]);
 
   const [items, setItems] = useState<DbProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -924,17 +1605,17 @@ export default function AdminProductsPage() {
     const filtered = !q
       ? items
       : items.filter((p) => {
-          const hay = [
-            p.product_name,
-            p.slug,
-            p.sku ?? "",
-            p.short_description ?? "",
-            p.product_type ?? "",
-          ]
-            .join(" ")
-            .toLowerCase();
-          return hay.includes(q);
-        });
+        const hay = [
+          p.product_name,
+          p.slug,
+          p.sku ?? "",
+          p.short_description ?? "",
+          p.product_type ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
 
     const sorted = [...filtered].sort((a, b) => {
       const factor = dir === "asc" ? 1 : -1;
@@ -1006,6 +1687,10 @@ export default function AdminProductsPage() {
 
       Object.entries(payload).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
+        if (key === "category_ids" && Array.isArray(value)) {
+          value.forEach((id) => fd.append("category_ids[]", id));
+          return;
+        }
         fd.append(key, String(value));
       });
 
@@ -1053,6 +1738,10 @@ export default function AdminProductsPage() {
 
       Object.entries(payload).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
+        if (key === "category_ids" && Array.isArray(value)) {
+          value.forEach((id) => fd.append("category_ids[]", id));
+          return;
+        }
         fd.append(key, String(value));
       });
 
@@ -1149,7 +1838,7 @@ export default function AdminProductsPage() {
                 Products
               </h1>
               <p className="mt-1 text-neutral-600">
-                Manage your store products.
+                Manage your store products with lighting specifications.
               </p>
             </div>
 
@@ -1250,12 +1939,14 @@ export default function AdminProductsPage() {
                     <h2 className="text-xl font-semibold text-neutral-900">
                       {editing ? "Update product" : "Add new product"}
                     </h2>
-                    <p className="text-sm text-neutral-500">
-                      Editing{" "}
-                      <span className="font-medium">
-                        {editing?.product_name}
-                      </span>
-                    </p>
+                    {editing && (
+                      <p className="text-sm text-neutral-500">
+                        Editing{" "}
+                        <span className="font-medium">
+                          {editing?.product_name}
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -1376,7 +2067,7 @@ export default function AdminProductsPage() {
                         Status
                       </th>
                       <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
-                        Short description
+                        Specs
                       </th>
                       <th className="px-3 py-3 text-right text-sm font-semibold text-neutral-700">
                         Actions
@@ -1453,33 +2144,83 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-4 border-t border-neutral-200">
-          <span className="text-sm text-neutral-500">
-            Page {page} of {totalPages}
-          </span>
+        <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-neutral-600">
+            <span className="font-medium text-neutral-900">Page</span>
+            <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-semibold">
+              {page}
+            </span>
+            <span className="text-neutral-400">/</span>
+            <span className="font-semibold">{totalPages}</span>
+          </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-neutral-500">Go to page</span>
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={pageInput}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^\d]/g, "");
+                  setPageInput(v);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  const n = Number(pageInput);
+                  if (!Number.isFinite(n)) return;
+                  const clamped = Math.min(totalPages, Math.max(1, n));
+                  setPage(clamped);
+                }}
+                onBlur={() => {
+                  if (!pageInput) {
+                    setPageInput(String(page));
+                    return;
+                  }
+                  const n = Number(pageInput);
+                  if (!Number.isFinite(n)) {
+                    setPageInput(String(page));
+                    return;
+                  }
+                  const clamped = Math.min(totalPages, Math.max(1, n));
+                  setPageInput(String(clamped));
+                }}
+                className={cn(
+                  "h-8 w-12 text-center",
+                  pageInput &&
+                  (Number(pageInput) < 1 || Number(pageInput) > totalPages) &&
+                  "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40",
+                )}
+                aria-label="Go to page"
+              />
+            </div>
           </div>
         </div>
       )}
+
+
       <AnimatePresence>
         {confirmDelete && (
           <>
@@ -1512,7 +2253,8 @@ export default function AdminProductsPage() {
                   </span>
                   ?
                   <br />
-                  Once deleted, this product <strong>cannot be restored</strong>.
+                  Once deleted, this product{" "}
+                  <strong>cannot be restored</strong>.
                 </p>
 
                 <div className="mt-6 flex justify-end gap-3">
@@ -1532,7 +2274,9 @@ export default function AdminProductsPage() {
                       setConfirmDelete(null);
                     }}
                   >
-                    {deletingId === confirmDelete.id ? "Deleting..." : "Delete"}
+                    {deletingId === confirmDelete.id
+                      ? "Deleting..."
+                      : "Delete"}
                   </Button>
                 </div>
               </div>
@@ -1540,6 +2284,7 @@ export default function AdminProductsPage() {
           </>
         )}
       </AnimatePresence>
+
       <AnimatePresence>
         {confirmBulkDelete && (
           <>
@@ -1572,7 +2317,8 @@ export default function AdminProductsPage() {
                   </span>{" "}
                   products?
                   <br />
-                  Once deleted, all product <strong>cannot be restored</strong>.
+                  Once deleted, all products{" "}
+                  <strong>cannot be restored</strong>.
                 </p>
 
                 <div className="mt-6 flex justify-end gap-3">
