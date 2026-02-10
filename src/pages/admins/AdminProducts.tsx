@@ -1636,10 +1636,11 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     load();
-  }, [page]);
+  }, [page, debouncedQuery]);
 
   useEffect(() => {
     setPage(1);
+    setPageInput("1");
   }, [debouncedQuery]);
 
   useEffect(() => {
