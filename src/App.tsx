@@ -6,6 +6,7 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { Collections } from "./pages/Collections";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
+import { Checkout } from "./pages/Checkout";
 import AdminLogin from "./pages/admins/AdminLogin";
 import AdminDashboard from "@/pages/admins/Admin";
 import AdminProducts from "@/pages/admins/AdminProducts";
@@ -22,6 +23,7 @@ function App() {
         <Route index element={<Home />} />
         <Route path="shop" element={<Shop />} />
         <Route path="product/:id" element={<ProductDetail />} />
+        <Route path="checkout" element={<Checkout />} />
         <Route path="collections" element={<Collections />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />

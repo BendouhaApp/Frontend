@@ -1,51 +1,8 @@
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-
-// Category data structure (translations handled separately)
-const categoryData = [
-  {
-    id: '1',
-    nameKey: 'categories.livingRoom',
-    descKey: 'categories.livingRoomDesc',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80',
-    itemCount: 42,
-  },
-  {
-    id: '2',
-    nameKey: 'categories.bedroom',
-    descKey: 'categories.bedroomDesc',
-    image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80',
-    itemCount: 38,
-  },
-  {
-    id: '3',
-    nameKey: 'categories.kitchen',
-    descKey: 'categories.kitchenDesc',
-    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
-    itemCount: 56,
-  },
-  {
-    id: '4',
-    nameKey: 'categories.lighting',
-    descKey: 'categories.lightingDesc',
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
-    itemCount: 31,
-  },
-  {
-    id: '5',
-    nameKey: 'categories.textiles',
-    descKey: 'categories.textilesDesc',
-    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
-    itemCount: 67,
-  },
-  {
-    id: '6',
-    nameKey: 'categories.decor',
-    descKey: 'categories.decorDesc',
-    image: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=800&q=80',
-    itemCount: 89,
-  },
-]
+import { useGet } from '@/hooks/useGet'
+import type { ApiResponse, Category } from '@/types/api'
+import { cn } from '@/lib/utils'
 
 // Animation variants
 const containerVariants: Variants = {
@@ -81,19 +38,26 @@ interface CategoryGridProps {
 export function CategoryGrid({
   title,
   subtitle,
-  showItemCount = true,
+  showItemCount = false,
 }: CategoryGridProps) {
   const { t } = useTranslation()
+  const { data } = useGet<ApiResponse<Category[]>>({
+    path: 'categories',
+    options: {
+      staleTime: 1000 * 60 * 10,
+    },
+  })
 
   const displayTitle = title ?? t('categories.title')
   const displaySubtitle = subtitle ?? t('categories.subtitle')
-
-  // Build categories with translations
-  const categories = categoryData.map((cat) => ({
-    ...cat,
-    name: t(cat.nameKey),
-    description: t(cat.descKey),
-  }))
+  const categories =
+    data?.data?.map((cat) => ({
+      id: cat.id,
+      name: cat.category_name,
+      description: cat.category_description ?? '',
+      image: cat.image ?? null,
+      itemCount: cat.other_categories?.length ?? 0,
+    })) ?? []
 
   return (
     <section className="section-padding bg-navy-50">
@@ -138,16 +102,16 @@ export function CategoryGrid({
 }
 
 // Individual Category Card Component
-interface Category {
+interface CategoryCardData {
   id: string
   name: string
   description: string
-  image: string
+  image: string | null
   itemCount: number
 }
 
 interface CategoryCardProps {
-  category: Category
+  category: CategoryCardData
   showItemCount?: boolean
   exploreText: string
   itemsText: string
@@ -156,20 +120,29 @@ interface CategoryCardProps {
 function CategoryCard({ category, showItemCount, exploreText, itemsText }: CategoryCardProps) {
   return (
     <motion.a
-      href={`/category/${category.id}`}
+      href={`/shop?category=${category.id}`}
       variants={itemVariants}
       className="group relative block overflow-hidden rounded-xl bg-navy-100"
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        {/* Image */}
-        <motion.img
-          src={category.image}
-          alt={category.name}
-          className="h-full w-full object-cover"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-        />
+        {category.image ? (
+          <motion.img
+            src={category.image}
+            alt={category.name}
+            className="h-full w-full object-cover"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          />
+        ) : (
+          <div
+            className={cn(
+              'flex h-full w-full items-center justify-center bg-gradient-to-br from-navy-300 via-navy-200 to-navy-100 text-navy-700'
+            )}
+          >
+            <span className="text-sm font-medium">{category.name}</span>
+          </div>
+        )}
 
         {/* Overlay - darkens on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/30 to-transparent transition-opacity duration-300 group-hover:opacity-90" />
@@ -223,18 +196,13 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
 
 // Alternative: Minimal Category Grid (no images, just text)
 export function CategoryGridMinimal() {
-  const { t } = useTranslation()
-
-  const minimalCategories = [
-    { id: '1', nameKey: 'categories.newArrivals', href: '/new' },
-    { id: '2', nameKey: 'categories.bestSellers', href: '/best-sellers' },
-    { id: '3', nameKey: 'categories.livingRoom', href: '/living-room' },
-    { id: '4', nameKey: 'categories.bedroom', href: '/bedroom' },
-    { id: '5', nameKey: 'categories.kitchen', href: '/kitchen' },
-    { id: '6', nameKey: 'categories.outdoor', href: '/outdoor' },
-    { id: '7', nameKey: 'categories.lighting', href: '/lighting' },
-    { id: '8', nameKey: 'common.sale', href: '/sale' },
-  ]
+  const { data } = useGet<ApiResponse<Category[]>>({
+    path: 'categories',
+    options: {
+      staleTime: 1000 * 60 * 10,
+    },
+  })
+  const minimalCategories = (data?.data ?? []).slice(0, 8)
 
   return (
     <section className="section-padding-sm border-y border-navy-200 bg-navy-50">
@@ -243,14 +211,14 @@ export function CategoryGridMinimal() {
           {minimalCategories.map((cat, index) => (
             <motion.a
               key={cat.id}
-              href={cat.href}
+              href={`/shop?category=${cat.id}`}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.05, duration: 0.4 }}
               className="group relative text-sm font-medium text-navy-600 transition-colors hover:text-primary md:text-base"
             >
-              {t(cat.nameKey)}
+              {cat.category_name}
               <span className="absolute -bottom-1 start-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full" />
             </motion.a>
           ))}

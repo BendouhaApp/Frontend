@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGet } from "@/hooks/useGet";
 import { usePostAction } from "@/hooks/usePostAction";
-import type { Cart, CartItem } from "@/types/api";
+import type { ApiResponse, Cart } from "@/types/api";
+import { calcSubtotal, mapCartItems } from "@/lib/cart";
 import { cn } from "@/lib/utils";
 
 // Cart Item Component
@@ -24,7 +25,7 @@ function CartItemRow({
   onRemove,
   isUpdating,
 }: {
-  item: CartItem;
+  item: ReturnType<typeof mapCartItems>[number];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
   isUpdating?: boolean;
@@ -44,8 +45,8 @@ function CartItemRow({
         className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100"
       >
         <img
-          src={item.product.image}
-          alt={item.product.name}
+          src={item.image}
+          alt={item.name}
           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
         />
       </Link>
@@ -57,7 +58,7 @@ function CartItemRow({
             to={`/product/${item.productId}`}
             className="text-sm font-medium text-neutral-900 transition-colors hover:text-neutral-600"
           >
-            {item.product.name}
+            {item.name}
           </Link>
           <div className="mt-1 space-y-0.5">
             {item.color && (
@@ -93,7 +94,7 @@ function CartItemRow({
 
           {/* Price */}
           <span className="text-sm font-medium text-neutral-900">
-            ${(item.product.price * item.quantity).toFixed(2)}
+            ${(item.price * item.quantity).toFixed(2)}
           </span>
         </div>
       </div>
@@ -173,26 +174,31 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
   // Fetch cart from API
-  const { data: cart, isLoading, isError } = useGet<Cart>({
+  const { data: cartResponse, isLoading, isError } = useGet<ApiResponse<Cart>>({
     path: "cart",
     options: {
       staleTime: 1000 * 60, // 1 minute
     },
   });
+  const cart = cartResponse?.data;
 
   // Mutations
-  const removeFromCart = usePostAction<CartItem>();
+  const removeFromCart = usePostAction<{ message?: string }>();
+  const updateCartItem = usePostAction<{ message?: string }>();
 
-  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity < 1) return;
     setUpdatingItemId(itemId);
-    try {
-      // This would call the actual API
-      // For now, using the postAction hook directly
-      console.log("Update quantity:", itemId, quantity);
-    } finally {
-      setUpdatingItemId(null);
-    }
+    updateCartItem.mutate(
+      {
+        method: "put",
+        path: `cart/items/${itemId}`,
+        body: { quantity },
+      },
+      {
+        onSettled: () => setUpdatingItemId(null),
+      },
+    );
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -203,14 +209,13 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
   };
 
   // Calculate totals from cart data
-  const items = cart?.items || [];
+  const items = mapCartItems(cart?.card_items ?? []);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cart?.subtotal || 0;
-  const shipping = cart?.shipping || (subtotal >= 150 ? 0 : 15);
-  const total = cart?.total || subtotal + shipping;
+  const subtotal = calcSubtotal(items);
+  const total = subtotal;
 
   const handleCheckout = () => {
-    console.log("Checkout:", { items, subtotal, shipping, total });
+    setIsOpen(false);
   };
 
   return (
@@ -316,20 +321,9 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                         {t("common.shipping")}
                       </span>
                       <span className="font-medium text-neutral-900">
-                        {shipping === 0 ? (
-                          <span className="text-green-600">
-                            {t("common.free")}
-                          </span>
-                        ) : (
-                          `$${shipping.toFixed(2)}`
-                        )}
+                        Calculated at checkout
                       </span>
                     </div>
-                    {shipping > 0 && (
-                      <p className="text-xs text-neutral-500">
-                        Free shipping on orders over $150
-                      </p>
-                    )}
                     <div className="border-t border-neutral-200 pt-3">
                       <div className="flex items-center justify-between">
                         <span className="text-base font-medium text-neutral-900">
@@ -348,9 +342,12 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                       onClick={handleCheckout}
                       size="lg"
                       className="w-full rounded-full"
+                      asChild
                     >
-                      Checkout
-                      <ArrowRight className="ms-2 h-4 w-4" />
+                      <Link to="/checkout">
+                        Checkout
+                        <ArrowRight className="ms-2 h-4 w-4" />
+                      </Link>
                     </Button>
                     <Button
                       variant="outline"

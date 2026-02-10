@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button'
 import { SkeletonProductGrid } from '@/components/ui/skeleton'
 import { useGet } from '@/hooks/useGet'
 import { usePost } from '@/hooks/usePost'
-import type { Product, ProductsResponse, AddToCartPayload, CartItem } from '@/types/api'
+import { useCart } from '@/hooks/useCart'
+import type {
+  Product,
+  ProductsResponse,
+  AddToCartPayload,
+  CartItem,
+  ApiResponse,
+} from '@/types/api'
 import { cn } from '@/lib/utils'
 
 const containerVariants: Variants = {
@@ -148,25 +155,26 @@ export function FeaturedProducts({
   count?: number
 }) {
   const { t } = useTranslation()
+  const { cartId } = useCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products',
+    path: 'products/public',
     options: {
       staleTime: 1000 * 60 * 5,
     },
   })
   
-  // Filter featured products (is_featured = true)
-  const products = (data?.data || []).filter(p => p.is_featured).slice(0, count)
+  const products = (data?.data || []).slice(0, count)
   
-  const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: 'cart/items?cart_id=1',
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
     successMessage: 'Produit ajouté au panier',
     errorMessage: "Erreur lors de l'ajout au panier",
   })
 
   const handleAddToCart = (product: Product) => {
+    if (!cartId) return
     addToCart.mutate({
       product_id: product.id,
       quantity: 1,
@@ -188,9 +196,10 @@ export function FeaturedProducts({
 // New Arrivals Section - Uses API
 export function NewArrivals() {
   const { t } = useTranslation()
+  const { cartId } = useCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products',
+    path: 'products/public',
     options: {
       staleTime: 1000 * 60 * 5,
     },
@@ -199,14 +208,15 @@ export function NewArrivals() {
   // Get latest products (by created_at)
   const products = (data?.data || []).slice(0, 6)
   
-  const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: 'cart/items?cart_id=1',
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
     successMessage: 'Produit ajouté au panier',
     errorMessage: "Erreur lors de l'ajout au panier",
   })
 
   const handleAddToCart = (product: Product) => {
+    if (!cartId) return
     addToCart.mutate({
       product_id: product.id,
       quantity: 1,
@@ -229,25 +239,30 @@ export function NewArrivals() {
 // Sale Products Section - Uses API
 export function SaleProducts() {
   const { t } = useTranslation()
+  const { cartId } = useCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products',
+    path: 'products/public',
     options: {
       staleTime: 1000 * 60 * 5,
     },
   })
   
-  // For now, just show some products as sale items
-  const products = (data?.data || []).slice(0, 3)
+  // Show products with a discount when possible
+  const discounted = (data?.data || []).filter(
+    (p) => p.originalPrice && p.originalPrice > p.price
+  )
+  const products = (discounted.length ? discounted : data?.data || []).slice(0, 3)
   
-  const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: 'cart/items?cart_id=1',
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
     successMessage: 'Produit ajouté au panier',
     errorMessage: "Erreur lors de l'ajout au panier",
   })
 
   const handleAddToCart = (product: Product) => {
+    if (!cartId) return
     addToCart.mutate({
       product_id: product.id,
       quantity: 1,
@@ -309,15 +324,17 @@ export function ProductCarousel({
   isLoading?: boolean
 }) {
   const { t } = useTranslation()
+  const { cartId } = useCart()
   
-  const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: 'cart/items?cart_id=1',
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
     successMessage: 'Produit ajouté au panier',
     errorMessage: "Erreur lors de l'ajout au panier",
   })
 
   const handleAddToCart = (product: Product) => {
+    if (!cartId) return
     addToCart.mutate({
       product_id: product.id,
       quantity: 1,

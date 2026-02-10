@@ -3,7 +3,7 @@
 // =========================
 
 export interface ApiResponse<T> {
-  message: string
+  message?: string
   data: T
 }
 
@@ -45,8 +45,22 @@ export interface LoginResponse {
 // Admin Log Types
 // =========================
 
-export type AdminAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'CONFIRM' | 'CANCEL'
-export type AdminEntity = 'PRODUCT' | 'CATEGORY' | 'ORDER'
+export type AdminAction =
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'CONFIRM'
+  | 'CANCEL'
+  | 'LOGIN'
+
+export type AdminEntity =
+  | 'PRODUCT'
+  | 'CATEGORY'
+  | 'ORDER'
+  | 'COUPON'
+  | 'SHIPPING'
+  | 'USER'
+  | 'ADMIN'
 
 export interface AdminLog {
   id: number
@@ -68,31 +82,20 @@ export interface AdminLog {
 // =========================
 
 export interface Category {
-  id: number
-  name: string
-  slug: string
-  description?: string
-  is_active: boolean
-  parent_id?: number
-  created_at: string
-  updated_at: string
-  parent?: Category
-  children?: Category[]
-  products?: Product[]
+  id: string
+  category_name: string
+  category_description?: string | null
+  parent_id?: string | null
+  image?: string | null
+  active?: boolean | null
+  other_categories?: Category[]
 }
 
-export interface CreateCategoryPayload {
-  name: string
-  description?: string
-  parent_id?: number
-  is_active?: boolean
-}
-
-export interface UpdateCategoryPayload {
-  name?: string
-  description?: string
-  parent_id?: number
-  is_active?: boolean
+export interface CategorySummary {
+  id: string
+  category_name: string
+  parent_id?: string | null
+  image?: string | null
 }
 
 // =========================
@@ -100,45 +103,44 @@ export interface UpdateCategoryPayload {
 // =========================
 
 export interface Product {
-  id: number
+  id: string
   name: string
   slug: string
+  price: number
+  originalPrice?: number | null
+  category: string
+  categories?: CategorySummary[]
   description?: string
-  sku: string
-  price: number | string
-  stock: number
-  is_active: boolean
-  is_featured: boolean
-  category_id?: number
-  created_at: string
-  image_url?: string
-  category?: Category
+  fullDescription?: string
+  image: string
+  thumbnail?: string | null
+  images?: string[]
+  gallery?: string[]
+  inStock?: boolean
+  quantity?: number
+  rating?: number | null
+  reviewCount?: number | null
+  badge?: string | null
+  sizes?: string[] | null
+  colors?: { name: string; value: string }[] | null
+  materials?: string[] | null
+  dimensions?: string | null
+  care?: string[] | null
+  cct?: number | null
+  lumen?: number | null
+  cri?: number | null
+  power?: number | null
+  angle?: number | null
 }
 
 export interface ProductsResponse {
-  message: string
+  message?: string
   data: Product[]
 }
 
 export interface ProductResponse {
-  message: string
+  message?: string
   data: Product
-}
-
-export interface CreateProductPayload {
-  name: string
-  slug: string
-  sku: string
-  price: number
-  image_url?: string
-}
-
-export interface UpdateProductPayload {
-  name?: string
-  slug?: string
-  sku?: string
-  price?: number
-  image_url?: string
 }
 
 // =========================
@@ -146,89 +148,74 @@ export interface UpdateProductPayload {
 // =========================
 
 export interface CartItem {
-  id: number
-  cart_id: number
-  product_id: number
+  id: string
+  card_id?: string | null
+  product_id?: string | null
   quantity: number
-  unit_price: number | string
-  total_price: number | string
-  product?: Product
+  product?: Product | null
+  // Raw backend product payload (if needed)
+  products?: Record<string, unknown>
 }
 
 export interface Cart {
-  id: number
-  user_id?: number
-  created_at: string
-  updated_at: string
-  items: CartItem[]
+  id: string
+  customer_id?: string | null
+  card_items: CartItem[]
 }
 
 export interface AddToCartPayload {
-  product_id: number
+  product_id: string
   quantity: number
 }
 
 export interface UpdateCartItemPayload {
-  product_id?: number
   quantity?: number
+}
+
+// =========================
+// Wilaya / Shipping Types
+// =========================
+
+export interface Wilaya {
+  id: number
+  name: string
+  display_name: string
+  active: boolean
+  free_shipping: boolean
+  home_delivery_enabled?: boolean
+  home_delivery_price?: number
+  office_delivery_enabled?: boolean
+  office_delivery_price?: number
 }
 
 // =========================
 // Order Types
 // =========================
 
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED'
-
 export interface OrderItem {
-  id: number
-  order_id: number
-  product_id?: number
-  product_name: string
-  product_sku?: string
+  id: string
+  product_id?: string | null
   quantity: number
-  unit_price: number | string
-  total_price: number | string
-  product?: Product
+  price: number | string
 }
 
 export interface Order {
-  id: number
-  order_number: string
-  customer_name: string
-  customer_phone: string
-  customer_wilaya: string
-  total_amount: number | string
-  status: OrderStatus
-  created_by?: number
+  id: string
+  customer_phone?: string | null
+  customer_wilaya?: string | null
+  delivery_type?: string | null
+  shipping_zone_id?: number | null
+  shipping_price?: number | string | null
+  total_price?: number | string | null
   created_at: string
-  admin?: Admin
-  items: OrderItem[]
+  order_items: OrderItem[]
 }
 
 export interface CreateOrderPayload {
-  customer_name: string
   customer_phone: string
-  customer_wilaya: string
-  status?: string
-}
-
-export interface UpdateOrderPayload {
-  status?: OrderStatus
-}
-
-export interface CreateOrderItemPayload {
-  order_id: number
-  product_id?: number
-  quantity: number
-  unit_price: number
-  product_name: string
-  product_sku?: string
-}
-
-export interface UpdateOrderItemPayload {
-  product_id?: number
-  quantity?: number
-  unit_price?: number
-  product_name?: string
-  product_sku?: string
+  wilaya_id: number
+  delivery_type?: 'home' | 'office'
+  customer_id?: string
+  coupon_id?: string
+  order_status_id?: string
 }

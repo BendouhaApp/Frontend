@@ -19,7 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGet } from "@/hooks/useGet";
 import { usePost } from "@/hooks/usePost";
-import type { ProductResponse, AddToCartPayload, CartItem } from "@/types/api";
+import { useCart } from "@/hooks/useCart";
+import type { ProductResponse, AddToCartPayload, CartItem, ApiResponse } from "@/types/api";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // Loading Skeleton for Product Detail
@@ -307,20 +309,11 @@ export function ProductDetail() {
   });
   const product = data?.data;
 
-  // Get cart ID from localStorage or create new one
-  const getCartId = () => {
-    const cartId = localStorage.getItem("cart_id");
-    if (cartId) return cartId;
-
-    // Generate a unique cart ID
-    const newCartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem("cart_id", newCartId);
-    return newCartId;
-  };
+  const { cartId } = useCart();
 
   // Cart mutation with dynamic cart_id
-  const addToCart = usePost<AddToCartPayload, CartItem>({
-    path: `cart/items?cart_id=${getCartId()}`,
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : "cart/items?cart_id=",
     method: "post",
     successMessage: "Product added to cart",
     errorMessage: "Error adding to cart",
@@ -384,6 +377,10 @@ export function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (!cartId) {
+      toast.error("Cart not ready. Please try again.");
+      return;
+    }
     addToCart.mutate({
       product_id: product.id,
       quantity,

@@ -3,54 +3,26 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight } from 'lucide-react'
 import { staggerContainer, staggerItem, fadeInUp, DURATION, EASE, hoverLift } from '@/lib/motion'
-
-const collections = [
-  {
-    id: 'living-room',
-    name: 'Living Room',
-    description: 'Elegant comfort for everyday moments',
-    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80',
-    itemCount: 24,
-  },
-  {
-    id: 'bedroom',
-    name: 'Bedroom',
-    description: 'Peaceful retreats for restful nights',
-    image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800&q=80',
-    itemCount: 18,
-  },
-  {
-    id: 'lighting',
-    name: 'Lighting',
-    description: 'Illuminate with intention',
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
-    itemCount: 32,
-  },
-  {
-    id: 'textiles',
-    name: 'Textiles',
-    description: 'Soft touches of luxury',
-    image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&q=80',
-    itemCount: 45,
-  },
-  {
-    id: 'decor',
-    name: 'Decor',
-    description: 'The details that make the difference',
-    image: 'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=800&q=80',
-    itemCount: 56,
-  },
-  {
-    id: 'kitchen',
-    name: 'Kitchen',
-    description: 'Where culinary art begins',
-    image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&q=80',
-    itemCount: 28,
-  },
-]
+import { useGet } from '@/hooks/useGet'
+import type { ApiResponse, Category } from '@/types/api'
+import { cn } from '@/lib/utils'
 
 export function Collections() {
   const { t } = useTranslation()
+  const { data } = useGet<ApiResponse<Category[]>>({
+    path: 'categories',
+    options: {
+      staleTime: 1000 * 60 * 10,
+    },
+  })
+  const collections =
+    data?.data?.map((cat) => ({
+      id: cat.id,
+      name: cat.category_name,
+      description: cat.category_description ?? '',
+      image: cat.image ?? null,
+      itemCount: cat.other_categories?.length ?? 0,
+    })) ?? []
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,20 +72,32 @@ export function Collections() {
         >
           {collections.map((collection) => (
             <motion.div key={collection.id} variants={staggerItem}>
-              <Link to={`/shop?collection=${collection.id}`} className="group block">
+              <Link to={`/shop?category=${collection.id}`} className="group block">
                 <motion.div
                   whileHover={hoverLift}
                   className="overflow-hidden rounded-2xl bg-neutral-100"
                 >
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <motion.img
-                      src={collection.image}
-                      alt={collection.name}
-                      className="h-full w-full object-cover"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.5 }}
-                    />
+                    {collection.image ? (
+                      <motion.img
+                        src={collection.image}
+                        alt={collection.name}
+                        className="h-full w-full object-cover"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    ) : (
+                      <div
+                        className={cn(
+                          'flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-200 via-neutral-100 to-white'
+                        )}
+                      >
+                        <span className="text-sm font-medium text-neutral-600">
+                          {collection.name}
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     
                     {/* Content Overlay */}

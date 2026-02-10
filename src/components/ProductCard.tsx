@@ -15,6 +15,8 @@ interface ProductCardProps {
   className?: string
 }
 
+type BadgeType = 'new' | 'sale' | 'bestseller'
+
 export function ProductCard({
   product,
   variant = 'default',
@@ -53,15 +55,20 @@ export function ProductCard({
     : 0
 
   // Determine which badge to show (priority: sale > new > bestseller)
-  const displayBadge = discount > 0 ? 'sale' : product.badge
+  const displayBadge: BadgeType | undefined =
+    discount > 0
+      ? 'sale'
+      : product.badge === 'new' || product.badge === 'sale' || product.badge === 'bestseller'
+        ? product.badge
+        : undefined
 
-  const badgeText = {
+  const badgeText: Record<BadgeType, string> = {
     new: t('common.newArrival'),
     sale: `-${discount}%`,
     bestseller: t('common.bestSeller'),
   }
 
-  const badgeColors = {
+  const badgeColors: Record<BadgeType, string> = {
     new: 'bg-cyan text-navy',
     sale: 'bg-gold text-navy',
     bestseller: 'bg-primary text-white',
@@ -251,8 +258,6 @@ function CompactProductCard({
   onAddToCart?: (product: Product) => void
   className?: string
 }) {
-  const { t } = useTranslation()
-  
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -350,15 +355,20 @@ function DetailedProductCard({
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-  const displayBadge = discount > 0 ? 'sale' : product.badge
+  const displayBadge: BadgeType | undefined =
+    discount > 0
+      ? 'sale'
+      : product.badge === 'new' || product.badge === 'sale' || product.badge === 'bestseller'
+        ? product.badge
+        : undefined
 
-  const badgeColors = {
+  const badgeColors: Record<BadgeType, string> = {
     new: 'bg-cyan text-navy',
     sale: 'bg-gold text-navy',
     bestseller: 'bg-primary text-white',
   }
 
-  const badgeText = {
+  const badgeText: Record<BadgeType, string> = {
     new: t('common.newArrival'),
     sale: `-${discount}%`,
     bestseller: t('common.bestSeller'),
