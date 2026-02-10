@@ -9,6 +9,7 @@ import {
   Instagram,
   Facebook,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BendouhaLogo } from "@/components/logo/BrandLogo";
@@ -17,11 +18,11 @@ import { BendouhaLogo } from "@/components/logo/BrandLogo";
 function SocialLink({
   href,
   icon: Icon,
-  label,
+  ariaLabel,
 }: {
   href: string;
   icon: React.ElementType;
-  label: string;
+  ariaLabel: string;
 }) {
   return (
     <motion.a
@@ -35,7 +36,7 @@ function SocialLink({
       )}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
-      aria-label={`Suivez-nous sur ${label}`}
+      aria-label={ariaLabel}
     >
       <Icon className="h-5 w-5" aria-hidden="true" />
     </motion.a>
@@ -71,23 +72,24 @@ function FooterLink({
 }
 
 export function Footer() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
 
   const currentYear = new Date().getFullYear();
 
   // Quick links
   const quickLinks = [
-    { to: "/shop", label: "Boutique" },
-    { to: "/collections", label: "Collections" },
-    { to: "/about", label: "À propos" },
-    { to: "/contact", label: "Contact" },
+    { to: "/shop", label: t("footer.shop") },
+    { to: "/collections", label: t("footer.collections") },
+    { to: "/about", label: t("footer.aboutUs") },
+    { to: "/contact", label: t("footer.contact") },
   ];
 
   // Support links
   const supportLinks = [
-    { to: "/faq", label: "FAQ" },
-    { to: "/shipping", label: "Livraison" },
-    { to: "/returns", label: "Retours" },
+    { to: "/faq", label: t("footer.faq") },
+    { to: "/shipping", label: t("footer.shippingInfo") },
+    { to: "/returns", label: t("footer.returns") },
   ];
 
   // Social links - Only Instagram and Facebook
@@ -127,8 +129,7 @@ export function Footer() {
               </motion.div>
             </Link>
             <p className="mt-4 max-w-sm text-base leading-relaxed text-navy-300">
-              Votre destination pour des équipements électriques de qualité
-              supérieure.
+              {t("footer.brandDescription")}
             </p>
 
             {/* Contact Info */}
@@ -150,11 +151,16 @@ export function Footer() {
             {/* Social Links */}
             <div className="mt-8">
               <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-gold">
-                Suivez-nous
+                {t("footer.followUs")}
               </h3>
               <div className="flex gap-3">
                 {socialLinks.map((social) => (
-                  <SocialLink key={social.label} {...social} />
+                  <SocialLink
+                    key={social.label}
+                    href={social.href}
+                    icon={social.icon}
+                    ariaLabel={`${t("footer.followUs")}: ${social.label}`}
+                  />
                 ))}
               </div>
             </div>
@@ -165,7 +171,7 @@ export function Footer() {
             {/* Quick Links */}
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-                Liens Rapides
+                {t("footer.quickLinks")}
               </h3>
               <ul className="space-y-3">
                 {quickLinks.map((link) => (
@@ -179,7 +185,7 @@ export function Footer() {
             {/* Support */}
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-                Support
+                {t("footer.support")}
               </h3>
               <ul className="space-y-3">
                 {supportLinks.map((link) => (
@@ -194,10 +200,10 @@ export function Footer() {
           {/* Newsletter Section */}
           <div className="lg:col-span-1">
             <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-              Newsletter
+              {t("footer.newsletter")}
             </h3>
             <p className="mb-4 text-sm text-navy-300">
-              Inscrivez-vous pour recevoir nos offres exclusives et nouveautés.
+              {t("footer.newsletterDesc")}
             </p>
             <form onSubmit={handleNewsletterSubmit} className="space-y-3">
               <div className="relative">
@@ -205,7 +211,7 @@ export function Footer() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Votre adresse email"
+                  placeholder={t("footer.emailPlaceholder")}
                   className={cn(
                     "w-full rounded-full border border-navy-600 bg-navy-800 px-4 py-3 text-sm text-white",
                     "placeholder:text-navy-400",
@@ -218,13 +224,12 @@ export function Footer() {
                 type="submit"
                 className="w-full rounded-full bg-primary hover:bg-primary-600"
               >
-                S'inscrire
+                {t("common.subscribe")}
                 <ArrowRight className="ms-2 h-4 w-4 rtl:rotate-180" />
               </Button>
             </form>
             <p className="mt-3 text-xs text-navy-400">
-              En vous inscrivant, vous acceptez notre politique de
-              confidentialité.
+              {t("footer.privacyConsent")}
             </p>
           </div>
         </div>
@@ -236,7 +241,7 @@ export function Footer() {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             {/* Copyright */}
             <p className="text-sm text-navy-400">
-              © {currentYear} Bendouha. Tous droits réservés.
+              {t("footer.copyright", { year: currentYear })}
             </p>
 
             {/* Legal Links */}
@@ -245,13 +250,13 @@ export function Footer() {
                 to="/privacy"
                 className="text-sm text-navy-400 transition-colors hover:text-cyan"
               >
-                Confidentialité
+                {t("footer.privacyPolicy")}
               </Link>
               <Link
                 to="/terms"
                 className="text-sm text-navy-400 transition-colors hover:text-cyan"
               >
-                Conditions d'utilisation
+                {t("footer.termsOfService")}
               </Link>
             </div>
           </div>

@@ -27,6 +27,7 @@ export function Header() {
   const navLinks = [
     { name: t("nav.shop"), href: "/shop" },
     { name: t("nav.collections"), href: "/collections" },
+    { name: t("nav.simulator"), href: "/simulator", badge: t("simulator.exclusiveBadge") },
     { name: t("nav.about"), href: "/about" },
     { name: t("nav.contact"), href: "/contact" },
   ];
@@ -92,6 +93,7 @@ export function Header() {
                   <NavigationLink
                     href={link.href}
                     isActive={location.pathname === link.href}
+                    badge={link.badge}
                   >
                     {link.name}
                   </NavigationLink>
@@ -170,10 +172,12 @@ function NavigationLink({
   href,
   children,
   isActive,
+  badge,
 }: {
   href: string;
   children: React.ReactNode;
   isActive?: boolean;
+  badge?: string;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -181,7 +185,7 @@ function NavigationLink({
     <Link
       to={href}
       className={cn(
-        "relative inline-flex h-8 items-center rounded-sm px-1 text-sm font-medium transition-colors",
+        "relative inline-flex h-8 items-center gap-2 rounded-sm px-1 text-sm font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         isActive ? "text-navy" : "text-navy-600 hover:text-primary",
       )}
@@ -190,6 +194,11 @@ function NavigationLink({
       aria-current={isActive ? "page" : undefined}
     >
       {children}
+      {badge ? (
+        <span className="rounded-full border border-gold-400/40 bg-gold-400/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-gold-600">
+          {badge}
+        </span>
+      ) : null}
       <motion.span
         className="absolute -bottom-0.5 start-0 h-0.5 w-full bg-primary"
         initial={{ scaleX: isActive ? 1 : 0 }}
@@ -204,7 +213,7 @@ function NavigationLink({
 
 // Mobile Navigation Component
 interface MobileNavigationProps {
-  navLinks: { name: string; href: string }[];
+  navLinks: { name: string; href: string; badge?: string }[];
   currentPath: string;
 }
 
@@ -234,7 +243,14 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                {link.name}
+                <div className="flex items-center justify-between">
+                  <span>{link.name}</span>
+                  {link.badge ? (
+                    <span className="rounded-full border border-gold-400/40 bg-gold-400/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-gold-600">
+                      {link.badge}
+                    </span>
+                  ) : null}
+                </div>
               </Link>
             </motion.li>
           );

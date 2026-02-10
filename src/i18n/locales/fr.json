@@ -30,10 +30,12 @@
   "nav": {
     "shop": "Boutique",
     "collections": "Collections",
+    "simulator": "Simulateur",
     "about": "À propos",
     "contact": "Contact",
     "newArrivals": "Nouveautés",
-    "bestSellers": "Meilleures ventes"
+    "bestSellers": "Meilleures ventes",
+    "simulator": "Simulator"
   },
   "hero": {
     "eyebrow": "Nouvelle Collection 2026",
@@ -131,7 +133,8 @@
     "newsletter": "Newsletter",
     "newsletterDesc": "Abonnez-vous pour des offres exclusives et les nouveautés.",
     "emailPlaceholder": "Entrez votre email",
-    "privacyConsent": "En vous abonnant, vous acceptez notre Politique de confidentialité."
+    "privacyConsent": "En vous abonnant, vous acceptez notre Politique de confidentialité.",
+    "quickLinks": "Liens rapides"
   },
   "about": {
     "title": "À propos de nous",
@@ -140,5 +143,46 @@
   "contact": {
     "title": "Contact",
     "subtitle": "Contactez-nous"
+  },
+  "simulator": {
+    "exclusiveBadge": "Exclusif",
+    "title": "Simulateur d’éclairage",
+    "subtitle": "Testez vos produits d’éclairage dans des scènes 3D et adaptez la lumière à chaque type de pièce.",
+    "roomSection": "Pièce",
+    "roomTypeLabel": "Type de pièce",
+    "roomFallback": "Modèles hors ligne chargés.",
+    "dimension": {
+      "width": "Largeur",
+      "length": "Longueur",
+      "height": "Hauteur"
+    },
+    "obstaclesSection": "Obstacles",
+    "obstaclesTitle": "Sélectionnez les obstacles",
+    "productSection": "Produits",
+    "productTitle": "Produits d'éclairage",
+    "productSubtitle": "Seuls les produits avec spécifications complètes sont affichés.",
+    "productLabel": "Choisir un produit",
+    "noProducts": "Aucun produit compatible",
+    "productFilterNote": "Filtré sur les produits avec CCT, lumen, CRI, puissance et angle.",
+    "productFallback": "Ajoutez les spécifications d’éclairage dans le back-office pour activer la simulation.",
+    "resultsSection": "Résultats",
+    "resultsTitle": "Résultats estimés",
+    "resultLux": "Éclairement moyen",
+    "resultBeam": "Couverture du faisceau",
+    "resultEfficacy": "Efficacité",
+    "safetyNotes": "Notes de sécurité",
+    "sceneTitle": "Scène 3D",
+    "sceneHint": "Glissez pour tourner. Faites défiler pour zoomer.",
+    "exclusiveTitle": "Simulateur d'éclairage exclusif",
+    "exclusiveBody": "Ce simulateur est une exclusivité Bendouha pour comparer les produits d'éclairage dans des pièces réelles.",
+    "warnings": "Alertes",
+    "warning": {
+      "low_cri": "CRI inférieur à 80 : rendu des couleurs réduit.",
+      "cct_outside_range": "CCT hors de la plage de confort (2700K–6500K).",
+      "low_lux": "Éclairement estimé faible pour les tâches.",
+      "high_lux": "Éclairement estimé élevé pour un usage résidentiel."
+    },
+    "simulationFallback": "Calcul local utilisé. Vérifiez la connexion au simulateur.",
+    "simulationLoading": "Calcul en cours..."
   }
 }

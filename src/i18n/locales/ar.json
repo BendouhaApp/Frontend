@@ -30,10 +30,12 @@
   "nav": {
     "shop": "المتجر",
     "collections": "المجموعات",
+    "simulator": "المحاكي",
     "about": "من نحن",
     "contact": "اتصل بنا",
     "newArrivals": "وصل حديثاً",
-    "bestSellers": "الأكثر مبيعاً"
+    "bestSellers": "الأكثر مبيعاً",
+    "simulator": "Simulator"
   },
   "hero": {
     "eyebrow": "مجموعة جديدة 2026",
@@ -131,7 +133,8 @@
     "newsletter": "النشرة الإخبارية",
     "newsletterDesc": "اشترك للحصول على عروض حصرية والمنتجات الجديدة.",
     "emailPlaceholder": "أدخل بريدك الإلكتروني",
-    "privacyConsent": "بالاشتراك، فإنك توافق على سياسة الخصوصية الخاصة بنا."
+    "privacyConsent": "بالاشتراك، فإنك توافق على سياسة الخصوصية الخاصة بنا.",
+    "quickLinks": "روابط سريعة"
   },
   "about": {
     "title": "من نحن",
@@ -140,5 +143,46 @@
   "contact": {
     "title": "اتصل بنا",
     "subtitle": "تواصل معنا"
+  },
+  "simulator": {
+    "exclusiveBadge": "حصري",
+    "title": "محاكي الإضاءة",
+    "subtitle": "اختبر منتجات الإضاءة في مشاهد ثلاثية الأبعاد واضبط الإضاءة لكل نوع غرفة.",
+    "roomSection": "الغرفة",
+    "roomTypeLabel": "نوع الغرفة",
+    "roomFallback": "تم تحميل القوالب دون اتصال.",
+    "dimension": {
+      "width": "العرض",
+      "length": "الطول",
+      "height": "الارتفاع"
+    },
+    "obstaclesSection": "العوائق",
+    "obstaclesTitle": "اختر العوائق",
+    "productSection": "المنتجات",
+    "productTitle": "منتجات الإضاءة",
+    "productSubtitle": "تُعرض فقط المنتجات ذات المواصفات الكاملة.",
+    "productLabel": "اختر منتجًا",
+    "noProducts": "لا توجد منتجات مناسبة",
+    "productFilterNote": "مصفاة على المنتجات التي تحتوي على CCT ولومن وCRI والقدرة والزاوية.",
+    "productFallback": "أضف مواصفات الإضاءة في لوحة الإدارة لتفعيل المحاكاة.",
+    "resultsSection": "النتائج",
+    "resultsTitle": "نتائج تقديرية",
+    "resultLux": "متوسط الإضاءة",
+    "resultBeam": "تغطية الحزمة",
+    "resultEfficacy": "الكفاءة",
+    "safetyNotes": "ملاحظات السلامة",
+    "sceneTitle": "مشهد ثلاثي الأبعاد",
+    "sceneHint": "اسحب للدوران. مرّر للتكبير.",
+    "exclusiveTitle": "محاكي إضاءة حصري",
+    "exclusiveBody": "هذا المحاكي حصري لدى بندوحة لمقارنة منتجات الإضاءة داخل غرف حقيقية.",
+    "warnings": "تنبيهات",
+    "warning": {
+      "low_cri": "CRI أقل من 80: دقة الألوان منخفضة.",
+      "cct_outside_range": "CCT خارج نطاق الراحة (2700K–6500K).",
+      "low_lux": "مستوى الإضاءة المقدر منخفض للمهام.",
+      "high_lux": "مستوى الإضاءة المقدر مرتفع للاستخدام السكني."
+    },
+    "simulationFallback": "تم استخدام حساب محلي. تحقق من اتصال المحاكي.",
+    "simulationLoading": "جارٍ الحساب..."
   }
 }

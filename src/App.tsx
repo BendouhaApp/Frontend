@@ -7,6 +7,7 @@ import { Collections } from "./pages/Collections";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { Checkout } from "./pages/Checkout";
+import { Simulator } from "./pages/Simulator";
 import AdminLogin from "./pages/admins/AdminLogin";
 import AdminDashboard from "@/pages/admins/Admin";
 import AdminProducts from "@/pages/admins/AdminProducts";
@@ -25,6 +26,7 @@ function App() {
         <Route path="product/:id" element={<ProductDetail />} />
         <Route path="checkout" element={<Checkout />} />
         <Route path="collections" element={<Collections />} />
+        <Route path="simulator" element={<Simulator />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
       </Route>

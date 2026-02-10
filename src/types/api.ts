@@ -144,6 +144,88 @@ export interface ProductResponse {
 }
 
 // =========================
+// Room / Simulator Types
+// =========================
+
+export type RoomTypeKey =
+  | 'bedroom'
+  | 'kitchen'
+  | 'bathroom'
+  | 'wc'
+  | 'living_room'
+
+export interface RoomDimensions {
+  width: number
+  length: number
+  height: number
+  unit: 'm'
+}
+
+export interface RoomTypeDefinition {
+  key: RoomTypeKey
+  label: string
+  description: string
+  defaultDimensions: RoomDimensions
+  safetyNotes?: string[]
+}
+
+export type RoomObstacleCategory = 'furniture' | 'opening' | 'fixture'
+
+export interface RoomObstacleDefinition {
+  id: string
+  label: string
+  category: RoomObstacleCategory
+  width: number
+  height: number
+  depth: number
+  placement: {
+    x: number
+    z: number
+  }
+  blocksLight?: boolean
+}
+
+export interface RoomTemplate extends RoomTypeDefinition {
+  obstacles: RoomObstacleDefinition[]
+}
+
+export interface RoomTemplatesResponse {
+  message?: string
+  data: RoomTemplate[]
+}
+
+export interface SimulateRoomRequest {
+  roomType: RoomTypeKey
+  dimensions: RoomDimensions
+  obstacles: string[]
+  product: {
+    cct: number
+    lumen: number
+    cri: number
+    power: number
+    angle: number
+  }
+}
+
+export interface SimulateRoomResult {
+  roomType: RoomTypeKey
+  dimensions: RoomDimensions
+  obstacleIds: string[]
+  blockageFactor: number
+  effectiveLumen: number
+  estimatedLux: number | null
+  beamDiameter: number | null
+  efficacy: number | null
+  warnings: string[]
+  safetyNotes?: string[]
+}
+
+export interface SimulateRoomResponse {
+  message?: string
+  data: SimulateRoomResult
+}
+
+// =========================
 // Cart Types
 // =========================
 
