@@ -24,7 +24,7 @@ import {
   Folder,
   ChevronRight,
   ChevronDown,
-  Filter
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -265,7 +265,6 @@ function Toggle({
   );
 }
 
-
 function CategorySelector({
   categories,
   selectedIds,
@@ -333,7 +332,9 @@ function CategorySelector({
     if (!cat.parent_id && isCurrentlySelected) {
       // Remove the main category AND all its subcategories
       const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
-      onChange(selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)));
+      onChange(
+        selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)),
+      );
       return;
     }
 
@@ -364,7 +365,9 @@ function CategorySelector({
     // If removing a main category, also remove its subcategories
     if (!cat.parent_id) {
       const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
-      onChange(selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)));
+      onChange(
+        selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)),
+      );
     } else {
       onChange(selectedIds.filter((x) => x !== id));
     }
@@ -374,7 +377,8 @@ function CategorySelector({
   const isExpanded = (id: string) => expandedIds.includes(id);
 
   // Check if a subcategory can be selected (its parent must be selected)
-  const canSelectSubcategory = (parentId: string) => selectedIds.includes(parentId);
+  const canSelectSubcategory = (parentId: string) =>
+    selectedIds.includes(parentId);
 
   const filteredMain =
     mainFilterId === "all"
@@ -442,9 +446,7 @@ function CategorySelector({
           </span>
 
           <div className="flex-1">
-            <p className="text-sm font-semibold text-neutral-900">
-              Categories
-            </p>
+            <p className="text-sm font-semibold text-neutral-900">Categories</p>
             <p className="text-xs text-neutral-500">
               Select main categories first, then choose subcategories
             </p>
@@ -565,7 +567,9 @@ function CategorySelector({
                             ? "hover:bg-neutral-100 text-neutral-600"
                             : "text-neutral-300 cursor-default",
                         )}
-                        aria-label={hasSubs ? "Toggle sub-categories" : undefined}
+                        aria-label={
+                          hasSubs ? "Toggle sub-categories" : undefined
+                        }
                       >
                         {hasSubs ? (
                           isExpanded(main.id) ? (
@@ -585,24 +589,34 @@ function CategorySelector({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <Folder className={cn(
-                            "h-4 w-4",
-                            mainSelected ? "text-primary" : "text-neutral-400"
-                          )} />
-                          <p className={cn(
-                            "truncate text-sm font-semibold",
-                            mainSelected ? "text-primary" : "text-neutral-900"
-                          )}>
+                          <Folder
+                            className={cn(
+                              "h-4 w-4",
+                              mainSelected
+                                ? "text-primary"
+                                : "text-neutral-400",
+                            )}
+                          />
+                          <p
+                            className={cn(
+                              "truncate text-sm font-semibold",
+                              mainSelected
+                                ? "text-primary"
+                                : "text-neutral-900",
+                            )}
+                          >
                             {main.category_name}
                           </p>
 
                           {hasSubs && (
-                            <span className={cn(
-                              "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                              mainSelected
-                                ? "bg-primary/20 text-primary"
-                                : "bg-neutral-100 text-neutral-600"
-                            )}>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                                mainSelected
+                                  ? "bg-primary/20 text-primary"
+                                  : "bg-neutral-100 text-neutral-600",
+                              )}
+                            >
                               {subs.length} Sub Category
                             </span>
                           )}
@@ -625,14 +639,19 @@ function CategorySelector({
                           className="overflow-hidden"
                         >
                           <div className="relative pb-3">
-                            <div className={cn(
-                              "absolute left-7 top-0 h-full w-px",
-                              mainSelected ? "bg-primary/30" : "bg-neutral-200"
-                            )} />
+                            <div
+                              className={cn(
+                                "absolute left-7 top-0 h-full w-px",
+                                mainSelected
+                                  ? "bg-primary/30"
+                                  : "bg-neutral-200",
+                              )}
+                            />
                             <div className="space-y-1 px-3 pb-2 pl-14">
                               {!mainSelected && (
                                 <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-xs text-amber-700">
-                                  Select the main category "{main.category_name}" first to enable subcategories
+                                  Select the main category "{main.category_name}
+                                  " first to enable subcategories
                                 </div>
                               )}
                               {subs.map((sub) => {
@@ -642,22 +661,34 @@ function CategorySelector({
                                     key={sub.id}
                                     className={cn(
                                       "relative flex items-center gap-3 rounded-lg px-2 py-2 transition",
-                                      canSelect ? "hover:bg-neutral-50" : "opacity-60",
+                                      canSelect
+                                        ? "hover:bg-neutral-50"
+                                        : "opacity-60",
                                     )}
                                   >
-                                    <div className={cn(
-                                      "absolute -left-7 top-1/2 h-px w-7",
-                                      mainSelected ? "bg-primary/30" : "bg-neutral-200"
-                                    )} />
+                                    <div
+                                      className={cn(
+                                        "absolute -left-7 top-1/2 h-px w-7",
+                                        mainSelected
+                                          ? "bg-primary/30"
+                                          : "bg-neutral-200",
+                                      )}
+                                    />
                                     <Checkbox
                                       checked={isSelected(sub.id)}
-                                      onCheckedChange={() => toggleCategory(sub.id)}
+                                      onCheckedChange={() =>
+                                        toggleCategory(sub.id)
+                                      }
                                       disabled={!canSelect}
                                     />
-                                    <p className={cn(
-                                      "min-w-0 truncate text-sm",
-                                      canSelect ? "text-neutral-700" : "text-neutral-400"
-                                    )}>
+                                    <p
+                                      className={cn(
+                                        "min-w-0 truncate text-sm",
+                                        canSelect
+                                          ? "text-neutral-700"
+                                          : "text-neutral-400",
+                                      )}
+                                    >
                                       {sub.category_name}
                                     </p>
                                   </div>
@@ -677,7 +708,6 @@ function CategorySelector({
     </div>
   );
 }
-
 
 function ProductForm({
   product,
@@ -1057,9 +1087,7 @@ function ProductForm({
               required
               placeholder="e.g., 3000"
             />
-            <p className="mt-1 text-xs text-neutral-500">
-              Range: 1000-10000K
-            </p>
+            <p className="mt-1 text-xs text-neutral-500">Range: 1000-10000K</p>
           </div>
 
           <div>
@@ -1464,7 +1492,7 @@ function ProductRow({
               ${money(product.sale_price)}
             </span>
             {product.compare_price != null &&
-              Number(product.compare_price) > 0 ? (
+            Number(product.compare_price) > 0 ? (
               <span className="text-xs text-neutral-400 line-through">
                 ${money(product.compare_price)}
               </span>
@@ -1487,11 +1515,15 @@ function ProductRow({
         <div className="flex flex-col gap-1 text-xs text-neutral-600">
           <div className="flex items-center gap-1">
             <Lightbulb className="h-3 w-3" />
-            <span>{product.cct}K • {product.lumen}lm</span>
+            <span>
+              {product.cct}K • {product.lumen}lm
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <Zap className="h-3 w-3" />
-            <span>{money(product.power)}W • {product.angle}°</span>
+            <span>
+              {money(product.power)}W • {product.angle}°
+            </span>
           </div>
         </div>
       </td>
@@ -1563,10 +1595,26 @@ export default function AdminProductsPage() {
   );
   const [dir, setDir] = useState<"asc" | "desc">("desc");
 
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 400);
+    return () => clearTimeout(t);
+  }, [query]);
+
   const load = async () => {
     setLoading(true);
     setError("");
+
     try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+
+      if (debouncedQuery.trim()) {
+        params.set("search", debouncedQuery.trim());
+      }
+
       const res = await api<{
         data: DbProduct[];
         meta: {
@@ -1575,7 +1623,7 @@ export default function AdminProductsPage() {
           total: number;
           totalPages: number;
         };
-      }>(`products?page=${page}&limit=${limit}`, { method: "GET" });
+      }>(`products?${params.toString()}`, { method: "GET" });
 
       setItems(res.data);
       setTotalPages(res.meta.totalPages);
@@ -1592,7 +1640,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [query]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     if (items.length === 0 && page > 1) {
@@ -1601,37 +1649,27 @@ export default function AdminProductsPage() {
   }, [items]);
 
   const normalized = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = !q
-      ? items
-      : items.filter((p) => {
-        const hay = [
-          p.product_name,
-          p.slug,
-          p.sku ?? "",
-          p.short_description ?? "",
-          p.product_type ?? "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q);
-      });
-
-    const sorted = [...filtered].sort((a, b) => {
+    const sorted = [...items].sort((a, b) => {
       const factor = dir === "asc" ? 1 : -1;
+
       if (sort === "name")
         return a.product_name.localeCompare(b.product_name) * factor;
+
       if (sort === "price")
         return (Number(a.sale_price) - Number(b.sale_price)) * factor;
+
       if (sort === "stock") return (a.quantity - b.quantity) * factor;
+
       const at = (a.updated_at || a.created_at || "") as string;
       const bt = (b.updated_at || b.created_at || "") as string;
+
       if (at && bt) return at.localeCompare(bt) * factor;
+
       return a.product_name.localeCompare(b.product_name) * factor;
     });
 
     return sorted;
-  }, [items, query, sort, dir]);
+  }, [items, sort, dir]);
 
   const hasSelection = selectedIds.length > 0;
   const isAllSelected =
@@ -2210,8 +2248,8 @@ export default function AdminProductsPage() {
                 className={cn(
                   "h-8 w-12 text-center",
                   pageInput &&
-                  (Number(pageInput) < 1 || Number(pageInput) > totalPages) &&
-                  "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40",
+                    (Number(pageInput) < 1 || Number(pageInput) > totalPages) &&
+                    "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40",
                 )}
                 aria-label="Go to page"
               />
@@ -2219,7 +2257,6 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
-
 
       <AnimatePresence>
         {confirmDelete && (
@@ -2253,8 +2290,8 @@ export default function AdminProductsPage() {
                   </span>
                   ?
                   <br />
-                  Once deleted, this product{" "}
-                  <strong>cannot be restored</strong>.
+                  Once deleted, this product <strong>cannot be restored</strong>
+                  .
                 </p>
 
                 <div className="mt-6 flex justify-end gap-3">
@@ -2274,9 +2311,7 @@ export default function AdminProductsPage() {
                       setConfirmDelete(null);
                     }}
                   >
-                    {deletingId === confirmDelete.id
-                      ? "Deleting..."
-                      : "Delete"}
+                    {deletingId === confirmDelete.id ? "Deleting..." : "Delete"}
                   </Button>
                 </div>
               </div>
@@ -2317,8 +2352,8 @@ export default function AdminProductsPage() {
                   </span>{" "}
                   products?
                   <br />
-                  Once deleted, all products{" "}
-                  <strong>cannot be restored</strong>.
+                  Once deleted, all products <strong>cannot be restored</strong>
+                  .
                 </p>
 
                 <div className="mt-6 flex justify-end gap-3">
