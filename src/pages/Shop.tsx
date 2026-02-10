@@ -302,6 +302,7 @@ export function Shop() {
   // Filter state
   const [manualCategory, setManualCategory] = useState<string | null>(null);
   const [manualSubcategory, setManualSubcategory] = useState<string | null>(null);
+  const [manualParamKey, setManualParamKey] = useState<string | null>(null);
   const [selectedSort, setSelectedSort] = useState("featured");
 
   const { cartId } = useCart();
@@ -349,8 +350,35 @@ export function Shop() {
     return { category: "all", subcategory: "all" };
   }, [categoryParam, categoryLookup]);
 
-  const selectedCategory = manualCategory ?? derivedSelection.category;
-  const selectedSubcategory = manualSubcategory ?? derivedSelection.subcategory;
+  const manualActive = manualParamKey === (categoryParam ?? null);
+  const baseCategory = manualActive
+    ? manualCategory ?? derivedSelection.category
+    : derivedSelection.category;
+  const baseSubcategory = manualActive
+    ? manualSubcategory ?? derivedSelection.subcategory
+    : derivedSelection.subcategory;
+
+  const selectedCategory = useMemo(() => {
+    if (baseCategory !== "all" && !categoryLookup.has(baseCategory)) {
+      return "all";
+    }
+    return baseCategory;
+  }, [baseCategory, categoryLookup]);
+
+  const selectedSubcategory = useMemo(() => {
+    if (baseSubcategory !== "all") {
+      const sub = categoryLookup.get(baseSubcategory);
+      if (!sub) return "all";
+      if (
+        selectedCategory !== "all" &&
+        sub.parent_id &&
+        sub.parent_id !== selectedCategory
+      ) {
+        return "all";
+      }
+    }
+    return baseSubcategory;
+  }, [baseSubcategory, categoryLookup, selectedCategory]);
 
   const activeCategoryId =
     selectedSubcategory !== "all" ? selectedSubcategory : selectedCategory;
@@ -366,6 +394,24 @@ export function Shop() {
     const selected = categoryLookup.get(selectedCategory);
     return selected?.other_categories ?? [];
   }, [selectedCategory, categoryLookup]);
+
+  const manualKey = categoryParam ?? null;
+  const applyManualCategory = (id: string) => {
+    setManualCategory(id);
+    setManualSubcategory("all");
+    setManualParamKey(manualKey);
+  };
+  const applyManualSubcategory = (id: string) => {
+    setManualCategory(selectedCategory);
+    setManualSubcategory(id);
+    setManualParamKey(manualKey);
+  };
+  const clearManualSelection = () => {
+    setManualCategory("all");
+    setManualSubcategory("all");
+    setManualParamKey(manualKey);
+  };
+
 
   // Fetch products from API (no filtering)
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
@@ -442,14 +488,8 @@ export function Shop() {
         subcategories={subcategories}
         selectedCategory={selectedCategory}
         selectedSubcategory={selectedSubcategory}
-        setSelectedCategory={(id) => {
-          setManualCategory(id);
-          setManualSubcategory("all");
-        }}
-        setSelectedSubcategory={(id) => {
-          setManualCategory(selectedCategory);
-          setManualSubcategory(id);
-        }}
+        setSelectedCategory={applyManualCategory}
+        setSelectedSubcategory={applyManualSubcategory}
       />
 
       {/* Page Header */}
@@ -604,14 +644,8 @@ export function Shop() {
             subcategories={subcategories}
             selectedCategory={selectedCategory}
             selectedSubcategory={selectedSubcategory}
-            setSelectedCategory={(id) => {
-              setManualCategory(id);
-              setManualSubcategory("all");
-            }}
-            setSelectedSubcategory={(id) => {
-              setManualCategory(selectedCategory);
-              setManualSubcategory(id);
-            }}
+            setSelectedCategory={applyManualCategory}
+            setSelectedSubcategory={applyManualSubcategory}
             className="hidden w-64 flex-shrink-0 lg:block"
           />
 
@@ -626,8 +660,7 @@ export function Shop() {
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   <button
                     onClick={() => {
-                      setManualCategory("all");
-                      setManualSubcategory("all");
+                      clearManualSelection();
                     }}
                     className={cn(
                       "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -643,8 +676,7 @@ export function Shop() {
                     <button
                       key={category.id}
                       onClick={() => {
-                        setManualCategory(category.id);
-                        setManualSubcategory("all");
+                        applyManualCategory(category.id);
                       }}
                       className={cn(
                         "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -669,10 +701,9 @@ export function Shop() {
                     {subcategories.map((subcategory) => (
                       <button
                         key={subcategory.id}
-                        onClick={() => {
-                          setManualCategory(selectedCategory);
-                          setManualSubcategory(subcategory.id);
-                        }}
+                      onClick={() => {
+                        applyManualSubcategory(subcategory.id);
+                      }}
                         className={cn(
                           "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
                           selectedSubcategory === subcategory.id
@@ -702,8 +733,7 @@ export function Shop() {
                   {selectedCategoryLabel}
                   <button
                     onClick={() => {
-                      setManualCategory("all");
-                      setManualSubcategory("all");
+                      clearManualSelection();
                     }}
                     className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
                   >
