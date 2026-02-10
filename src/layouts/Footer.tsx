@@ -8,6 +8,7 @@ import {
   Mail,
   Instagram,
   Facebook,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ function SocialLink({
   ariaLabel,
 }: {
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   ariaLabel: string;
 }) {
   return (

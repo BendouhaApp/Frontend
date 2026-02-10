@@ -411,10 +411,14 @@ export function Shop() {
     return selected?.other_categories ?? [];
   }, [selectedCategory, categoryLookup]);
 
-  // Fetch products from API
+  // Fetch products from API (server-side filtering by category/subcategory)
+  const productQuery =
+    activeCategoryId !== "all" ? { categoryId: activeCategoryId } : undefined;
+
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
       path: "products/public",
+      query: productQuery,
       options: {
         staleTime: 1000 * 60 * 5, // 5 minutes
       },
