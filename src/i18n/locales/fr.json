@@ -87,6 +87,7 @@
     "subcategories": "Sous-catégories",
     "subcategoriesHint": "Sélectionnez une catégorie pour afficher les sous-catégories.",
     "noSubcategories": "Aucune sous-catégorie",
+    "noCategories": "Aucune catégorie disponible",
     "sortBy": "Trier par",
     "priceRange": "Fourchette de prix",
     "color": "Couleur",

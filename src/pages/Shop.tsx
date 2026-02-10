@@ -31,7 +31,6 @@ import { toast } from "sonner";
 type ViewMode = "grid" | "large" | "list";
 type CardVariant = "default" | "compact" | "detailed";
 
-const priceRangeIds = ["all", "under-100", "100-250", "250-500", "over-500"];
 const sortOptionIds = [
   "featured",
   "newest",
@@ -60,18 +59,6 @@ const itemVariants = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TFn = (key: string, opts?: any) => string;
 
-// Helper to get price range label
-function getPriceLabel(t: TFn, id: string): string {
-  const labels: Record<string, string> = {
-    all: t("products.allPrices"),
-    "under-100": t("products.underPrice", { price: "$100" }),
-    "100-250": t("products.priceRangeBetween", { min: "$100", max: "$250" }),
-    "250-500": t("products.priceRangeBetween", { min: "$250", max: "$500" }),
-    "over-500": t("products.overPrice", { price: "$500" }),
-  };
-  return labels[id] || id;
-}
-
 // Helper to get sort label
 function getSortLabel(t: TFn, id: string): string {
   const labels: Record<string, string> = {
@@ -92,8 +79,6 @@ function FilterSidebar({
   selectedSubcategory,
   setSelectedCategory,
   setSelectedSubcategory,
-  selectedPrice,
-  setSelectedPrice,
   className,
 }: {
   categories: Category[];
@@ -102,8 +87,6 @@ function FilterSidebar({
   selectedSubcategory: string;
   setSelectedCategory: (id: string) => void;
   setSelectedSubcategory: (id: string) => void;
-  selectedPrice: string;
-  setSelectedPrice: (id: string) => void;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -132,6 +115,11 @@ function FilterSidebar({
               <span>{t("products.allCategories")}</span>
             </button>
           </li>
+          {categories.length === 0 && (
+            <li className="px-3 py-2 text-sm text-navy-500">
+              {t("products.noCategories")}
+            </li>
+          )}
           {categories.map((category) => (
             <li key={category.id}>
               <button
@@ -190,38 +178,13 @@ function FilterSidebar({
         )}
       </div>
 
-      {/* Price Range */}
-      <div>
-        <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-navy-500">
-          {t("products.priceRange")}
-        </h3>
-        <ul className="space-y-2">
-          {priceRangeIds.map((id) => (
-            <li key={id}>
-              <button
-                onClick={() => setSelectedPrice(id)}
-                className={cn(
-                  "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
-                  selectedPrice === id
-                    ? "bg-primary text-white"
-                    : "text-navy-700 hover:bg-navy-50",
-                )}
-              >
-                {getPriceLabel(t, id)}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Clear Filters */}
+      {/* Clear Selection */}
       <Button
         variant="outline"
         className="w-full border-primary text-primary hover:bg-primary hover:text-white"
         onClick={() => {
           setSelectedCategory("all");
           setSelectedSubcategory("all");
-          setSelectedPrice("all");
         }}
       >
         {t("products.clearFilters")}
@@ -240,8 +203,6 @@ function MobileFilterDrawer({
   selectedSubcategory,
   setSelectedCategory,
   setSelectedSubcategory,
-  selectedPrice,
-  setSelectedPrice,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -251,8 +212,6 @@ function MobileFilterDrawer({
   selectedSubcategory: string;
   setSelectedCategory: (id: string) => void;
   setSelectedSubcategory: (id: string) => void;
-  selectedPrice: string;
-  setSelectedPrice: (id: string) => void;
 }) {
   const { t } = useTranslation();
 
@@ -291,8 +250,6 @@ function MobileFilterDrawer({
                   selectedSubcategory={selectedSubcategory}
                   setSelectedCategory={setSelectedCategory}
                   setSelectedSubcategory={setSelectedSubcategory}
-                  selectedPrice={selectedPrice}
-                  setSelectedPrice={setSelectedPrice}
                 />
               </div>
               <div className="border-t border-navy-200 p-4">
@@ -345,7 +302,6 @@ export function Shop() {
   // Filter state
   const [manualCategory, setManualCategory] = useState<string | null>(null);
   const [manualSubcategory, setManualSubcategory] = useState<string | null>(null);
-  const [selectedPrice, setSelectedPrice] = useState("all");
   const [selectedSort, setSelectedSort] = useState("featured");
 
   const { cartId } = useCart();
@@ -411,14 +367,10 @@ export function Shop() {
     return selected?.other_categories ?? [];
   }, [selectedCategory, categoryLookup]);
 
-  // Fetch products from API (server-side filtering by category/subcategory)
-  const productQuery =
-    activeCategoryId !== "all" ? { categoryId: activeCategoryId } : undefined;
-
+  // Fetch products from API (no filtering)
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
       path: "products/public",
-      query: productQuery,
       options: {
         staleTime: 1000 * 60 * 5, // 5 minutes
       },
@@ -435,52 +387,7 @@ export function Shop() {
   });
 
   // Filter products by price range
-  const products = useMemo(() => {
-    let filtered = [...allProducts];
-
-    if (activeCategoryId !== "all") {
-      const selected = categoryLookup.get(activeCategoryId);
-      const selectedName = selected?.category_name?.toLowerCase();
-
-      filtered = filtered.filter((product) => {
-        const categories = product.categories ?? [];
-        if (categories.length > 0) {
-          return categories.some(
-            (cat) =>
-              cat.id === activeCategoryId || cat.parent_id === activeCategoryId,
-          );
-        }
-        if (selectedName) {
-          return product.category?.toLowerCase() === selectedName;
-        }
-        return true;
-      });
-    }
-
-    if (selectedPrice !== "all") {
-      filtered = filtered.filter((product) => {
-        const price =
-          typeof product.price === "string"
-            ? parseFloat(product.price)
-            : product.price;
-
-        switch (selectedPrice) {
-          case "under-100":
-            return price < 100;
-          case "100-250":
-            return price >= 100 && price < 250;
-          case "250-500":
-            return price >= 250 && price < 500;
-          case "over-500":
-            return price >= 500;
-          default:
-            return true;
-        }
-      });
-    }
-
-    return filtered;
-  }, [allProducts, activeCategoryId, selectedPrice, categoryLookup]);
+  const products = allProducts;
 
   const handleAddToCart = (product: Product) => {
     if (!cartId) {
@@ -524,8 +431,7 @@ export function Shop() {
 
   const { variant, gridClass } = getViewConfig();
 
-  const activeFiltersCount =
-    (activeCategoryId !== "all" ? 1 : 0) + (selectedPrice !== "all" ? 1 : 0);
+  const activeFiltersCount = activeCategoryId !== "all" ? 1 : 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -544,8 +450,6 @@ export function Shop() {
           setManualCategory(selectedCategory);
           setManualSubcategory(id);
         }}
-        selectedPrice={selectedPrice}
-        setSelectedPrice={setSelectedPrice}
       />
 
       {/* Page Header */}
@@ -708,14 +612,83 @@ export function Shop() {
               setManualCategory(selectedCategory);
               setManualSubcategory(id);
             }}
-            selectedPrice={selectedPrice}
-            setSelectedPrice={setSelectedPrice}
             className="hidden w-64 flex-shrink-0 lg:block"
           />
 
           {/* Product Grid */}
           <div className="flex-1">
-            {/* Active Filters Display */}
+            {/* Mobile Categories */}
+            <div className="mb-6 space-y-4 lg:hidden">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy-400">
+                  {t("products.categories")}
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  <button
+                    onClick={() => {
+                      setManualCategory("all");
+                      setManualSubcategory("all");
+                    }}
+                    className={cn(
+                      "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
+                      selectedCategory === "all" &&
+                        selectedSubcategory === "all"
+                        ? "border-primary bg-primary text-white"
+                        : "border-neutral-200 bg-white text-neutral-600 hover:border-primary/50 hover:text-primary",
+                    )}
+                  >
+                    {t("products.allCategories")}
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setManualCategory(category.id);
+                        setManualSubcategory("all");
+                      }}
+                      className={cn(
+                        "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
+                        selectedCategory === category.id &&
+                          selectedSubcategory === "all"
+                          ? "border-primary bg-primary text-white"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:border-primary/50 hover:text-primary",
+                      )}
+                    >
+                      {category.category_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedCategory !== "all" && subcategories.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-navy-400">
+                    {t("products.subcategories")}
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {subcategories.map((subcategory) => (
+                      <button
+                        key={subcategory.id}
+                        onClick={() => {
+                          setManualCategory(selectedCategory);
+                          setManualSubcategory(subcategory.id);
+                        }}
+                        className={cn(
+                          "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
+                          selectedSubcategory === subcategory.id
+                            ? "border-primary bg-primary text-white"
+                            : "border-neutral-200 bg-white text-neutral-600 hover:border-primary/50 hover:text-primary",
+                        )}
+                      >
+                        {subcategory.category_name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Active Selection Display */}
             {activeFiltersCount > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -725,41 +698,18 @@ export function Shop() {
                 <span className="text-sm text-navy-500">
                   {t("products.activeFilters")}
                 </span>
-                {activeCategoryId !== "all" && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
-                    {selectedCategoryLabel}
-                    <button
-                      onClick={() => {
-                        setManualCategory("all");
-                        setManualSubcategory("all");
-                      }}
-                      className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                )}
-                {selectedPrice !== "all" && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
-                    {getPriceLabel(t, selectedPrice)}
-                    <button
-                      onClick={() => setSelectedPrice("all")}
-                      className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                )}
-                <button
-                  onClick={() => {
-                    setManualCategory("all");
-                    setManualSubcategory("all");
-                    setSelectedPrice("all");
-                  }}
-                  className="text-sm text-navy-500 underline hover:text-primary"
-                >
-                  {t("products.clearAll")}
-                </button>
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
+                  {selectedCategoryLabel}
+                  <button
+                    onClick={() => {
+                      setManualCategory("all");
+                      setManualSubcategory("all");
+                    }}
+                    className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
               </motion.div>
             )}
 
