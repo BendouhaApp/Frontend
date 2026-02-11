@@ -264,6 +264,7 @@ export interface Wilaya {
   display_name: string
   active: boolean
   free_shipping: boolean
+  default_rate?: number | null
   home_delivery_enabled?: boolean
   home_delivery_price?: number
   office_delivery_enabled?: boolean
@@ -283,6 +284,8 @@ export interface OrderItem {
 
 export interface Order {
   id: string
+  customer_first_name?: string | null
+  customer_last_name?: string | null
   customer_phone?: string | null
   customer_wilaya?: string | null
   delivery_type?: string | null
@@ -294,6 +297,8 @@ export interface Order {
 }
 
 export interface CreateOrderPayload {
+  customer_first_name: string
+  customer_last_name: string
   customer_phone: string
   wilaya_id: number
   delivery_type?: 'home' | 'office'

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGet } from "@/hooks/useGet";
 import { usePost } from "@/hooks/usePost";
@@ -30,14 +30,15 @@ export function Checkout() {
     },
   });
 
-  const wilayas = wilayaResponse?.data ?? [];
+  const wilayas = useMemo(() => wilayaResponse?.data ?? [], [wilayaResponse?.data]);
   const items = mapCartItems(cart?.card_items ?? []);
   const subtotal = calcSubtotal(items);
 
   const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [wilayaId, setWilayaId] = useState<number | "">("");
   const [deliveryType, setDeliveryType] = useState<"home" | "office">("home");
-  const [orderId, setOrderId] = useState<string | null>(null);
 
   const selectedWilaya = useMemo(
     () => wilayas.find((w) => w.id === wilayaId),
@@ -47,27 +48,33 @@ export function Checkout() {
   const shipping = useMemo(() => {
     if (!selectedWilaya) return null;
     if (selectedWilaya.free_shipping) return 0;
+    const baseRate =
+      selectedWilaya.default_rate !== undefined
+        ? Number(selectedWilaya.default_rate ?? 0)
+        : null;
     if (deliveryType === "office") {
       if (!selectedWilaya.office_delivery_enabled) return null;
-      return Number(selectedWilaya.office_delivery_price ?? 0);
+      const officePrice = Number(selectedWilaya.office_delivery_price ?? 0);
+      return officePrice > 0 ? officePrice : Number(baseRate ?? officePrice);
     }
     if (!selectedWilaya.home_delivery_enabled) return null;
-    return Number(selectedWilaya.home_delivery_price ?? 0);
+    const homePrice = Number(selectedWilaya.home_delivery_price ?? 0);
+    return homePrice > 0 ? homePrice : Number(baseRate ?? homePrice);
   }, [selectedWilaya, deliveryType]);
 
-  useEffect(() => {
-    if (!selectedWilaya) return;
-    if (deliveryType === "home" && selectedWilaya.home_delivery_enabled === false) {
-      if (selectedWilaya.office_delivery_enabled) {
-        setDeliveryType("office");
-      }
+  const resolveDeliveryType = (
+    wilaya: (typeof wilayas)[number] | undefined,
+    current: "home" | "office",
+  ) => {
+    if (!wilaya) return current;
+    if (current === "home" && wilaya.home_delivery_enabled === false) {
+      return wilaya.office_delivery_enabled ? "office" : current;
     }
-    if (deliveryType === "office" && selectedWilaya.office_delivery_enabled === false) {
-      if (selectedWilaya.home_delivery_enabled) {
-        setDeliveryType("home");
-      }
+    if (current === "office" && wilaya.office_delivery_enabled === false) {
+      return wilaya.home_delivery_enabled ? "home" : current;
     }
-  }, [selectedWilaya, deliveryType]);
+    return current;
+  };
 
   const total = subtotal + (shipping ?? 0);
 
@@ -76,19 +83,23 @@ export function Checkout() {
     method: "post",
     successMessage: "Order placed successfully",
     errorMessage: "Failed to place order",
+    options: {
+      onSuccess: () => {
+        refetch();
+      },
+    },
   });
 
-  useEffect(() => {
-    if (createOrder.data?.data?.id) {
-      setOrderId(createOrder.data.data.id);
-      refetch();
-    }
-  }, [createOrder.data, refetch]);
+  const orderId = createOrder.data?.data?.id ?? null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cartId) {
       toast.error("Cart not ready. Please try again.");
+      return;
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error("First name and last name are required.");
       return;
     }
     if (!phone.trim()) {
@@ -105,6 +116,8 @@ export function Checkout() {
     }
 
     createOrder.mutate({
+      customer_first_name: firstName.trim(),
+      customer_last_name: lastName.trim(),
       customer_phone: phone.trim(),
       wilaya_id: Number(wilayaId),
       delivery_type: deliveryType,
@@ -187,6 +200,33 @@ export function Checkout() {
           </h2>
 
           <div className="mt-6 space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-sm font-medium text-neutral-700">
+                  First name
+                </label>
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Your first name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-neutral-700">
+                  Last name
+                </label>
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Your last name"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-sm font-medium text-neutral-700">
                 Phone number
@@ -206,9 +246,12 @@ export function Checkout() {
               </label>
               <select
                 value={wilayaId}
-                onChange={(e) =>
-                  setWilayaId(e.target.value ? Number(e.target.value) : "")
-                }
+                onChange={(e) => {
+                  const nextId = e.target.value ? Number(e.target.value) : "";
+                  setWilayaId(nextId);
+                  const nextWilaya = wilayas.find((w) => w.id === nextId);
+                  setDeliveryType((prev) => resolveDeliveryType(nextWilaya, prev));
+                }}
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 required
               >

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Loader2,
   Search,
@@ -9,37 +9,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const API_BASE = import.meta.env.VITE_API_URL;
-
-async function api<T>(
-  path: string,
-  opts: RequestInit & { auth?: boolean } = { auth: true },
-): Promise<T> {
-  const token = localStorage.getItem("admin_token");
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(opts.headers as any),
-  };
-
-  if (opts.auth !== false && token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}/${path}`, {
-    ...opts,
-    headers,
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new Error(data?.message || "Request failed");
-  }
-
-  return data;
-}
+import { useGet } from "@/hooks/useGet";
+import { usePostAction } from "@/hooks/usePostAction";
 
 type OrderItem = {
   id: string;
@@ -50,6 +21,9 @@ type OrderItem = {
 type Order = {
   id: string;
   created_at: string;
+  customer_first_name?: string | null;
+  customer_last_name?: string | null;
+  customer_phone?: string | null;
   customers?: {
     first_name: string;
     last_name: string;
@@ -74,56 +48,51 @@ type StatusesResponse = {
 };
 
 export function AdminOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [statuses, setStatuses] = useState<OrderStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
 
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
-  const [totalPages, setTotalPages] = useState(1);
+  const adminToken = localStorage.getItem("admin_token");
+  const adminRequestHeader = adminToken
+    ? { headers: { Authorization: `Bearer ${adminToken}` } }
+    : undefined;
 
-const loadOrders = async () => {
-  setLoading(true);
-  setError("");
+  const ordersQuery = useGet<OrdersDbResponse>({
+    path: "orders/admin",
+    query: { page, limit },
+    requestHeader: adminRequestHeader,
+    options: {
+      staleTime: 1000 * 15,
+      placeholderData: (previous) => previous,
+    },
+  });
 
-  try {
-    const res = await api<OrdersDbResponse>(
-      `orders/admin?page=${page}&limit=${limit}`,
-    );
+  const statusesQuery = useGet<StatusesResponse>({
+    path: "orders/statuses",
+    requestHeader: adminRequestHeader,
+    options: {
+      staleTime: 1000 * 60,
+    },
+  });
 
-    const mapped: Order[] = res.data.map((o) => ({
+  const orders = useMemo<Order[]>(() => {
+    const data = ordersQuery.data?.data ?? [];
+    return data.map((o) => ({
       ...o,
       order_items: o.order_items.map((i) => ({
         ...i,
         price: Number(i.price),
       })),
     }));
+  }, [ordersQuery.data]);
 
-    setOrders(mapped);
-    setTotalPages(res.meta.totalPages);
-  } catch (e: any) {
-    setError(e?.message || "Failed to load orders");
-    setOrders([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  const statuses = statusesQuery.data?.data ?? [];
+  const totalPages = ordersQuery.data?.meta.totalPages ?? 1;
+  const loading = ordersQuery.isLoading || statusesQuery.isLoading;
+  const error =
+    ordersQuery.error?.message || statusesQuery.error?.message || "";
 
-const loadStatuses = async () => {
-  const res = await api<StatusesResponse>("orders/statuses");
-  setStatuses(res.data ?? []);
-};
-
-useEffect(() => {
-  loadOrders();
-  loadStatuses();
-}, [page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [query]);
+  const updateStatus = usePostAction();
 
   /* ===== STATUS IDS ===== */
   const confirmedStatusId = statuses.find(
@@ -135,18 +104,15 @@ useEffect(() => {
   )?.id;
 
   /* ===== UPDATE ===== */
-  const updateStatus = async (orderId: string, statusId?: string) => {
+  const updateStatusAction = (orderId: string, statusId?: string) => {
     if (!statusId) return;
-
-    try {
-      await api(`orders/${orderId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ order_status_id: statusId }),
-      });
-      loadOrders();
-    } catch (e: any) {
-      alert(e.message);
-    }
+    updateStatus.mutate({
+      method: "patch",
+      path: `orders/${orderId}`,
+      body: { order_status_id: statusId },
+      requestHeader: adminRequestHeader,
+      invalidateQueries: true,
+    });
   };
 
   /* ===== FILTER ===== */
@@ -155,7 +121,11 @@ useEffect(() => {
     return orders.filter(
       (o) =>
         o.id.toLowerCase().includes(query.toLowerCase()) ||
-        o.customers?.email?.toLowerCase().includes(query.toLowerCase()),
+        o.customers?.email?.toLowerCase().includes(query.toLowerCase()) ||
+        `${o.customer_first_name ?? ""} ${o.customer_last_name ?? ""}`
+          .toLowerCase()
+          .includes(query.toLowerCase()) ||
+        o.customer_phone?.toLowerCase().includes(query.toLowerCase()),
     );
   }, [orders, query]);
 
@@ -173,6 +143,9 @@ useEffect(() => {
   type DbOrder = {
     id: string;
     created_at: string;
+    customer_first_name?: string | null;
+    customer_last_name?: string | null;
+    customer_phone?: string | null;
     customers?: {
       first_name: string;
       last_name: string;
@@ -208,7 +181,10 @@ useEffect(() => {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={loadOrders}
+            onClick={() => {
+              ordersQuery.refetch();
+              statusesQuery.refetch();
+            }}
             className="gap-2"
             disabled={loading}
           >
@@ -222,7 +198,13 @@ useEffect(() => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setQuery(value);
+            if (page !== 1) {
+              setPage(1);
+            }
+          }}
           placeholder="Search by order ID or email..."
           className="w-full rounded-xl border py-2 pl-9 pr-3"
         />
@@ -263,9 +245,10 @@ useEffect(() => {
                   <td className="px-4 py-3">
                     {order.customers
                       ? `${order.customers.first_name} ${order.customers.last_name}`
-                      : "—"}
+                      : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
+                        "—"}
                     <div className="text-xs text-neutral-500">
-                      {order.customers?.email}
+                      {order.customers?.email || order.customer_phone || "—"}
                     </div>
                   </td>
 
@@ -280,7 +263,9 @@ useEffect(() => {
                   <td className="px-4 py-3 flex gap-2">
                     <button
                       disabled={!confirmedStatusId}
-                      onClick={() => updateStatus(order.id, confirmedStatusId)}
+                      onClick={() =>
+                        updateStatusAction(order.id, confirmedStatusId)
+                      }
                       className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40"
                       title="Confirm order"
                     >
@@ -289,7 +274,9 @@ useEffect(() => {
 
                     <button
                       disabled={!canceledStatusId}
-                      onClick={() => updateStatus(order.id, canceledStatusId)}
+                      onClick={() =>
+                        updateStatusAction(order.id, canceledStatusId)
+                      }
                       className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40"
                       title="Cancel order"
                     >

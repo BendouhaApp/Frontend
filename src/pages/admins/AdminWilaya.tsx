@@ -27,9 +27,20 @@ async function api<T>(
   opts: RequestInit & { auth?: boolean } = { auth: true },
 ): Promise<T> {
   const token = localStorage.getItem("admin_token");
+  const normalizeHeaders = (headers?: HeadersInit): Record<string, string> => {
+    if (!headers) return {};
+    if (headers instanceof Headers) {
+      return Object.fromEntries(headers.entries());
+    }
+    if (Array.isArray(headers)) {
+      return Object.fromEntries(headers);
+    }
+    return headers;
+  };
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(opts.headers as any),
+    ...normalizeHeaders(opts.headers),
   };
   if (opts.auth !== false && token) headers.Authorization = `Bearer ${token}`;
 
@@ -47,6 +58,7 @@ type ShippingZone = {
   active: boolean;
   free_shipping: boolean;
   rate_type: string | null;
+  default_rate?: number | null;
   home_delivery_enabled?: boolean;
   home_delivery_price?: number;
   office_delivery_enabled?: boolean;
@@ -70,6 +82,9 @@ function WilayaForm({
   const [displayName, setDisplayName] = useState(zone?.display_name ?? "");
   const [active, setActive] = useState(zone?.active ?? true);
   const [freeShipping, setFreeShipping] = useState(zone?.free_shipping ?? false);
+  const [defaultRate, setDefaultRate] = useState(
+    zone?.default_rate?.toString() ?? "700",
+  );
   
   const [homeEnabled, setHomeEnabled] = useState(zone?.home_delivery_enabled ?? true);
   const [homePrice, setHomePrice] = useState<string>(
@@ -88,6 +103,7 @@ function WilayaForm({
       display_name: displayName.trim(),
       active,
       free_shipping: freeShipping,
+      default_rate: Number(defaultRate),
       home_delivery_enabled: homeEnabled,
       home_delivery_price: homeEnabled ? Number(homePrice) : 0,
       office_delivery_enabled: officeEnabled,
@@ -172,6 +188,31 @@ function WilayaForm({
             />
           </div>
         )}
+      </div>
+
+      {/* Default Shipping Rate */}
+      <div className="rounded-lg border border-neutral-200 p-4 bg-neutral-50">
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="h-5 w-5 text-amber-600" />
+          <h3 className="font-semibold text-neutral-900">
+            Default Shipping Rate
+          </h3>
+        </div>
+        <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
+          Default Rate (DZA)
+        </label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={defaultRate}
+          onChange={(e) => setDefaultRate(e.target.value)}
+          className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+          placeholder="700"
+        />
+        <p className="mt-1 text-xs text-neutral-500">
+          Used when no specific delivery price is set.
+        </p>
       </div>
 
       {/* Office Delivery Section */}
@@ -303,8 +344,8 @@ export default function AdminWilaya() {
     try {
       const res = await api<{ data: ShippingZone[] }>("admin/shipping-zones");
       setItems(res.data ?? []);
-    } catch (e: any) {
-      setError(e.message || "Failed to load wilayas");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load wilayas");
     } finally {
       setLoading(false);
     }
@@ -353,8 +394,8 @@ export default function AdminWilaya() {
       await load();
       setShowForm(false);
       setEditing(null);
-    } catch (e: any) {
-      setError(e.message || "Failed to save wilaya");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to save wilaya");
     } finally {
       setSaving(false);
     }
@@ -366,8 +407,8 @@ export default function AdminWilaya() {
       await api(`admin/shipping-zones/${id}`, { method: "DELETE" });
       await load();
       setConfirmDelete(null);
-    } catch (e: any) {
-      setError(e.message || "Failed to delete wilaya");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete wilaya");
     }
   };
 
@@ -379,8 +420,8 @@ export default function AdminWilaya() {
         body: JSON.stringify({ active: !zone.active }),
       });
       await load();
-    } catch (e: any) {
-      setError(e.message || "Failed to update status");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update status");
     }
   };
 
@@ -575,6 +616,9 @@ export default function AdminWilaya() {
                       Wilaya
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+                      Default Rate
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                       Home Delivery
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
@@ -609,6 +653,16 @@ export default function AdminWilaya() {
                             </p>
                             <p className="text-xs text-neutral-500">{zone.name}</p>
                           </div>
+                        </div>
+                      </td>
+
+                      {/* Home Delivery */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 text-amber-700">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="text-sm font-semibold">
+                            {zone.default_rate ?? 0} DZA
+                          </span>
                         </div>
                       </td>
 

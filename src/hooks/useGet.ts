@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/http'
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import type { Options } from 'ky'
 
 export interface UseGetProps<T> {
   path: string
@@ -7,6 +8,7 @@ export interface UseGetProps<T> {
   options?: Partial<UseQueryOptions<T, Error, T>>
   defaultOperation?: 'blob' | 'json' | 'text' | 'arrayBuffer'
   skip?: number
+  requestHeader?: Options
 }
 
 export const useGet = <Response>({
@@ -15,6 +17,7 @@ export const useGet = <Response>({
   query = skip === undefined ? {} : { skip: 0 },
   options,
   defaultOperation = 'json',
+  requestHeader,
 }: UseGetProps<Response>) => {
   const pathArray = path.split('/')
 
@@ -25,6 +28,7 @@ export const useGet = <Response>({
     queryFn: async () => {
       const response = await apiClient.get(path, {
         searchParams: haveParams ? query : undefined,
+        ...requestHeader,
       })
       
       switch (defaultOperation) {
