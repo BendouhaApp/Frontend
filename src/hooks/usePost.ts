@@ -50,14 +50,14 @@ export const usePost = <TVariables, TResponse>({
       }
       return res.json() as Promise<TResponse>
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       toast.success(successMessage)
       queryClient.invalidateQueries({
         queryKey: [pathArray[0]],
       })
-      onSuccess?.(data, variables, context)
+      onSuccess?.(data, variables, onMutateResult, context)
     },
-    onError: async (error: Error, variables, context) => {
+    onError: async (error: Error, variables, onMutateResult, context) => {
       toast.error(errorMessage)
       if (error instanceof HTTPError) {
         try {
@@ -74,7 +74,7 @@ export const usePost = <TVariables, TResponse>({
           // JSON parsing failed, ignore
         }
       }
-      onError?.(error, variables, context)
+      onError?.(error, variables, onMutateResult, context)
     },
     ...mutationOptions,
   })

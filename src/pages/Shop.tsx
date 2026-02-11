@@ -246,7 +246,7 @@ function MobileFilterDrawer({
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 <FilterSidebar
-                  categories={rootCategories}
+                  categories={categories}
                   subcategories={subcategories}
                   selectedCategory={selectedCategory}
                   selectedSubcategory={selectedSubcategory}
@@ -408,6 +408,7 @@ export function Shop() {
       path: "products/public",
       query: {
         limit: ITEMS_PER_PAGE,
+        page,
         start: Math.max(0, (page - 1) * ITEMS_PER_PAGE),
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
       },
@@ -416,8 +417,18 @@ export function Shop() {
       },
     },
   );
-  const products = useMemo(() => data?.data ?? [], [data?.data]);
-  const totalItems = data?.meta?.total ?? products.length;
+  const rawProducts = useMemo(() => data?.data ?? [], [data?.data]);
+  const pageStart = Math.max(0, (page - 1) * ITEMS_PER_PAGE);
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const metaLimit = data?.meta?.limit;
+  const shouldClientSlice =
+    rawProducts.length > ITEMS_PER_PAGE &&
+    (metaLimit === undefined || rawProducts.length > metaLimit);
+  const products = useMemo(() => {
+    if (!shouldClientSlice) return rawProducts;
+    return rawProducts.slice(pageStart, pageEnd);
+  }, [rawProducts, shouldClientSlice, pageStart, pageEnd]);
+  const totalItems = data?.meta?.total ?? rawProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
 
