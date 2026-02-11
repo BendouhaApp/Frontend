@@ -39,6 +39,8 @@ const sortOptionIds = [
   "rating",
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -294,15 +296,12 @@ function ErrorState({
 
 export function Shop() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
-  // Filter state
-  const [manualCategory, setManualCategory] = useState<string | null>(null);
-  const [manualSubcategory, setManualSubcategory] = useState<string | null>(null);
-  const [manualParamKey, setManualParamKey] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const [selectedSort, setSelectedSort] = useState("featured");
 
   const { cartId } = useCart();
@@ -350,35 +349,8 @@ export function Shop() {
     return { category: "all", subcategory: "all" };
   }, [categoryParam, categoryLookup]);
 
-  const manualActive = manualParamKey === (categoryParam ?? null);
-  const baseCategory = manualActive
-    ? manualCategory ?? derivedSelection.category
-    : derivedSelection.category;
-  const baseSubcategory = manualActive
-    ? manualSubcategory ?? derivedSelection.subcategory
-    : derivedSelection.subcategory;
-
-  const selectedCategory = useMemo(() => {
-    if (baseCategory !== "all" && !categoryLookup.has(baseCategory)) {
-      return "all";
-    }
-    return baseCategory;
-  }, [baseCategory, categoryLookup]);
-
-  const selectedSubcategory = useMemo(() => {
-    if (baseSubcategory !== "all") {
-      const sub = categoryLookup.get(baseSubcategory);
-      if (!sub) return "all";
-      if (
-        selectedCategory !== "all" &&
-        sub.parent_id &&
-        sub.parent_id !== selectedCategory
-      ) {
-        return "all";
-      }
-    }
-    return baseSubcategory;
-  }, [baseSubcategory, categoryLookup, selectedCategory]);
+  const selectedCategory = derivedSelection.category;
+  const selectedSubcategory = derivedSelection.subcategory;
 
   const activeCategoryId =
     selectedSubcategory !== "all" ? selectedSubcategory : selectedCategory;
@@ -395,21 +367,16 @@ export function Shop() {
     return selected?.other_categories ?? [];
   }, [selectedCategory, categoryLookup]);
 
-  const manualKey = categoryParam ?? null;
-  const applyManualCategory = (id: string) => {
-    setManualCategory(id);
-    setManualSubcategory("all");
-    setManualParamKey(manualKey);
-  };
-  const applyManualSubcategory = (id: string) => {
-    setManualCategory(selectedCategory);
-    setManualSubcategory(id);
-    setManualParamKey(manualKey);
-  };
-  const clearManualSelection = () => {
-    setManualCategory("all");
-    setManualSubcategory("all");
-    setManualParamKey(manualKey);
+  const setCategoryParam = (id?: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (!id || id === "all") {
+      next.delete("category");
+      next.delete("collection");
+    } else {
+      next.set("category", id);
+      next.delete("collection");
+    }
+    setSearchParams(next);
   };
 
 
@@ -428,16 +395,21 @@ export function Shop() {
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
     path: cartId ? `cart/items?cart_id=${cartId}` : "cart/items?cart_id=",
     method: "post",
-    successMessage: "Produit ajouté au panier",
-    errorMessage: "Erreur lors de l'ajout au panier",
+    successMessage: t("cart.addedToCart"),
+    errorMessage: t("cart.addToCartError"),
   });
 
-  // Filter products by price range
   const products = allProducts;
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return products.slice(start, start + ITEMS_PER_PAGE);
+  }, [products, currentPage]);
 
   const handleAddToCart = (product: Product) => {
     if (!cartId) {
-      toast.error("Cart not ready. Please try again.");
+      toast.error(t("cart.notReady"));
       return;
     }
     addToCart.mutate({
@@ -488,8 +460,14 @@ export function Shop() {
         subcategories={subcategories}
         selectedCategory={selectedCategory}
         selectedSubcategory={selectedSubcategory}
-        setSelectedCategory={applyManualCategory}
-        setSelectedSubcategory={applyManualSubcategory}
+        setSelectedCategory={(id) => {
+          setCategoryParam(id);
+          setPage(1);
+        }}
+        setSelectedSubcategory={(id) => {
+          setCategoryParam(id);
+          setPage(1);
+        }}
       />
 
       {/* Page Header */}
@@ -644,8 +622,14 @@ export function Shop() {
             subcategories={subcategories}
             selectedCategory={selectedCategory}
             selectedSubcategory={selectedSubcategory}
-            setSelectedCategory={applyManualCategory}
-            setSelectedSubcategory={applyManualSubcategory}
+            setSelectedCategory={(id) => {
+              setCategoryParam(id);
+              setPage(1);
+            }}
+            setSelectedSubcategory={(id) => {
+              setCategoryParam(id);
+              setPage(1);
+            }}
             className="hidden w-64 flex-shrink-0 lg:block"
           />
 
@@ -660,7 +644,8 @@ export function Shop() {
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   <button
                     onClick={() => {
-                      clearManualSelection();
+                      setCategoryParam(null);
+                      setPage(1);
                     }}
                     className={cn(
                       "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -676,7 +661,8 @@ export function Shop() {
                     <button
                       key={category.id}
                       onClick={() => {
-                        applyManualCategory(category.id);
+                        setCategoryParam(category.id);
+                        setPage(1);
                       }}
                       className={cn(
                         "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -702,7 +688,8 @@ export function Shop() {
                       <button
                         key={subcategory.id}
                       onClick={() => {
-                        applyManualSubcategory(subcategory.id);
+                        setCategoryParam(subcategory.id);
+                        setPage(1);
                       }}
                         className={cn(
                           "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -733,7 +720,8 @@ export function Shop() {
                   {selectedCategoryLabel}
                   <button
                     onClick={() => {
-                      clearManualSelection();
+                      setCategoryParam(null);
+                      setPage(1);
                     }}
                     className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
                   >
@@ -773,7 +761,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {products.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}
@@ -787,6 +775,39 @@ export function Shop() {
                   </motion.div>
                 )}
               </>
+            )}
+
+            {!isLoading && !isError && products.length > 0 && totalPages > 1 && (
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <p className="text-sm text-navy-500">
+                  {t("common.pageOf", {
+                    page: currentPage,
+                    total: totalPages,
+                  })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setPage((prev) => Math.max(1, prev - 1))
+                    }
+                  >
+                    {t("common.previous")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                  >
+                    {t("common.next")}
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useGet } from "@/hooks/useGet";
 import { usePost } from "@/hooks/usePost";
 import { useCart } from "@/hooks/useCart";
@@ -20,6 +21,7 @@ type CreateOrderResponse = {
 };
 
 export function Checkout() {
+  const { t } = useTranslation();
   const { cart, cartId, isLoading: isCartLoading, refetch } = useCart();
   const { data: wilayaResponse, isLoading: isWilayasLoading } = useGet<
     ApiResponse<Wilaya[]>
@@ -81,8 +83,8 @@ export function Checkout() {
   const createOrder = usePost<CreateOrderPayload, CreateOrderResponse>({
     path: cartId ? `orders?cart_id=${cartId}` : "orders?cart_id=",
     method: "post",
-    successMessage: "Order placed successfully",
-    errorMessage: "Failed to place order",
+    successMessage: t("checkout.orderPlacedSuccess"),
+    errorMessage: t("checkout.orderPlacedError"),
     options: {
       onSuccess: () => {
         refetch();
@@ -95,23 +97,23 @@ export function Checkout() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cartId) {
-      toast.error("Cart not ready. Please try again.");
+      toast.error(t("cart.notReady"));
       return;
     }
     if (!firstName.trim() || !lastName.trim()) {
-      toast.error("First name and last name are required.");
+      toast.error(t("checkout.requiredNameError"));
       return;
     }
     if (!phone.trim()) {
-      toast.error("Phone number is required.");
+      toast.error(t("checkout.requiredPhoneError"));
       return;
     }
     if (!wilayaId) {
-      toast.error("Please select a wilaya.");
+      toast.error(t("checkout.requiredWilayaError"));
       return;
     }
     if (shipping === null) {
-      toast.error("Selected delivery type is not available.");
+      toast.error(t("checkout.deliveryUnavailableError"));
       return;
     }
 
@@ -128,7 +130,7 @@ export function Checkout() {
     return (
       <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-12 md:px-6">
-          <p className="text-neutral-600">Loading checkout...</p>
+          <p className="text-neutral-600">{t("checkout.loading")}</p>
         </div>
       </div>
     );
@@ -140,13 +142,13 @@ export function Checkout() {
         <div className="container mx-auto px-4 py-12 md:px-6">
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
             <h1 className="text-2xl font-semibold text-neutral-900">
-              Your cart is empty
+              {t("checkout.cartEmptyTitle")}
             </h1>
             <p className="mt-2 text-neutral-600">
-              Add some items to your cart before checking out.
+              {t("checkout.cartEmptyBody")}
             </p>
             <Button asChild className="mt-6 rounded-full">
-              <Link to="/shop">Back to shop</Link>
+              <Link to="/shop">{t("checkout.backToShop")}</Link>
             </Button>
           </div>
         </div>
@@ -160,16 +162,17 @@ export function Checkout() {
         <div className="container mx-auto px-4 py-12 md:px-6">
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
             <h1 className="text-2xl font-semibold text-neutral-900">
-              Order confirmed
+              {t("checkout.orderConfirmedTitle")}
             </h1>
             <p className="mt-2 text-neutral-600">
-              Your order has been placed successfully.
+              {t("checkout.orderConfirmedBody")}
             </p>
             <p className="mt-4 text-sm text-neutral-500">
-              Order ID: <span className="font-medium">{orderId}</span>
+              {t("checkout.orderIdLabel")}{" "}
+              <span className="font-medium">{orderId}</span>
             </p>
             <Button asChild className="mt-6 rounded-full">
-              <Link to="/shop">Continue shopping</Link>
+              <Link to="/shop">{t("checkout.continueShopping")}</Link>
             </Button>
           </div>
         </div>
@@ -177,15 +180,17 @@ export function Checkout() {
     );
   }
 
+  const currency = t("common.currency");
+
   return (
     <div className="min-h-screen bg-white">
       <div className="border-b border-neutral-200 bg-neutral-50/60">
         <div className="container mx-auto px-4 py-10 md:px-6">
           <h1 className="text-3xl font-semibold text-neutral-900">
-            Checkout
+            {t("checkout.title")}
           </h1>
           <p className="mt-2 text-neutral-600">
-            Confirm your delivery details and place your order.
+            {t("checkout.subtitle")}
           </p>
         </div>
       </div>
@@ -196,32 +201,32 @@ export function Checkout() {
           className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
         >
           <h2 className="text-lg font-semibold text-neutral-900">
-            Delivery information
+            {t("checkout.deliveryInformation")}
           </h2>
 
           <div className="mt-6 space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-sm font-medium text-neutral-700">
-                  First name
+                  {t("checkout.firstName")}
                 </label>
                 <input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Your first name"
+                  placeholder={t("checkout.firstNamePlaceholder")}
                   required
                 />
               </div>
               <div>
                 <label className="text-sm font-medium text-neutral-700">
-                  Last name
+                  {t("checkout.lastName")}
                 </label>
                 <input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="Your last name"
+                  placeholder={t("checkout.lastNamePlaceholder")}
                   required
                 />
               </div>
@@ -229,20 +234,20 @@ export function Checkout() {
 
             <div>
               <label className="text-sm font-medium text-neutral-700">
-                Phone number
+                {t("checkout.phoneNumber")}
               </label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="+213..."
+                placeholder={t("checkout.phonePlaceholder")}
                 required
               />
             </div>
 
             <div>
               <label className="text-sm font-medium text-neutral-700">
-                Wilaya
+                {t("checkout.wilaya")}
               </label>
               <select
                 value={wilayaId}
@@ -255,7 +260,7 @@ export function Checkout() {
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 required
               >
-                <option value="">Select a wilaya</option>
+                <option value="">{t("checkout.selectWilaya")}</option>
                 {wilayas.map((wilaya) => (
                   <option key={wilaya.id} value={wilaya.id}>
                     {wilaya.display_name}
@@ -266,7 +271,7 @@ export function Checkout() {
 
             <div>
               <label className="text-sm font-medium text-neutral-700">
-                Delivery type
+                {t("checkout.deliveryType")}
               </label>
               <div className="mt-2 flex flex-col gap-2">
                 <label className="flex items-center gap-2 text-sm text-neutral-700">
@@ -278,10 +283,10 @@ export function Checkout() {
                     onChange={() => setDeliveryType("home")}
                     disabled={selectedWilaya?.home_delivery_enabled === false}
                   />
-                  Home delivery
+                  {t("checkout.homeDelivery")}
                   {selectedWilaya?.home_delivery_enabled === false && (
                     <span className="text-xs text-neutral-400">
-                      (not available)
+                      {t("checkout.notAvailable")}
                     </span>
                   )}
                 </label>
@@ -294,10 +299,10 @@ export function Checkout() {
                     onChange={() => setDeliveryType("office")}
                     disabled={selectedWilaya?.office_delivery_enabled === false}
                   />
-                  Office delivery
+                  {t("checkout.officeDelivery")}
                   {selectedWilaya?.office_delivery_enabled === false && (
                     <span className="text-xs text-neutral-400">
-                      (not available)
+                      {t("checkout.notAvailable")}
                     </span>
                   )}
                 </label>
@@ -312,13 +317,15 @@ export function Checkout() {
               createOrder.isPending || !cartId || shipping === null || !wilayaId
             }
           >
-            {createOrder.isPending ? "Placing order..." : "Place order"}
+            {createOrder.isPending
+              ? t("checkout.placingOrder")
+              : t("checkout.placeOrder")}
           </Button>
         </form>
 
         <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
           <h2 className="text-lg font-semibold text-neutral-900">
-            Order summary
+            {t("checkout.orderSummary")}
           </h2>
 
           <div className="mt-6 space-y-4">
@@ -329,11 +336,11 @@ export function Checkout() {
                     {item.name}
                   </p>
                   <p className="text-xs text-neutral-500">
-                    Qty {item.quantity}
+                    {t("checkout.qty")} {item.quantity}
                   </p>
                 </div>
                 <span className="text-sm font-medium text-neutral-900">
-                  {(item.price * item.quantity).toFixed(2)} DZD
+                  {(item.price * item.quantity).toFixed(2)} {currency}
                 </span>
               </div>
             ))}
@@ -341,13 +348,13 @@ export function Checkout() {
 
           <div className="mt-6 space-y-2 border-t border-neutral-200 pt-4 text-sm">
             <div className="flex items-center justify-between text-neutral-600">
-              <span>Subtotal</span>
+              <span>{t("common.subtotal")}</span>
               <span className="font-medium text-neutral-900">
-                {subtotal.toFixed(2)} DZD
+                {subtotal.toFixed(2)} {currency}
               </span>
             </div>
             <div className="flex items-center justify-between text-neutral-600">
-              <span>Shipping</span>
+              <span>{t("common.shipping")}</span>
               <span
                 className={cn(
                   "font-medium",
@@ -355,13 +362,15 @@ export function Checkout() {
                 )}
               >
                 {shipping === null
-                  ? "Select delivery"
-                  : `${shipping.toFixed(2)} DZD`}
+                  ? t("checkout.selectDelivery")
+                  : `${shipping.toFixed(2)} ${currency}`}
               </span>
             </div>
             <div className="flex items-center justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
-              <span>Total</span>
-              <span>{total.toFixed(2)} DZD</span>
+              <span>{t("common.total")}</span>
+              <span>
+                {total.toFixed(2)} {currency}
+              </span>
             </div>
           </div>
         </div>
