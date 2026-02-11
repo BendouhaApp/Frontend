@@ -128,7 +128,7 @@
     "cartEmptyBody": "أضف بعض العناصر إلى سلتك قبل إتمام الطلب.",
     "backToShop": "العودة إلى المتجر",
     "orderConfirmedTitle": "تم تأكيد الطلب",
-    "orderConfirmedBody": "تم إرسال طلبك بنجاح.",
+    "orderConfirmedBody": "تم إنشاء الطلب بنجاح!",
     "orderIdLabel": "رقم الطلب:",
     "continueShopping": "متابعة التسوق",
     "title": "إتمام الشراء",
@@ -155,7 +155,7 @@
     "requiredPhoneError": "رقم الهاتف مطلوب.",
     "requiredWilayaError": "يرجى اختيار الولاية.",
     "deliveryUnavailableError": "نوع التوصيل المختار غير متاح.",
-    "orderPlacedSuccess": "تم إنشاء الطلب بنجاح",
+    "orderPlacedSuccess": "تم إنشاء الطلب بنجاح!",
     "orderPlacedError": "تعذر إنشاء الطلب"
   },
   "footer": {

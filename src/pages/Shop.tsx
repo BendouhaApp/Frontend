@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -39,7 +39,7 @@ const sortOptionIds = [
   "rating",
 ];
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 9;
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -246,7 +246,7 @@ function MobileFilterDrawer({
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 <FilterSidebar
-                  categories={categories}
+                  categories={rootCategories}
                   subcategories={subcategories}
                   selectedCategory={selectedCategory}
                   selectedSubcategory={selectedSubcategory}
@@ -313,24 +313,41 @@ export function Shop() {
     },
   });
 
-  const categories = useMemo(
+  const rawCategories = useMemo(
     () => categoriesResponse?.data ?? [],
     [categoriesResponse?.data],
   );
 
+  const { rootCategories, flatCategories } = useMemo(() => {
+    const flat: Category[] = [];
+    const hasTree = rawCategories.some(
+      (category) => category.other_categories?.length,
+    );
+    if (hasTree) {
+      const walk = (items: Category[]) => {
+        items.forEach((item) => {
+          flat.push(item);
+          if (item.other_categories?.length) {
+            walk(item.other_categories);
+          }
+        });
+      };
+      walk(rawCategories);
+    } else {
+      flat.push(...rawCategories);
+    }
+
+    const roots = flat.filter((category) => !category.parent_id);
+    return { rootCategories: roots, flatCategories: flat };
+  }, [rawCategories]);
+
   const categoryLookup = useMemo(() => {
     const map = new Map<string, Category>();
-    const walk = (items: Category[]) => {
-      for (const item of items) {
-        map.set(item.id, item);
-        if (item.other_categories?.length) {
-          walk(item.other_categories);
-        }
-      }
-    };
-    walk(categories);
+    flatCategories.forEach((item) => {
+      map.set(item.id, item);
+    });
     return map;
-  }, [categories]);
+  }, [flatCategories]);
 
   const categoryParam =
     searchParams.get("category") ?? searchParams.get("collection");
@@ -363,9 +380,10 @@ export function Shop() {
 
   const subcategories = useMemo(() => {
     if (selectedCategory === "all") return [];
-    const selected = categoryLookup.get(selectedCategory);
-    return selected?.other_categories ?? [];
-  }, [selectedCategory, categoryLookup]);
+    return flatCategories.filter(
+      (category) => category.parent_id === selectedCategory,
+    );
+  }, [selectedCategory, flatCategories]);
 
   const setCategoryParam = (id?: string | null) => {
     const next = new URLSearchParams(searchParams);
@@ -379,17 +397,35 @@ export function Shop() {
     setSearchParams(next);
   };
 
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategoryId]);
 
-  // Fetch products from API (no filtering)
+
+  // Fetch products from API
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
       path: "products/public",
+      query: {
+        limit: ITEMS_PER_PAGE,
+        start: Math.max(0, (page - 1) * ITEMS_PER_PAGE),
+        ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
+      },
       options: {
         staleTime: 1000 * 60 * 5, // 5 minutes
       },
     },
   );
-  const allProducts = useMemo(() => data?.data ?? [], [data?.data]);
+  const products = useMemo(() => data?.data ?? [], [data?.data]);
+  const totalItems = data?.meta?.total ?? products.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   // Cart mutation - you need a cart_id to add items
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
@@ -398,14 +434,6 @@ export function Shop() {
     successMessage: t("cart.addedToCart"),
     errorMessage: t("cart.addToCartError"),
   });
-
-  const products = allProducts;
-  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
-  const currentPage = Math.min(page, totalPages);
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return products.slice(start, start + ITEMS_PER_PAGE);
-  }, [products, currentPage]);
 
   const handleAddToCart = (product: Product) => {
     if (!cartId) {
@@ -456,7 +484,7 @@ export function Shop() {
       <MobileFilterDrawer
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
-        categories={categories}
+        categories={rootCategories}
         subcategories={subcategories}
         selectedCategory={selectedCategory}
         selectedSubcategory={selectedSubcategory}
@@ -506,7 +534,7 @@ export function Shop() {
               )}
             </Button>
             <p className="text-sm text-navy-600">
-              {isLoading ? "..." : `${products.length} ${t("common.items")}`}
+              {isLoading ? "..." : `${totalItems} ${t("common.items")}`}
             </p>
           </div>
 
@@ -618,7 +646,7 @@ export function Shop() {
         <div className="flex gap-8 lg:gap-12">
           {/* Desktop Sidebar */}
           <FilterSidebar
-            categories={categories}
+            categories={rootCategories}
             subcategories={subcategories}
             selectedCategory={selectedCategory}
             selectedSubcategory={selectedSubcategory}
@@ -657,7 +685,7 @@ export function Shop() {
                   >
                     {t("products.allCategories")}
                   </button>
-                  {categories.map((category) => (
+                  {rootCategories.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => {
@@ -761,7 +789,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {paginatedProducts.map((product) => (
+                    {products.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}

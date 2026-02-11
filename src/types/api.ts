@@ -136,6 +136,12 @@ export interface Product {
 export interface ProductsResponse {
   message?: string
   data: Product[]
+  meta?: {
+    total: number
+    limit: number
+    start: number
+    totalPages?: number
+  }
 }
 
 export interface ProductResponse {

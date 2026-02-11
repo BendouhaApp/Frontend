@@ -128,7 +128,7 @@
     "cartEmptyBody": "Ajoutez des articles à votre panier avant de passer commande.",
     "backToShop": "Retour à la boutique",
     "orderConfirmedTitle": "Commande confirmée",
-    "orderConfirmedBody": "Votre commande a été passée avec succès.",
+    "orderConfirmedBody": "Commande effectuée avec succès !",
     "orderIdLabel": "ID de commande :",
     "continueShopping": "Continuer vos achats",
     "title": "Paiement",
@@ -155,7 +155,7 @@
     "requiredPhoneError": "Le numéro de téléphone est obligatoire.",
     "requiredWilayaError": "Veuillez sélectionner une wilaya.",
     "deliveryUnavailableError": "Le type de livraison sélectionné n'est pas disponible.",
-    "orderPlacedSuccess": "Commande passée avec succès",
+    "orderPlacedSuccess": "Commande effectuée avec succès !",
     "orderPlacedError": "Échec de la commande"
   },
   "footer": {
