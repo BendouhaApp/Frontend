@@ -363,14 +363,22 @@ export function Shop() {
     if (selected) {
       return { category: selected.id, subcategory: "all" };
     }
+    const hasChildren = flatCategories.some(
+      (category) => category.parent_id === categoryParam,
+    );
+    if (hasChildren) {
+      return { category: categoryParam, subcategory: "all" };
+    }
     return { category: "all", subcategory: "all" };
-  }, [categoryParam, categoryLookup]);
+  }, [categoryParam, categoryLookup, flatCategories]);
 
   const selectedCategory = derivedSelection.category;
   const selectedSubcategory = derivedSelection.subcategory;
 
   const activeCategoryId =
     selectedSubcategory !== "all" ? selectedSubcategory : selectedCategory;
+  const parentFilterActive =
+    selectedCategory !== "all" && selectedSubcategory === "all";
 
   const selectedCategoryLabel =
     activeCategoryId === "all"
@@ -407,9 +415,10 @@ export function Shop() {
     {
       path: "products/public",
       query: {
-        limit: ITEMS_PER_PAGE,
-        page,
-        start: Math.max(0, (page - 1) * ITEMS_PER_PAGE),
+        limit: parentFilterActive ? 5000 : ITEMS_PER_PAGE,
+        ...(parentFilterActive
+          ? {}
+          : { page, start: Math.max(0, (page - 1) * ITEMS_PER_PAGE) }),
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
       },
       options: {
@@ -418,17 +427,36 @@ export function Shop() {
     },
   );
   const rawProducts = useMemo(() => data?.data ?? [], [data?.data]);
+  const filteredProducts = useMemo(() => {
+    if (activeCategoryId === "all") return rawProducts;
+    const isSubcategory = selectedSubcategory !== "all";
+    return rawProducts.filter((product) => {
+      const categories = product.categories ?? [];
+      if (categories.length === 0) return false;
+      if (isSubcategory) {
+        return categories.some((category) => category.id === activeCategoryId);
+      }
+      return categories.some(
+        (category) =>
+          category.id === activeCategoryId ||
+          category.parent_id === activeCategoryId,
+      );
+    });
+  }, [rawProducts, activeCategoryId, selectedSubcategory]);
   const pageStart = Math.max(0, (page - 1) * ITEMS_PER_PAGE);
   const pageEnd = pageStart + ITEMS_PER_PAGE;
   const metaLimit = data?.meta?.limit;
-  const shouldClientSlice =
-    rawProducts.length > ITEMS_PER_PAGE &&
-    (metaLimit === undefined || rawProducts.length > metaLimit);
+  const responseIsUnpaginated =
+    parentFilterActive ||
+    (rawProducts.length > ITEMS_PER_PAGE &&
+      (metaLimit === undefined || rawProducts.length > metaLimit));
   const products = useMemo(() => {
-    if (!shouldClientSlice) return rawProducts;
-    return rawProducts.slice(pageStart, pageEnd);
-  }, [rawProducts, shouldClientSlice, pageStart, pageEnd]);
-  const totalItems = data?.meta?.total ?? rawProducts.length;
+    if (!responseIsUnpaginated) return filteredProducts;
+    return filteredProducts.slice(pageStart, pageEnd);
+  }, [filteredProducts, responseIsUnpaginated, pageStart, pageEnd]);
+  const totalItems = responseIsUnpaginated
+    ? filteredProducts.length
+    : (data?.meta?.total ?? filteredProducts.length);
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
 
