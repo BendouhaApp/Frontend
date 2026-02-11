@@ -20,6 +20,12 @@ type CreateOrderResponse = {
   };
 };
 
+type OrderSummary = {
+  id: string;
+  items: ReturnType<typeof mapCartItems>;
+  pricing?: CreateOrderResponse["pricing"];
+};
+
 export function Checkout() {
   const { t } = useTranslation();
   const { cart, cartId, isLoading: isCartLoading, refetch } = useCart();
@@ -41,6 +47,7 @@ export function Checkout() {
   const [lastName, setLastName] = useState("");
   const [wilayaId, setWilayaId] = useState<number | "">("");
   const [deliveryType, setDeliveryType] = useState<"home" | "office">("home");
+  const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
 
   const selectedWilaya = useMemo(
     () => wilayas.find((w) => w.id === wilayaId),
@@ -86,13 +93,29 @@ export function Checkout() {
     successMessage: t("checkout.orderPlacedSuccess"),
     errorMessage: t("checkout.orderPlacedError"),
     options: {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        if (response?.data?.id) {
+          setOrderSummary({
+            id: response.data.id,
+            items,
+            pricing: response.pricing,
+          });
+        }
         refetch();
       },
     },
   });
 
   const orderId = createOrder.data?.data?.id ?? null;
+  const resolvedOrderSummary =
+    orderSummary ??
+    (orderId
+      ? {
+          id: orderId,
+          items,
+          pricing: createOrder.data?.pricing,
+        }
+      : null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +159,104 @@ export function Checkout() {
     );
   }
 
+  const currency = t("common.currency");
+
+  if (resolvedOrderSummary) {
+    const summaryItems = resolvedOrderSummary.items ?? [];
+    const summarySubtotal =
+      resolvedOrderSummary.pricing?.items_total != null
+        ? Number(resolvedOrderSummary.pricing.items_total)
+        : calcSubtotal(summaryItems);
+    const summaryShipping =
+      resolvedOrderSummary.pricing?.shipping != null
+        ? Number(resolvedOrderSummary.pricing.shipping)
+        : shipping ?? 0;
+    const summaryTotal =
+      resolvedOrderSummary.pricing?.total != null
+        ? Number(resolvedOrderSummary.pricing.total)
+        : summarySubtotal + summaryShipping;
+
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 py-12 md:px-6">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
+              <h1 className="text-2xl font-semibold text-neutral-900">
+                {t("checkout.orderConfirmedTitle")}
+              </h1>
+              <p className="mt-2 text-neutral-600">
+                {t("checkout.orderConfirmedBody")}
+              </p>
+              <p className="mt-4 text-sm text-neutral-500">
+                {t("checkout.orderIdLabel")}{" "}
+                <span className="font-medium">
+                  {resolvedOrderSummary.id}
+                </span>
+              </p>
+              <Button asChild className="mt-6 rounded-full">
+                <Link to="/shop">{t("checkout.continueShopping")}</Link>
+              </Button>
+            </div>
+
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+              <h2 className="text-lg font-semibold text-neutral-900">
+                {t("checkout.orderSummary")}
+              </h2>
+
+              <div className="mt-6 space-y-4">
+                {summaryItems.length === 0 ? (
+                  <p className="text-sm text-neutral-500">
+                    {t("checkout.cartEmptyBody")}
+                  </p>
+                ) : (
+                  summaryItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-neutral-900">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-neutral-500">
+                          {t("checkout.qty")} {item.quantity}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium text-neutral-900">
+                        {(item.price * item.quantity).toFixed(2)} {currency}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-6 space-y-2 border-t border-neutral-200 pt-4 text-sm">
+                <div className="flex items-center justify-between text-neutral-600">
+                  <span>{t("common.subtotal")}</span>
+                  <span className="font-medium text-neutral-900">
+                    {summarySubtotal.toFixed(2)} {currency}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-neutral-600">
+                  <span>{t("common.shipping")}</span>
+                  <span className="font-medium text-neutral-900">
+                    {summaryShipping.toFixed(2)} {currency}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
+                  <span>{t("common.total")}</span>
+                  <span>
+                    {summaryTotal.toFixed(2)} {currency}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!items.length) {
     return (
       <div className="min-h-screen bg-white">
@@ -155,32 +276,6 @@ export function Checkout() {
       </div>
     );
   }
-
-  if (orderId) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-12 md:px-6">
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
-            <h1 className="text-2xl font-semibold text-neutral-900">
-              {t("checkout.orderConfirmedTitle")}
-            </h1>
-            <p className="mt-2 text-neutral-600">
-              {t("checkout.orderConfirmedBody")}
-            </p>
-            <p className="mt-4 text-sm text-neutral-500">
-              {t("checkout.orderIdLabel")}{" "}
-              <span className="font-medium">{orderId}</span>
-            </p>
-            <Button asChild className="mt-6 rounded-full">
-              <Link to="/shop">{t("checkout.continueShopping")}</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const currency = t("common.currency");
 
   return (
     <div className="min-h-screen bg-white">

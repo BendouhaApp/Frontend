@@ -34,7 +34,9 @@ export const usePost = <TVariables, TResponse>({
 }: Props<TVariables, TResponse>) => {
   const queryClient = useQueryClient()
   const pathArray = path.split('/')
-  
+
+  const { onSuccess, onError, ...mutationOptions } = options ?? {}
+
   const mutation = useMutation<TResponse, Error, TVariables>({
     mutationFn: async (body: TVariables) => {
       let res: KyResponse
@@ -48,13 +50,14 @@ export const usePost = <TVariables, TResponse>({
       }
       return res.json() as Promise<TResponse>
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       toast.success(successMessage)
       queryClient.invalidateQueries({
         queryKey: [pathArray[0]],
       })
+      onSuccess?.(data, variables, context)
     },
-    onError: async (error: Error) => {
+    onError: async (error: Error, variables, context) => {
       toast.error(errorMessage)
       if (error instanceof HTTPError) {
         try {
@@ -71,8 +74,9 @@ export const usePost = <TVariables, TResponse>({
           // JSON parsing failed, ignore
         }
       }
+      onError?.(error, variables, context)
     },
-    ...options,
+    ...mutationOptions,
   })
 
   return mutation
