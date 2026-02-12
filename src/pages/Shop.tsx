@@ -127,7 +127,7 @@ function FilterSidebar({
               <button
                 onClick={() => {
                   setSelectedCategory(category.id);
-                  setSelectedSubcategory("all");
+                  //setSelectedSubcategory("all");  ===>  Removing this fixed category click
                 }}
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
