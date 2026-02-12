@@ -1810,19 +1810,25 @@ export default function AdminProductsPage() {
     }
   };
 
-  const deleteProduct = async (id: string) => {
-    setDeletingId(id);
-    setError("");
-
-    try {
-      await api(`products/${id}`, { method: "DELETE" });
-      setItems((p) => p.filter((x) => x.id !== id));
-    } catch (e: any) {
-      setError(e?.message || "Delete failed");
-    } finally {
-      setDeletingId(null);
+const deleteProduct = async (id: string) => {
+  setDeletingId(id);
+  setError("");
+  try {
+    await api(`products/${id}`, { method: "DELETE" });
+    await load();
+  } catch (e: any) {
+    const msg = getErrMsg(e.data, "Failed to delete product");
+    setError(msg);
+    console.error("Delete failed:", e);
+    if (e.status === 400) {
+      setTimeout(() => setError(""), 8000);
+    } else {
+      setTimeout(() => setError(""), 5000);
     }
-  };
+  } finally {
+    setDeletingId(null);
+  }
+};
 
   const bulkUpdateStatus = async (published: boolean) => {
     try {
@@ -1844,28 +1850,31 @@ export default function AdminProductsPage() {
     }
   };
 
-  const bulkDelete = async () => {
-    if (!selectedIds.length) return;
-
-    setSaving(true);
-    setError("");
-
-    try {
-      await api("products/bulk", {
-        method: "DELETE",
-        body: JSON.stringify({ ids: selectedIds }),
-      });
-
-      setItems((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
-
-      setSelectedIds([]);
-      setConfirmBulkDelete(false);
-    } catch (e: any) {
-      setError(e?.message || "Bulk delete failed");
-    } finally {
-      setSaving(false);
+const bulkDelete = async () => {
+  setSaving(true);
+  setError("");
+  try {
+    await api<{ success: boolean; count: number }>("products/bulk", {
+      method: "DELETE",
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+    setSelectedIds([]);
+    setConfirmBulkDelete(false);
+    await load();
+  } catch (e: any) {
+    const msg = getErrMsg(e.data, "Failed to delete products");
+    setError(msg);
+    console.error("Bulk delete failed:", e);
+    setConfirmBulkDelete(false);
+    if (e.status === 400) {
+      setTimeout(() => setError(""), 10000);
+    } else {
+      setTimeout(() => setError(""), 5000);
     }
-  };
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-neutral-50">

@@ -1,11 +1,16 @@
 import { useMemo, useState } from "react";
 import {
-  Loader2,
   Search,
   ShoppingCart,
   Check,
   X,
   RefreshCcw,
+  AlertCircle,
+  Package,
+  User,
+  MapPin,
+  CreditCard,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +21,10 @@ type OrderItem = {
   id: string;
   price: number;
   quantity: number;
+  products?: {
+    product_name: string;
+    sku: string | null;
+  };
 };
 
 type Order = {
@@ -24,6 +33,10 @@ type Order = {
   customer_first_name?: string | null;
   customer_last_name?: string | null;
   customer_phone?: string | null;
+  customer_wilaya?: string | null;
+  delivery_type?: string | null;
+  shipping_price?: string | number;
+  total_price?: string | number;
   customers?: {
     first_name: string;
     last_name: string;
@@ -32,6 +45,9 @@ type Order = {
   order_statuses?: {
     status_name: string;
     color: string;
+  };
+  shipping_zones?: {
+    display_name: string;
   };
   order_items: OrderItem[];
 };
@@ -47,11 +63,57 @@ type StatusesResponse = {
   data: OrderStatus[];
 };
 
+type DbOrderItem = {
+  id: string;
+  price: string;
+  quantity: number;
+  products?: {
+    product_name: string;
+    sku: string | null;
+  };
+};
+
+type DbOrder = {
+  id: string;
+  created_at: string;
+  customer_first_name?: string | null;
+  customer_last_name?: string | null;
+  customer_phone?: string | null;
+  customer_wilaya?: string | null;
+  delivery_type?: string | null;
+  shipping_price?: string | number;
+  total_price?: string | number;
+  customers?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  order_statuses?: {
+    status_name: string;
+    color: string;
+  };
+  shipping_zones?: {
+    display_name: string;
+  };
+  order_items: DbOrderItem[];
+};
+
+type OrdersDbResponse = {
+  data: DbOrder[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
 export function AdminOrders() {
   const [query, setQuery] = useState("");
-
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
   const adminToken = localStorage.getItem("admin_token");
   const adminRequestHeader = adminToken
     ? { headers: { Authorization: `Bearer ${adminToken}` } }
@@ -64,6 +126,8 @@ export function AdminOrders() {
     options: {
       staleTime: 1000 * 15,
       placeholderData: (previous) => previous,
+      retry: 1,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -72,6 +136,17 @@ export function AdminOrders() {
     requestHeader: adminRequestHeader,
     options: {
       staleTime: 1000 * 60,
+    },
+  });
+
+  const orderDetailsQuery = useGet<{ message: string; data: DbOrder }>({
+    path: selectedOrderId ? `orders/admin/${selectedOrderId}` : "",
+    requestHeader: adminRequestHeader,
+    options: {
+      enabled: !!selectedOrderId,
+      staleTime: 0,
+      retry: 1,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -94,7 +169,6 @@ export function AdminOrders() {
 
   const updateStatus = usePostAction();
 
-  /* ===== STATUS IDS ===== */
   const confirmedStatusId = statuses.find(
     (s) => s.status_name.toLowerCase() === "confirmed",
   )?.id;
@@ -103,7 +177,6 @@ export function AdminOrders() {
     (s) => s.status_name.toLowerCase() === "canceled",
   )?.id;
 
-  /* ===== UPDATE ===== */
   const updateStatusAction = (orderId: string, statusId?: string) => {
     if (!statusId) return;
     updateStatus.mutate({
@@ -115,7 +188,6 @@ export function AdminOrders() {
     });
   };
 
-  /* ===== FILTER ===== */
   const filtered = useMemo(() => {
     if (!query) return orders;
     return orders.filter(
@@ -132,44 +204,19 @@ export function AdminOrders() {
   const calcTotal = (items: OrderItem[]) =>
     items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-  /* ===== Loading ===== */
+  const selectedOrder = useMemo<Order | null>(() => {
+    const o = orderDetailsQuery.data?.data;
+    if (!o) return null;
 
-  type DbOrderItem = {
-    id: string;
-    price: string; // Decimal
-    quantity: number;
-  };
-
-  type DbOrder = {
-    id: string;
-    created_at: string;
-    customer_first_name?: string | null;
-    customer_last_name?: string | null;
-    customer_phone?: string | null;
-    customers?: {
-      first_name: string;
-      last_name: string;
-      email: string;
+    return {
+      ...o,
+      order_items: (o.order_items ?? []).map((i) => ({
+        ...i,
+        price: Number(i.price),
+      })),
     };
-    order_statuses?: {
-      status_name: string;
-      color: string;
-    };
-    order_items: DbOrderItem[];
-  };
+  }, [orderDetailsQuery.data]);
 
-  type OrdersDbResponse = {
-    data: DbOrder[];
-    meta: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  };
-
-
-  /* ===== UI ===== */
   return (
     <div className="mx-auto max-w-7xl p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -211,14 +258,66 @@ export function AdminOrders() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <div className="flex-1">
+            <p className="font-medium text-sm text-red-900">
+              Failed to load orders
+            </p>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              ordersQuery.refetch();
+              statusesQuery.refetch();
+            }}
+            className="shrink-0"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-neutral-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading orders…
+        <div className="overflow-hidden rounded-xl bg-white shadow">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-100 text-left">
+              <tr>
+                <th className="px-4 py-3">Order</th>
+                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="border-t">
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-24 animate-pulse rounded bg-neutral-200" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-32 animate-pulse rounded bg-neutral-200" />
+                    <div className="mt-1 h-3 w-24 animate-pulse rounded bg-neutral-200" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-20 animate-pulse rounded bg-neutral-200" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-16 animate-pulse rounded bg-neutral-200" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 animate-pulse rounded-lg bg-neutral-200" />
+                      <div className="h-8 w-8 animate-pulse rounded-lg bg-neutral-200" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl bg-white p-10 text-center shadow">
@@ -239,7 +338,12 @@ export function AdminOrders() {
             </thead>
             <tbody>
               {filtered.map((order) => (
-                <tr key={order.id} className="border-t hover:bg-neutral-50">
+                <tr
+                  key={order.id}
+                  className="border-t hover:bg-neutral-50 cursor-pointer transition"
+                  onClick={() => setSelectedOrderId(order.id)}
+                  title="Click to view details"
+                >
                   <td className="px-4 py-3 font-medium">{order.id}</td>
 
                   <td className="px-4 py-3">
@@ -253,35 +357,52 @@ export function AdminOrders() {
                   </td>
 
                   <td className="px-4 py-3">
-                    {order.order_statuses?.status_name ?? "—"}
+                    {order.order_statuses ? (
+                      <span
+                        className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                        style={{
+                          backgroundColor: `${order.order_statuses.color}20`,
+                          color: order.order_statuses.color,
+                        }}
+                      >
+                        {order.order_statuses.status_name}
+                      </span>
+                    ) : (
+                      <span className="text-neutral-400">—</span>
+                    )}
                   </td>
 
                   <td className="px-4 py-3 font-medium">
                     ${calcTotal(order.order_items).toFixed(2)}
                   </td>
 
-                  <td className="px-4 py-3 flex gap-2">
-                    <button
-                      disabled={!confirmedStatusId}
-                      onClick={() =>
-                        updateStatusAction(order.id, confirmedStatusId)
-                      }
-                      className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40"
-                      title="Confirm order"
-                    >
-                      <Check size={16} />
-                    </button>
+                  <td
+                    className="px-4 py-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex gap-2">
+                      <button
+                        disabled={!confirmedStatusId || updateStatus.isPending}
+                        onClick={() =>
+                          updateStatusAction(order.id, confirmedStatusId)
+                        }
+                        className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Confirm order"
+                      >
+                        <Check size={16} />
+                      </button>
 
-                    <button
-                      disabled={!canceledStatusId}
-                      onClick={() =>
-                        updateStatusAction(order.id, canceledStatusId)
-                      }
-                      className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40"
-                      title="Cancel order"
-                    >
-                      <X size={16} />
-                    </button>
+                      <button
+                        disabled={!canceledStatusId || updateStatus.isPending}
+                        onClick={() =>
+                          updateStatusAction(order.id, canceledStatusId)
+                        }
+                        className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Cancel order"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -289,17 +410,24 @@ export function AdminOrders() {
           </table>
         </div>
       )}
-      {!loading && totalPages > 1 && (
+
+      {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-sm text-neutral-500">
-            Page {page} of {totalPages}
+          <span className="text-sm text-neutral-600">
+            Page <span className="font-semibold">{page}</span> of{" "}
+            <span className="font-semibold">{totalPages}</span>
+            {ordersQuery.data?.meta.total && (
+              <span className="ml-2 text-neutral-500">
+                ({ordersQuery.data.meta.total} total orders)
+              </span>
+            )}
           </span>
 
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              disabled={page === 1}
+              disabled={page === 1 || loading}
               onClick={() => setPage((p) => p - 1)}
             >
               Previous
@@ -308,13 +436,193 @@ export function AdminOrders() {
             <Button
               variant="outline"
               size="sm"
-              disabled={page === totalPages}
+              disabled={page >= totalPages || loading}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
             </Button>
           </div>
         </div>
+      )}
+
+      {selectedOrder && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            onClick={() => setSelectedOrderId(null)}
+          />
+
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Order Details</h2>
+                  <p className="text-sm text-neutral-500">{selectedOrder.id}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedOrderId(null)}
+                  className="rounded-lg p-2 hover:bg-neutral-100 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-neutral-600">
+                    Status
+                  </span>
+                  {selectedOrder.order_statuses && (
+                    <span
+                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                      style={{
+                        backgroundColor: `${selectedOrder.order_statuses.color}20`,
+                        color: selectedOrder.order_statuses.color,
+                      }}
+                    >
+                      {selectedOrder.order_statuses.status_name}
+                    </span>
+                  )}
+                </div>
+
+                <div className="rounded-xl border p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                    <User className="h-4 w-4" />
+                    Customer Information
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Name</span>
+                      <span className="font-medium">
+                        {selectedOrder.customers
+                          ? `${selectedOrder.customers.first_name} ${selectedOrder.customers.last_name}`
+                          : `${selectedOrder.customer_first_name ?? ""} ${selectedOrder.customer_last_name ?? ""}`.trim() ||
+                            "—"}
+                      </span>
+                    </div>
+                    {(selectedOrder.customers?.email ||
+                      selectedOrder.customer_phone) && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Contact</span>
+                        <span className="font-medium">
+                          {selectedOrder.customers?.email ||
+                            selectedOrder.customer_phone}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                    <MapPin className="h-4 w-4" />
+                    Shipping Information
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    {selectedOrder.customer_wilaya && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Wilaya</span>
+                        <span className="font-medium">
+                          {selectedOrder.customer_wilaya}
+                        </span>
+                      </div>
+                    )}
+                    {selectedOrder.delivery_type && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Delivery Type</span>
+                        <span className="font-medium capitalize">
+                          {selectedOrder.delivery_type}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                    <Package className="h-4 w-4" />
+                    Items ({selectedOrder.order_items.length})
+                  </div>
+                  <div className="space-y-3">
+                    {selectedOrder.order_items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-3 text-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {item.products?.product_name || "Product"}
+                          </p>
+                          {item.products?.sku && (
+                            <p className="text-xs text-neutral-500">
+                              SKU: {item.products.sku}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">
+                            ${item.price.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            Qty: {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                    <CreditCard className="h-4 w-4" />
+                    Pricing
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Subtotal</span>
+                      <span className="font-medium">
+                        ${calcTotal(selectedOrder.order_items).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Shipping</span>
+                      <span className="font-medium">
+                        ${Number(selectedOrder.shipping_price || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 text-base font-semibold">
+                      <span>Total</span>
+                      <span>
+                        $
+                        {Number(
+                          selectedOrder.total_price ||
+                            calcTotal(selectedOrder.order_items),
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-neutral-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  Created {new Date(selectedOrder.created_at).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 border-t bg-neutral-50 px-6 py-4">
+                <Button
+                  onClick={() => setSelectedOrderId(null)}
+                  className="w-full"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
