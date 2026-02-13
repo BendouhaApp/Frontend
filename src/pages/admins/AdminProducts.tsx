@@ -1810,25 +1810,25 @@ export default function AdminProductsPage() {
     }
   };
 
-const deleteProduct = async (id: string) => {
-  setDeletingId(id);
-  setError("");
-  try {
-    await api(`products/${id}`, { method: "DELETE" });
-    await load();
-  } catch (e: any) {
-    const msg = getErrMsg(e.data, "Failed to delete product");
-    setError(msg);
-    console.error("Delete failed:", e);
-    if (e.status === 400) {
-      setTimeout(() => setError(""), 8000);
-    } else {
-      setTimeout(() => setError(""), 5000);
+  const deleteProduct = async (id: string) => {
+    setDeletingId(id);
+    setError("");
+    try {
+      await api(`products/${id}`, { method: "DELETE" });
+      await load();
+    } catch (e: any) {
+      const msg = getErrMsg(e.data, "Failed to delete product");
+      setError(msg);
+      console.error("Delete failed:", e);
+      if (e.status === 400) {
+        setTimeout(() => setError(""), 8000);
+      } else {
+        setTimeout(() => setError(""), 5000);
+      }
+    } finally {
+      setDeletingId(null);
     }
-  } finally {
-    setDeletingId(null);
-  }
-};
+  };
 
   const bulkUpdateStatus = async (published: boolean) => {
     try {
@@ -1850,31 +1850,62 @@ const deleteProduct = async (id: string) => {
     }
   };
 
-const bulkDelete = async () => {
-  setSaving(true);
-  setError("");
-  try {
-    await api<{ success: boolean; count: number }>("products/bulk", {
-      method: "DELETE",
-      body: JSON.stringify({ ids: selectedIds }),
-    });
-    setSelectedIds([]);
-    setConfirmBulkDelete(false);
-    await load();
-  } catch (e: any) {
-    const msg = getErrMsg(e.data, "Failed to delete products");
-    setError(msg);
-    console.error("Bulk delete failed:", e);
-    setConfirmBulkDelete(false);
-    if (e.status === 400) {
-      setTimeout(() => setError(""), 10000);
-    } else {
-      setTimeout(() => setError(""), 5000);
+  const bulkUpdateOutOfStockVisibility = async (hide: boolean) => {
+    try {
+      await api("products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          ids: selectedIds,
+          disable_out_of_stock: hide,
+        }),
+      });
+
+      setItems((prev) =>
+        prev.map((p) =>
+          selectedIds.includes(p.id) ? { ...p, disable_out_of_stock: hide } : p,
+        ),
+      );
+
+      setSelectedIds([]);
+    } catch (e: any) {
+      setError(e?.message || "Bulk update failed");
     }
-  } finally {
-    setSaving(false);
-  }
-};
+  };
+
+  const bulkDelete = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await api<{ success: boolean; count: number }>("products/bulk", {
+        method: "DELETE",
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+      await load();
+    } catch (e: any) {
+      const msg = getErrMsg(e.data, "Failed to delete products");
+      setError(msg);
+      console.error("Bulk delete failed:", e);
+      setConfirmBulkDelete(false);
+      if (e.status === 400) {
+        setTimeout(() => setError(""), 10000);
+      } else {
+        setTimeout(() => setError(""), 5000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const selectedProducts = normalized.filter((p) => selectedIds.includes(p.id));
+
+  const allPublished =
+    selectedProducts.length > 0 && selectedProducts.every((p) => p.published);
+
+  const allHideOos =
+    selectedProducts.length > 0 &&
+    selectedProducts.every((p) => p.disable_out_of_stock);
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -2164,13 +2195,30 @@ const bulkDelete = async () => {
                 Delete selected
               </Button>
 
-              <Button variant="outline" onClick={() => bulkUpdateStatus(true)}>
-                Activate
-              </Button>
+              <Button
+  onClick={() => bulkUpdateStatus(!allPublished)}
+  className={cn(
+    "transition border",
+    allPublished
+      ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+      : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
+  )}
+>
+  {allPublished ? "Set as Draft" : "Set as Published"}
+</Button>
 
-              <Button variant="outline" onClick={() => bulkUpdateStatus(false)}>
-                Disable
-              </Button>
+<Button
+  onClick={() => bulkUpdateOutOfStockVisibility(!allHideOos)}
+  className={cn(
+    "transition border",
+    allHideOos
+      ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+      : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
+  )}
+>
+  {allHideOos ? "Allow Out of Stock" : "Hide Out of Stock"}
+</Button>
+
 
               <Button
                 variant="ghost"

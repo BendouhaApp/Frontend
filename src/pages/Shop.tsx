@@ -377,8 +377,6 @@ export function Shop() {
 
   const activeCategoryId =
     selectedSubcategory !== "all" ? selectedSubcategory : selectedCategory;
-  const parentFilterActive =
-    selectedCategory !== "all" && selectedSubcategory === "all";
 
   const selectedCategoryLabel =
     activeCategoryId === "all"
@@ -409,62 +407,47 @@ export function Shop() {
     setPage(1);
   }, [activeCategoryId]);
 
-
   // Fetch products from API
+  const start = (page - 1) * ITEMS_PER_PAGE;
+
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
       path: "products/public",
       query: {
-        limit: parentFilterActive ? 5000 : ITEMS_PER_PAGE,
-        ...(parentFilterActive
-          ? {}
-          : { page, start: Math.max(0, (page - 1) * ITEMS_PER_PAGE) }),
+        limit: ITEMS_PER_PAGE,
+        start,
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
       },
       options: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60 * 5,
       },
     },
   );
-  const rawProducts = useMemo(() => data?.data ?? [], [data?.data]);
-  const filteredProducts = useMemo(() => {
-    if (activeCategoryId === "all") return rawProducts;
-    const isSubcategory = selectedSubcategory !== "all";
-    return rawProducts.filter((product) => {
-      const categories = product.categories ?? [];
-      if (categories.length === 0) return false;
-      if (isSubcategory) {
-        return categories.some((category) => category.id === activeCategoryId);
-      }
-      return categories.some(
-        (category) =>
-          category.id === activeCategoryId ||
-          category.parent_id === activeCategoryId,
-      );
-    });
-  }, [rawProducts, activeCategoryId, selectedSubcategory]);
-  const pageStart = Math.max(0, (page - 1) * ITEMS_PER_PAGE);
-  const pageEnd = pageStart + ITEMS_PER_PAGE;
-  const metaLimit = data?.meta?.limit;
-  const responseIsUnpaginated =
-    parentFilterActive ||
-    (rawProducts.length > ITEMS_PER_PAGE &&
-      (metaLimit === undefined || rawProducts.length > metaLimit));
-  const products = useMemo(() => {
-    if (!responseIsUnpaginated) return filteredProducts;
-    return filteredProducts.slice(pageStart, pageEnd);
-  }, [filteredProducts, responseIsUnpaginated, pageStart, pageEnd]);
-  const totalItems = responseIsUnpaginated
-    ? filteredProducts.length
-    : (data?.meta?.total ?? filteredProducts.length);
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const currentPage = Math.min(page, totalPages);
+
+  const products = data?.data ?? [];
+  const totalItems = data?.meta?.total ?? 0;
+  const totalPages = Math.max(
+    1,
+    data?.meta?.totalPages ?? Math.ceil(totalItems / ITEMS_PER_PAGE),
+  );
+  const currentPage = page;
 
   useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+    if (isLoading) return;
+
+    setPage((prev) => {
+      if (prev > totalPages) return totalPages;
+      if (prev < 1) return 1;
+      return prev;
+    });
+  }, [totalPages, isLoading]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [page]);
 
   // Cart mutation - you need a cart_id to add items
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
@@ -754,10 +737,10 @@ export function Shop() {
                     {subcategories.map((subcategory) => (
                       <button
                         key={subcategory.id}
-                      onClick={() => {
-                        setCategoryParam(subcategory.id);
-                        setPage(1);
-                      }}
+                        onClick={() => {
+                          setCategoryParam(subcategory.id);
+                          setPage(1);
+                        }}
                         className={cn(
                           "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
                           selectedSubcategory === subcategory.id
@@ -799,7 +782,7 @@ export function Shop() {
             )}
 
             {/* Loading State */}
-            {isLoading && <SkeletonProductGrid count={8} />}
+            {isLoading && <SkeletonProductGrid count={ITEMS_PER_PAGE} />}
 
             {/* Error State */}
             {isError && (
@@ -844,7 +827,7 @@ export function Shop() {
               </>
             )}
 
-            {!isLoading && !isError && products.length > 0 && totalPages > 1 && (
+            {!isLoading && !isError && totalItems > ITEMS_PER_PAGE && (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p className="text-sm text-navy-500">
                   {t("common.pageOf", {
@@ -857,9 +840,7 @@ export function Shop() {
                     variant="outline"
                     size="sm"
                     disabled={currentPage === 1}
-                    onClick={() =>
-                      setPage((prev) => Math.max(1, prev - 1))
-                    }
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   >
                     {t("common.previous")}
                   </Button>
