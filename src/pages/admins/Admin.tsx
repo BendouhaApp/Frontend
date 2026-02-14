@@ -20,7 +20,9 @@ import { cn } from "@/lib/utils";
 
 type Stats = {
   totalOrders: number;
+  todayOrders: number;
   pendingOrders: number;
+  confirmedOrders: number;
   totalProducts: number;
   totalRevenue: number;
   totalCategories: number;
@@ -34,6 +36,7 @@ type Stats = {
   activeWilayas: number;
   inactiveWilayas: number;
 };
+
 
 type Order = {
   id: string;
@@ -166,7 +169,7 @@ export default function AdminDashboard() {
     if (!statusColor) return undefined;
 
     return {
-      backgroundColor: `${statusColor}20`, // adds transparency
+      backgroundColor: `${statusColor}20`,
       color: statusColor,
     };
   };
@@ -234,6 +237,7 @@ export default function AdminDashboard() {
                 label="Total Revenue"
                 value={`${stats.totalRevenue.toLocaleString()} DZA`}
                 icon={<DollarSign className="h-5 w-5" />}
+                subtext={`${stats.confirmedOrders || 0} confirmed orders`}
               />
               <StatCard
                 label="Products"
@@ -257,6 +261,7 @@ export default function AdminDashboard() {
                 label="Total Orders"
                 value={stats.totalOrders}
                 icon={<ShoppingCart className="h-5 w-5" />}
+                subtext={`${stats.todayOrders || 0} orders today`}
               />
               <StatCard
                 label="Pending Orders"
