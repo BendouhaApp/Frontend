@@ -261,80 +261,93 @@ export default function AdminDashboard() {
         {!loading && stats && (
           <>
             <motion.div
-  variants={containerVariants}
-  initial="hidden"
-  animate="show"
-  className="grid gap-6 md:grid-cols-4"
-  style={{ perspective: 1000 }}
->
-  <StatCard
-    variants={fadeUp}
-    label="Total Revenue"
-    value={`${stats.totalRevenue.toLocaleString()} DZA`}
-    icon={<DollarSign className="h-5 w-5" />}
-    subtext={`${stats.confirmedOrders || 0} confirmed orders`}
-  />
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid gap-6 md:grid-cols-4"
+              style={{ perspective: 1000 }}
+            >
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Total Revenue"
+                  value={`${stats.totalRevenue.toLocaleString()} DZA`}
+                  icon={<DollarSign className="h-5 w-5" />}
+                  subtext={`${stats.confirmedOrders || 0} confirmed orders`}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Products"
-    value={stats.totalProducts}
-    icon={<Package className="h-5 w-5" />}
-    subtext={`${stats.publishedProducts || 0} published • ${stats.draftProducts || 0} drafts`}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Products"
+                  value={stats.totalProducts}
+                  icon={<Package className="h-5 w-5" />}
+                  subtext={`${stats.publishedProducts || 0} published • ${stats.draftProducts || 0} drafts`}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Categories"
-    value={stats.totalCategories}
-    icon={<Tag className="h-5 w-5" />}
-    subtext={`${stats.mainCategories || 0} main • ${stats.subCategories || 0} sub`}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Categories"
+                  value={stats.totalCategories}
+                  icon={<Tag className="h-5 w-5" />}
+                  subtext={`${stats.mainCategories || 0} main • ${stats.subCategories || 0} sub`}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Wilayas"
-    value={stats.totalWilayas}
-    icon={<MapPin className="h-5 w-5" />}
-    subtext={`${stats.activeWilayas} active • ${stats.inactiveWilayas} inactive`}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Wilayas"
+                  value={stats.totalWilayas}
+                  icon={<MapPin className="h-5 w-5" />}
+                  subtext={`${stats.activeWilayas} active • ${stats.inactiveWilayas} inactive`}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Total Orders"
-    value={stats.totalOrders}
-    icon={<ShoppingCart className="h-5 w-5" />}
-    subtext={`${stats.todayOrders || 0} orders today`}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Total Orders"
+                  value={stats.totalOrders}
+                  icon={<ShoppingCart className="h-5 w-5" />}
+                  subtext={`${stats.todayOrders || 0} orders today`}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Pending Orders"
-    value={stats.pendingOrders}
-    icon={<Clock className="h-5 w-5" />}
-    alert={stats.pendingOrders > 0 ? "Needs attention" : "All clear"}
-    isWarning={stats.pendingOrders > 0}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Pending Orders"
+                  value={stats.pendingOrders}
+                  icon={<Clock className="h-5 w-5" />}
+                  alert={
+                    stats.pendingOrders > 0 ? "Needs attention" : "All clear"
+                  }
+                  isWarning={stats.pendingOrders > 0}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Low Stock Alert"
-    value={stats.lowStockProducts || 0}
-    icon={<AlertCircle className="h-5 w-5" />}
-    alert={(stats.lowStockProducts || 0) > 0 ? "Restock needed" : "Healthy"}
-    isWarning={(stats.lowStockProducts || 0) > 0}
-  />
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Low Stock Alert"
+                  value={stats.lowStockProducts || 0}
+                  icon={<AlertCircle className="h-5 w-5" />}
+                  alert={
+                    (stats.lowStockProducts || 0) > 0
+                      ? "Restock needed"
+                      : "Healthy"
+                  }
+                  isWarning={(stats.lowStockProducts || 0) > 0}
+                />
+              </motion.div>
 
-  <StatCard
-    variants={fadeUp}
-    label="Out of Stock"
-    value={stats.outOfStockProducts}
-    icon={<AlertTriangle className="h-5 w-5" />}
-    alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
-    isWarning={stats.outOfStockProducts > 0}
-  />
-</motion.div>
-
+              <motion.div variants={fadeUp}>
+                <StatCard
+                  label="Out of Stock"
+                  value={stats.outOfStockProducts}
+                  icon={<AlertTriangle className="h-5 w-5" />}
+                  alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
+                  isWarning={stats.outOfStockProducts > 0}
+                />
+              </motion.div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -516,7 +529,6 @@ function StatCard({
       }}
       style={{ transformStyle: "preserve-3d" }}
     >
-
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
 
       <div className="relative z-10">
