@@ -10,8 +10,10 @@ import {
   Loader2,
   RotateCcw,
   Image as ImageIcon,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -63,7 +65,9 @@ function CategoryForm({
   const [parentId, setParentId] = useState<string | null>(
     category?.parent_id ?? null,
   );
-  const [imagePreview, setImagePreview] = useState<string>(category?.image ?? "");
+  const [imagePreview, setImagePreview] = useState<string>(
+    category?.image ?? "",
+  );
   const [active, setActive] = useState(category?.active ?? true);
   const [query, setQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
@@ -96,7 +100,7 @@ function CategoryForm({
       category_description: desc.trim() || null,
       parent_id: parentId || null,
       active,
-      image: parentId ? null : (image.trim() || null), // No image if it has a parent
+      image: parentId ? null : image.trim() || null, // No image if it has a parent
     });
   };
 
@@ -203,60 +207,65 @@ function CategoryForm({
         )}
       </div>
 
-      {/* Conditional Image Upload - Only for Main Categories */}
       {!parentId && (
         <div>
-          <label className="text-sm font-medium text-neutral-700">
+          <label className="block mb-2.5 text-sm font-medium text-neutral-700">
             Category Image (optional)
           </label>
-          
-          <div className="mt-1.5">
-            {imagePreview ? (
-              <div className="relative">
-                <div className="h-32 w-full rounded-lg border-2 border-dashed border-neutral-300 overflow-hidden bg-neutral-50">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImagePreview("");
-                    setImage("");
-                  }}
-                  className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1.5 text-white shadow-lg hover:bg-red-600 transition"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 transition hover:border-blue-400 hover:bg-blue-50/30">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <div className="flex flex-col items-center gap-1.5 text-neutral-500">
-                  <ImageIcon className="h-6 w-6 text-neutral-400" />
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-neutral-700">
-                      Click to upload image
-                    </p>
-                    <p className="text-xs text-neutral-500">
-                      PNG, JPG, WEBP up to 5MB
-                    </p>
-                  </div>
-                </div>
-              </label>
+
+          <label
+            className={cn(
+              "flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-sm transition",
+              image
+                ? "border-primary bg-primary/5"
+                : "border-neutral-300 hover:bg-neutral-50",
             )}
-          </div>
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            {image ? (
+              <>
+                <Check className="h-5 w-5 text-primary" />
+                <span className="font-medium text-primary">Image selected</span>
+              </>
+            ) : (
+              <>
+                <ImageIcon className="h-5 w-5 text-neutral-400" />
+                <span className="text-neutral-600">
+                  Click to upload category image
+                </span>
+              </>
+            )}
+          </label>
+
+          {(imagePreview || image) && (
+            <div className="mt-3 relative w-fit">
+              <img
+                src={imagePreview}
+                alt="Category preview"
+                className="h-24 w-24 rounded-xl object-cover border"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setImagePreview("");
+                  setImage("");
+                }}
+                className="absolute -top-2 -right-2 rounded-full bg-red-500 p-1.5 text-white shadow-md hover:bg-red-600 transition"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Status Toggle */}
       <div className="flex items-center justify-between rounded-lg border border-neutral-300 p-3.5">
         <div>
           <p className="text-sm font-medium text-neutral-700">Status</p>
@@ -280,7 +289,6 @@ function CategoryForm({
         </button>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-3 pt-3">
         <Button
           type="button"
@@ -290,7 +298,11 @@ function CategoryForm({
         >
           Cancel
         </Button>
-        <Button type="submit" className="flex-1 h-10 bg-blue-600 hover:bg-blue-700" disabled={loading}>
+        <Button
+          type="submit"
+          className="flex-1 h-10 bg-blue-600 hover:bg-blue-700"
+          disabled={loading}
+        >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {category ? "Update category" : "Create category"}
         </Button>
@@ -344,11 +356,15 @@ export function AdminCategory() {
 
     if (query) {
       list = list.filter((c) => {
-        const matchesName = c.category_name.toLowerCase().includes(query.toLowerCase());
-        const parentName = c.parent_id 
+        const matchesName = c.category_name
+          .toLowerCase()
+          .includes(query.toLowerCase());
+        const parentName = c.parent_id
           ? items.find((item) => item.id === c.parent_id)?.category_name || ""
           : "";
-        const matchesParent = parentName.toLowerCase().includes(query.toLowerCase());
+        const matchesParent = parentName
+          .toLowerCase()
+          .includes(query.toLowerCase());
         return matchesName || matchesParent;
       });
     }
@@ -396,7 +412,9 @@ export function AdminCategory() {
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Categories</h1>
-          <p className="mt-1 text-sm text-neutral-600">Manage product categories</p>
+          <p className="mt-1 text-sm text-neutral-600">
+            Manage product categories
+          </p>
         </div>
         <Button
           onClick={() => {
@@ -499,9 +517,13 @@ export function AdminCategory() {
           <div className="mx-auto w-fit rounded-full bg-neutral-100 p-4 mb-3">
             <Folder className="h-8 w-8 text-neutral-400" />
           </div>
-          <p className="font-semibold text-neutral-900 mb-1">No categories found</p>
+          <p className="font-semibold text-neutral-900 mb-1">
+            No categories found
+          </p>
           <p className="text-sm text-neutral-500">
-            {query ? "Try adjusting your search" : "Get started by creating a new category"}
+            {query
+              ? "Try adjusting your search"
+              : "Get started by creating a new category"}
           </p>
         </div>
       ) : (
