@@ -252,7 +252,7 @@ export function AdminOrders() {
               setPage(1);
             }
           }}
-          placeholder="Search by order ID or email..."
+          placeholder="Search by order ID or phone number..."
           className="w-full rounded-xl border py-2 pl-9 pr-3"
         />
       </div>

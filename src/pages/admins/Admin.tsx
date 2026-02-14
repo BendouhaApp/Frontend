@@ -38,15 +38,22 @@ type Stats = {
 type Order = {
   id: string;
   created_at: string;
+
+  customer_first_name?: string | null;
+  customer_last_name?: string | null;
+  customer_phone?: string | null;
+
   customers?: {
     first_name: string;
     last_name: string;
     email: string;
   } | null;
+
   order_statuses?: {
     status_name: string;
     color: string;
   } | null;
+
   order_items: {
     id: string;
     price: string | number;
@@ -155,27 +162,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const getStatusColor = (statusName?: string, statusColor?: string) => {
-    if (!statusName) return "bg-neutral-100 text-neutral-700";
-    const status = statusName.toLowerCase();
+  const getStatusStyle = (statusColor?: string) => {
+    if (!statusColor) return undefined;
 
-    if (statusColor) {
-      return `bg-[${statusColor}]/10 text-[${statusColor}]`;
-    }
-
-    switch (status) {
-      case "paid":
-      case "confirmed":
-      case "delivered":
-        return "bg-emerald-100 text-emerald-700";
-      case "pending":
-        return "bg-amber-100 text-amber-700";
-      case "cancelled":
-      case "canceled":
-        return "bg-rose-100 text-rose-700";
-      default:
-        return "bg-blue-100 text-blue-700";
-    }
+    return {
+      backgroundColor: `${statusColor}20`, // adds transparency
+      color: statusColor,
+    };
   };
 
   const calculateOrderTotal = (order: Order) => {
@@ -297,7 +290,7 @@ export default function AdminDashboard() {
             <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-5 w-5 text-primary" />
                   Recent Orders
                 </h3>
 
@@ -355,22 +348,21 @@ export default function AdminDashboard() {
                             <div className="text-sm text-neutral-900">
                               {order.customers
                                 ? `${order.customers.first_name} ${order.customers.last_name}`
-                                : "Guest"}
+                                : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
+                                  "Guest"}
                             </div>
-                            {order.customers?.email && (
-                              <div className="text-xs text-neutral-500">
-                                {order.customers.email}
-                              </div>
-                            )}
+
+                            <div className="text-xs text-neutral-500">
+                              {order.customers?.email ||
+                                order.customer_phone ||
+                                ""}
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <span
-                              className={cn(
-                                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
-                                getStatusColor(
-                                  order.order_statuses?.status_name,
-                                  order.order_statuses?.color,
-                                ),
+                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                              style={getStatusStyle(
+                                order.order_statuses?.color,
                               )}
                             >
                               {getStatusIcon(order.order_statuses?.status_name)}
