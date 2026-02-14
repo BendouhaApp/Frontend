@@ -8,8 +8,8 @@ import {
   Mail,
   Instagram,
   Facebook,
-  type LucideIcon,
 } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ function SocialLink({
   ariaLabel,
 }: {
   href: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   ariaLabel: string;
 }) {
   return (
@@ -96,12 +96,17 @@ export function Footer() {
   // Social links - Only Instagram and Facebook
   const socialLinks = [
     {
-      href: "https://instagram.com/bendouha",
+      href: "https://www.tiktok.com/@bendou95",
+      icon: SiTiktok,
+      label: "Tiktok",
+    },
+    {
+      href: "https://www.instagram.com/electricity.bendo",
       icon: Instagram,
       label: "Instagram",
     },
     {
-      href: "https://facebook.com/bendouha",
+      href: "https://www.facebook.com/bendouha.elec",
       icon: Facebook,
       label: "Facebook",
     },
@@ -137,7 +142,13 @@ export function Footer() {
             <div className="mt-8 space-y-3">
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <MapPin className="h-4 w-4 shrink-0 text-cyan" />
-                <span>Boulevard des 20 mètres, Blida, Algérie</span>
+                <a
+                  className="text-inherit focus:outline-none"
+                  href="https://maps.app.goo.gl/t5aMCSCskGvYFuAQ6"
+                  target="_blank"
+                >
+                  <span>Boulevard des 20 mètres, Blida, Algérie</span>
+                </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <Phone className="h-4 w-4 shrink-0 text-cyan" />
