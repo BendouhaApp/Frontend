@@ -301,7 +301,6 @@ function CategorySelector({
       arr.push(c);
       m.set(c.parent_id, arr);
     });
-    // stable sorting
     m.forEach((arr) =>
       arr.sort((a, b) => a.category_name.localeCompare(b.category_name)),
     );
@@ -310,7 +309,6 @@ function CategorySelector({
 
   useEffect(() => {
     if (mainFilterId === "all") return;
-    // Auto-expand the filtered main category
     setExpandedIds((prev) =>
       prev.includes(mainFilterId) ? prev : [...prev, mainFilterId],
     );
@@ -328,9 +326,7 @@ function CategorySelector({
 
     const isCurrentlySelected = selectedIds.includes(id);
 
-    // If this is a main category being deselected
     if (!cat.parent_id && isCurrentlySelected) {
-      // Remove the main category AND all its subcategories
       const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
       onChange(
         selectedIds.filter((x) => x !== id && !subsToRemove.includes(x)),
@@ -338,16 +334,12 @@ function CategorySelector({
       return;
     }
 
-    // If this is a subcategory being selected
     if (cat.parent_id && !isCurrentlySelected) {
-      // Check if parent is selected
       if (!selectedIds.includes(cat.parent_id)) {
-        // Parent not selected, don't allow subcategory selection
         return;
       }
     }
 
-    // Normal toggle
     onChange(
       isCurrentlySelected
         ? selectedIds.filter((x) => x !== id)
@@ -362,7 +354,6 @@ function CategorySelector({
       return;
     }
 
-    // If removing a main category, also remove its subcategories
     if (!cat.parent_id) {
       const subsToRemove = subByParent.get(id)?.map((s) => s.id) ?? [];
       onChange(
@@ -375,8 +366,6 @@ function CategorySelector({
 
   const isSelected = (id: string) => selectedIds.includes(id);
   const isExpanded = (id: string) => expandedIds.includes(id);
-
-  // Check if a subcategory can be selected (its parent must be selected)
   const canSelectSubcategory = (parentId: string) =>
     selectedIds.includes(parentId);
 
@@ -438,7 +427,6 @@ function CategorySelector({
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-      {/* Top controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600">
@@ -487,7 +475,6 @@ function CategorySelector({
         </div>
       </div>
 
-      {/* Selected summary */}
       <AnimatePresence initial={false}>
         {selectedChips.length > 0 && (
           <motion.div
@@ -526,7 +513,6 @@ function CategorySelector({
         )}
       </AnimatePresence>
 
-      {/* Tree */}
       <div className="mt-4 max-h-[26rem] overflow-y-auto pr-1">
         {filteredMain.length === 0 ? (
           <div className="rounded-xl border border-dashed border-neutral-200 p-6 text-center">
@@ -752,14 +738,12 @@ function ProductForm({
   );
   const [note, setNote] = useState(product?.note ?? "");
 
-  // Lighting specifications
   const [cct, setCct] = useState<number>(product?.cct ?? 3000);
   const [lumen, setLumen] = useState<number>(product?.lumen ?? 800);
   const [cri, setCri] = useState<number>(product?.cri ?? 80);
   const [power, setPower] = useState<number>(Number(product?.power ?? 10));
   const [angle, setAngle] = useState<number>(product?.angle ?? 120);
 
-  // Categories
   const [categories, setCategories] = useState<DbCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
@@ -778,7 +762,6 @@ function ProductForm({
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
-  // Load categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -846,7 +829,6 @@ function ProductForm({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (cct < 1000 || cct > 10000) {
       alert("CCT must be between 1000 and 10000 Kelvin");
       return;
@@ -901,7 +883,6 @@ function ProductForm({
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      {/* Basic Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
@@ -1065,7 +1046,6 @@ function ProductForm({
         </div>
       </div>
 
-      {/* Lighting Specifications */}
       <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
         <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" />
@@ -1158,7 +1138,6 @@ function ProductForm({
         </div>
       </div>
 
-      {/* Categories */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
           <Folder className="h-5 w-5 text-primary" />
@@ -1186,7 +1165,6 @@ function ProductForm({
         )}
       </div>
 
-      {/* Status Toggles */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-neutral-900">Status</h3>
         <div className="grid gap-3 md:grid-cols-2">
@@ -1207,7 +1185,6 @@ function ProductForm({
         </div>
       </div>
 
-      {/* Images */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-neutral-900">Images</h3>
 
@@ -1337,7 +1314,6 @@ function ProductForm({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-3 border-t border-neutral-200 pt-6">
         <Button
           type="button"
@@ -1572,13 +1548,17 @@ export default function AdminProductsPage() {
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Category filter state
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
+
   useEffect(() => {
-    // Keep the "Go to page" input in sync with current page
     setPageInput(String(page));
   }, [page]);
 
   useEffect(() => {
-    // Clamp current page if total pages changes (e.g. after filters/search)
     setPage((p) => Math.min(Math.max(1, p), totalPages));
   }, [totalPages]);
 
@@ -1602,6 +1582,45 @@ export default function AdminProductsPage() {
     return () => clearTimeout(t);
   }, [query]);
 
+  // Load categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await api<{ message?: string; data: DbCategory[] }>(
+          "categories/admin",
+        );
+        setCategories(res.data ?? []);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Main categories (no parent)
+  const mainCategories = useMemo(
+    () => categories.filter((c) => !c.parent_id && c.active !== false),
+    [categories],
+  );
+
+  // Subcategories for selected main category
+  const subCategories = useMemo(() => {
+    if (!selectedMainCategory) return [];
+    return categories.filter(
+      (c) => c.parent_id === selectedMainCategory && c.active !== false,
+    );
+  }, [categories, selectedMainCategory]);
+
+  // Reset subcategory when main category changes
+  useEffect(() => {
+    setSelectedSubCategory("");
+  }, [selectedMainCategory]);
+
+  // Determine active filter category ID
+  const activeCategoryFilter = selectedSubCategory || selectedMainCategory || "";
+
   const load = async () => {
     setLoading(true);
     setError("");
@@ -1613,6 +1632,10 @@ export default function AdminProductsPage() {
 
       if (debouncedQuery.trim()) {
         params.set("search", debouncedQuery.trim());
+      }
+
+      if (activeCategoryFilter) {
+        params.set("categoryId", activeCategoryFilter);
       }
 
       const res = await api<{
@@ -1636,12 +1659,12 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     load();
-  }, [page, debouncedQuery]);
+  }, [page, debouncedQuery, activeCategoryFilter]);
 
   useEffect(() => {
     setPage(1);
     setPageInput("1");
-  }, [debouncedQuery]);
+  }, [debouncedQuery, activeCategoryFilter]);
 
   useEffect(() => {
     if (items.length === 0 && page > 1) {
@@ -1907,6 +1930,19 @@ export default function AdminProductsPage() {
     selectedProducts.length > 0 &&
     selectedProducts.every((p) => p.disable_out_of_stock);
 
+  // Get category name for display
+  const getActiveCategoryName = () => {
+    if (selectedSubCategory) {
+      const sub = categories.find((c) => c.id === selectedSubCategory);
+      return sub?.category_name || "";
+    }
+    if (selectedMainCategory) {
+      const main = categories.find((c) => c.id === selectedMainCategory);
+      return main?.category_name || "";
+    }
+    return "";
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="border-b border-neutral-200 bg-white">
@@ -1940,52 +1976,157 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full md:max-w-lg">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name, slug, SKU, type…"
-                className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
+          <div className="mt-5 space-y-3">
+            {/* Main Controls Row */}
+            <div className="flex items-center gap-3 overflow-x-auto pb-1">
+              {/* Search */}
+              <div className="relative min-w-[280px] flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by name, slug, SKU, type…"
+                  className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2"
-                onClick={() => {
-                  setSort((s) =>
-                    s === "created"
-                      ? "name"
-                      : s === "name"
-                        ? "price"
-                        : s === "price"
-                          ? "stock"
-                          : "created",
-                  );
-                }}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                Sort: {sort}
-              </Button>
+              {/* Category Filters */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Folder className="h-4 w-4 text-neutral-500" />
+                <select
+                  value={selectedMainCategory}
+                  onChange={(e) => setSelectedMainCategory(e.target.value)}
+                  className={cn(
+                    "h-10 min-w-[160px] rounded-xl border border-neutral-200 bg-white px-3 pr-8 text-sm outline-none transition",
+                    "focus:border-primary focus:ring-2 focus:ring-primary/20",
+                    selectedMainCategory && "border-primary/50 bg-primary/5 font-medium",
+                  )}
+                  disabled={loadingCategories}
+                >
+                  <option value="">All categories</option>
+                  {mainCategories
+                    .slice()
+                    .sort((a, b) =>
+                      a.category_name.localeCompare(b.category_name),
+                    )
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.category_name}
+                      </option>
+                    ))}
+                </select>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2"
-                onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                {dir.toUpperCase()}
-              </Button>
+                {selectedMainCategory && subCategories.length > 0 && (
+                  <select
+                    value={selectedSubCategory}
+                    onChange={(e) => setSelectedSubCategory(e.target.value)}
+                    className={cn(
+                      "h-10 min-w-[160px] rounded-xl border border-neutral-200 bg-white px-3 pr-8 text-sm outline-none transition",
+                      "focus:border-primary focus:ring-2 focus:ring-primary/20",
+                      selectedSubCategory && "border-primary/50 bg-primary/5 font-medium",
+                    )}
+                  >
+                    <option value="">All subcategories</option>
+                    {subCategories
+                      .slice()
+                      .sort((a, b) =>
+                        a.category_name.localeCompare(b.category_name),
+                      )
+                      .map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.category_name}
+                        </option>
+                      ))}
+                  </select>
+                )}
 
-              <div className="text-sm text-neutral-500">
-                {normalized.length} / {items.length}
+                {(selectedMainCategory || selectedSubCategory) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedMainCategory("");
+                      setSelectedSubCategory("");
+                    }}
+                    className="gap-1.5 h-10"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              {/* Spacer */}
+              <div className="flex-1 min-w-4" />
+
+              {/* Sort Controls */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 h-10"
+                  onClick={() => {
+                    setSort((s) =>
+                      s === "created"
+                        ? "name"
+                        : s === "name"
+                          ? "price"
+                          : s === "price"
+                            ? "stock"
+                            : "created",
+                    );
+                  }}
+                >
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sort:</span> {sort}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 h-10 min-w-[85px]"
+                  onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
+                >
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  {dir.toUpperCase()}
+                </Button>
+
+                <div className="text-sm text-neutral-500 tabular-nums flex-shrink-0">
+                  {normalized.length} / {items.length}
+                </div>
               </div>
             </div>
+
+            {/* Active Filter Indicator */}
+            {activeCategoryFilter && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-2"
+              >
+                <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5">
+                  <Filter className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium text-primary">
+                    {getActiveCategoryName()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedMainCategory("");
+                      setSelectedSubCategory("");
+                    }}
+                    className="ml-1 grid h-4 w-4 place-items-center rounded hover:bg-primary/20 transition"
+                    aria-label="Clear filter"
+                  >
+                    <X className="h-3 w-3 text-primary" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </div>
 
           {error && (
@@ -2092,7 +2233,9 @@ export default function AdminProductsPage() {
                 <h3 className="mb-2 text-lg font-semibold text-neutral-900">
                   No matches
                 </h3>
-                <p className="text-neutral-600">Try another search query.</p>
+                <p className="text-neutral-600">
+                  Try adjusting your search or filters.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -2196,29 +2339,28 @@ export default function AdminProductsPage() {
               </Button>
 
               <Button
-  onClick={() => bulkUpdateStatus(!allPublished)}
-  className={cn(
-    "transition border",
-    allPublished
-      ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
-      : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
-  )}
->
-  {allPublished ? "Set as Draft" : "Set as Published"}
-</Button>
+                onClick={() => bulkUpdateStatus(!allPublished)}
+                className={cn(
+                  "transition border",
+                  allPublished
+                    ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+                    : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30",
+                )}
+              >
+                {allPublished ? "Set as Draft" : "Set as Published"}
+              </Button>
 
-<Button
-  onClick={() => bulkUpdateOutOfStockVisibility(!allHideOos)}
-  className={cn(
-    "transition border",
-    allHideOos
-      ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
-      : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
-  )}
->
-  {allHideOos ? "Allow Out of Stock" : "Hide Out of Stock"}
-</Button>
-
+              <Button
+                onClick={() => bulkUpdateOutOfStockVisibility(!allHideOos)}
+                className={cn(
+                  "transition border",
+                  allHideOos
+                    ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+                    : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30",
+                )}
+              >
+                {allHideOos ? "Allow Out of Stock" : "Hide Out of Stock"}
+              </Button>
 
               <Button
                 variant="ghost"
