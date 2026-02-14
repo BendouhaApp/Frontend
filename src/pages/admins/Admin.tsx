@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
+import api from "@/lib/axios";
 
 type Stats = {
   totalOrders: number;
@@ -87,8 +88,6 @@ const tableRowVariants: Variants = {
   },
 };
 
-const API_BASE = import.meta.env.VITE_API_URL;
-
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -100,38 +99,18 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const token = localStorage.getItem("admin_token");
-        if (!token) {
+        const accessToken = localStorage.getItem("access_token");
+
+        if (!accessToken) {
           navigate("/admin/login", { replace: true });
           return;
         }
 
-        const headers = { Authorization: `Bearer ${token}` };
+        const statsRes = await api.get("/admin/dashboard");
+        const ordersRes = await api.get("/admin/dashboard/recent-orders");
 
-        const statsRes = await fetch(`${API_BASE}/admin/dashboard`, {
-          headers,
-        });
-
-        if (statsRes.status === 401) {
-          navigate("/admin/login", { replace: true });
-          return;
-        }
-        if (!statsRes.ok) throw new Error("Stats request failed");
-
-        const statsData: Stats = await statsRes.json();
-
-        const ordersRes = await fetch(
-          `${API_BASE}/admin/dashboard/recent-orders`,
-          { headers },
-        );
-
-        if (ordersRes.status === 401) {
-          navigate("/admin/login", { replace: true });
-          return;
-        }
-        if (!ordersRes.ok) throw new Error("Orders request failed");
-
-        const ordersData = await ordersRes.json();
+        const statsData: Stats = statsRes.data;
+        const ordersData = ordersRes.data;
 
         const normalizedOrders: Order[] = Array.isArray(ordersData)
           ? ordersData.map((order: any) => ({

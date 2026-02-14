@@ -13,38 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const API_BASE = import.meta.env.VITE_API_URL;
-const LOGS_ENDPOINT = "admins-logs";
-
-async function api<T>(
-  path: string,
-  opts: RequestInit & { auth?: boolean } = { auth: true },
-): Promise<T> {
-  const token = localStorage.getItem("admin_token");
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(opts.headers as any),
-  };
-
-  if (opts.auth !== false && token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}/${path}`, {
-    ...opts,
-    headers,
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new Error(data?.message || "Request failed");
-  }
-
-  return data as T;
-}
+import api from "@/lib/axios";
 
 export type AdminLog = {
   id: string;
@@ -76,7 +45,15 @@ type LogsResponse = {
   };
 };
 
-const ACTIONS = ["CREATE", "UPDATE", "DELETE", "CONFIRM", "CANCEL", "LOGIN"];
+const ACTIONS = [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "CONFIRM",
+  "CANCEL",
+  "LOGIN",
+  "LOGIN_FAILED",
+];
 const ENTITIES = [
   "PRODUCT",
   "CATEGORY",
@@ -94,6 +71,7 @@ const ACTION_COLORS: Record<string, string> = {
   CONFIRM: "bg-green-50 text-green-700 border-green-200",
   CANCEL: "bg-orange-50 text-orange-700 border-orange-200",
   LOGIN: "bg-purple-50 text-purple-700 border-purple-200",
+  LOGIN_FAILED: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 function parseInputDate(dateStr: string) {
@@ -142,11 +120,6 @@ export default function AdminLogs() {
   }, [query]);
 
   useEffect(() => {
-  const t = setTimeout(() => setDebouncedQuery(query), 300);
-  return () => clearTimeout(t);
-}, [query]);
-
-  useEffect(() => {
     setPageInput(String(page));
   }, [page]);
 
@@ -167,8 +140,8 @@ export default function AdminLogs() {
   }, [selectedDate, selectedActions, selectedEntities]);
 
   useEffect(() => {
-  load(false);
-}, [page, debouncedQuery, selectedActions, selectedEntities, selectedDate]);
+    load(false);
+  }, [page, debouncedQuery, selectedActions, selectedEntities, selectedDate]);
 
   async function load(isRefresh = false) {
     isRefresh ? setRefreshing(true) : setLoading(true);
@@ -192,22 +165,22 @@ export default function AdminLogs() {
         params.append("date", selectedDate);
       }
 
-      const res = await api<LogsResponse>(
-        `${LOGS_ENDPOINT}?${params.toString()}`,
+      const res = await api.get<LogsResponse>(
+        `/admins-logs?${params.toString()}`,
       );
 
-      setLogs(res.data);
-      setTotalPages(res.meta.totalPages);
-      setTotal(res.meta.total);
-      setStats(res.stats || { last24h: 0, actionCounts: {} });
+      setLogs(res.data.data);
+      setTotalPages(res.data.meta.totalPages);
+      setTotal(res.data.meta.total);
+      setStats(res.data.stats || { last24h: 0, actionCounts: {} });
     } catch (e: any) {
-      setError(e?.message || "Failed to load logs");
+      setError(e?.response?.data?.message || "Failed to load logs");
       setLogs([]);
       setStats({ last24h: 0, actionCounts: {} });
     } finally {
       isRefresh ? setRefreshing(false) : setLoading(false);
     }
-  };
+  }
 
   const clearFilters = () => {
     setSelectedActions([]);

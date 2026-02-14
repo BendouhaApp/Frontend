@@ -17,26 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const API_BASE = import.meta.env.VITE_API_URL;
-
-async function api<T>(
-  path: string,
-  opts: RequestInit & { auth?: boolean } = { auth: true },
-): Promise<T> {
-  const token = localStorage.getItem("admin_token");
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(opts.headers as any),
-  };
-  if (opts.auth !== false && token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${API_BASE}/${path}`, { ...opts, headers });
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) throw new Error(data?.message || "Request failed");
-  return data;
-}
+import api from "@/lib/axios";
 
 export type DbCategory = {
   id: string;
@@ -382,10 +363,10 @@ export function AdminCategory() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api<any>("categories/admin");
-      setItems(res.data ?? []);
+      const res = await api.get("/categories/admin");
+      setItems(res.data?.data ?? []);
     } catch (e: any) {
-      setError(e.message);
+      setError(e?.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -431,34 +412,36 @@ export function AdminCategory() {
     setSaving(true);
     try {
       if (editing) {
-        await api(`categories/${editing.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        await api.patch(`/categories/${editing.id}`, payload);
       } else {
-        await api("categories", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        await api.post("/categories", payload);
       }
       await load();
       setShowForm(false);
       setEditing(null);
     } catch (e: any) {
-      setError(e.message);
+      setError(e?.response?.data?.message || "Something went wrong");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteCategory = async (id: string) => {
-    await api(`categories/${id}`, { method: "DELETE" });
-    await load();
+    try {
+      await api.delete(`/categories/${id}`);
+      await load();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "Delete failed");
+    }
   };
 
   const activate = async (id: string) => {
-    await api(`categories/${id}/activate`, { method: "PATCH" });
-    await load();
+    try {
+      await api.patch(`categories/${id}/activate`);
+      await load();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "Activation failed");
+    }
   };
 
   const mainCategories = items.filter((c) => !c.parent_id);

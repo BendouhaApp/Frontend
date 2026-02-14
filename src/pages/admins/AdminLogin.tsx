@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/axios";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -16,40 +17,29 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const res = await api.post("/admin/auth/login", {
+        username,
+        password,
+      });
 
-      const data = await res.json().catch(() => null);
+      const { access_token, refresh_token } = res.data;
 
-      if (!res.ok) {
-        setError(data?.message || "Invalid credentials");
-        return;
-      }
-
-      const token = data?.access_token ?? data?.token;
-
-      if (!token) {
+      if (!access_token || !refresh_token) {
         setError("Invalid server response");
         return;
       }
 
-      localStorage.setItem("admin_token", token);
-      localStorage.setItem("admin_username", username);
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
 
       navigate("/admin", { replace: true });
-    } catch (err) {
-      console.error("LOGIN ERROR:", err);
-      setError("Server error. Please try again.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-navy via-primary-700 to-navy-600 relative overflow-hidden">
       <div

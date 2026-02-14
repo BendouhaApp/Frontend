@@ -29,13 +29,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import api from "@/lib/axios";
 
-const API_BASE = import.meta.env.VITE_API_URL;
 const money = (v: string | number | null | undefined) => {
   const n = typeof v === "string" ? Number(v) : Number(v ?? 0);
   if (Number.isNaN(n)) return "0.00";
   return n.toFixed(2);
 };
+
 const slugify = (input: string) =>
   input
     .toLowerCase()
@@ -44,13 +45,6 @@ const slugify = (input: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-type ApiError = { message?: string | string[] };
-const getErrMsg = (data: any, fallback = "Something went wrong") => {
-  const msg = (data as ApiError)?.message;
-  if (Array.isArray(msg)) return msg.join(" · ");
-  return msg || fallback;
-};
-
 const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL;
 
 const img = (url?: string | null) => {
@@ -58,45 +52,6 @@ const img = (url?: string | null) => {
   if (url.startsWith("http")) return url;
   return `${PUBLIC_URL}${url.startsWith("/") ? url : `/${url}`}`;
 };
-
-async function api<T>(
-  path: string,
-  opts: RequestInit & { auth?: boolean } = { auth: true },
-): Promise<T> {
-  const token = localStorage.getItem("admin_token");
-
-  const isFormData = opts.body instanceof FormData;
-
-  const headers: Record<string, string> = {
-    ...(opts.headers as any),
-  };
-
-  if (!isFormData) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  if (opts.auth !== false && token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}/${path}`, {
-    ...opts,
-    headers,
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    const err = new Error(
-      getErrMsg(data, `Request failed (${res.status})`),
-    ) as any;
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-
-  return data as T;
-}
 
 type DbProduct = {
   id: string;
@@ -765,11 +720,11 @@ function ProductForm({
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await api<{ message?: string; data: DbCategory[] }>(
+        const res = await api.get<{ message?: string; data: DbCategory[] }>(
           "categories/admin",
         );
-        setCategories(res.data ?? []);
-      } catch (error) {
+        setCategories(res.data.data ?? []);
+      } catch (error: any) {
         console.error("Failed to load categories:", error);
       } finally {
         setLoadingCategories(false);
@@ -1586,11 +1541,11 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await api<{ message?: string; data: DbCategory[] }>(
+        const res = await api.get<{ message?: string; data: DbCategory[] }>(
           "categories/admin",
         );
-        setCategories(res.data ?? []);
-      } catch (error) {
+        setCategories(res.data.data ?? []);
+      } catch (error: any) {
         console.error("Failed to load categories:", error);
       } finally {
         setLoadingCategories(false);
@@ -1619,7 +1574,8 @@ export default function AdminProductsPage() {
   }, [selectedMainCategory]);
 
   // Determine active filter category ID
-  const activeCategoryFilter = selectedSubCategory || selectedMainCategory || "";
+  const activeCategoryFilter =
+    selectedSubCategory || selectedMainCategory || "";
 
   const load = async () => {
     setLoading(true);
@@ -1638,7 +1594,7 @@ export default function AdminProductsPage() {
         params.set("categoryId", activeCategoryFilter);
       }
 
-      const res = await api<{
+      const res = await api.get<{
         data: DbProduct[];
         meta: {
           page: number;
@@ -1646,12 +1602,14 @@ export default function AdminProductsPage() {
           total: number;
           totalPages: number;
         };
-      }>(`products?${params.toString()}`, { method: "GET" });
+      }>(`products?${params.toString()}`);
 
-      setItems(res.data);
-      setTotalPages(res.meta.totalPages);
+      setItems(res.data.data);
+      setTotalPages(res.data.meta.totalPages);
     } catch (e: any) {
-      setError(e?.message || "Failed to load products");
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load products",
+      );
     } finally {
       setLoading(false);
     }
@@ -1708,8 +1666,8 @@ export default function AdminProductsPage() {
     setError("");
     setSaving(true);
     try {
-      const res = await api<OneResponse>(`products/${p.id}`, { method: "GET" });
-      const raw = "data" in (res as any) ? (res as any).data : res;
+      const res = await api.get<OneResponse>(`products/${p.id}`);
+      const raw = "data" in res.data ? res.data.data : res.data;
 
       const normalized: DbProduct = {
         ...raw,
@@ -1719,10 +1677,11 @@ export default function AdminProductsPage() {
           : [],
       };
       setEditing(normalized);
-
       setShowForm(true);
     } catch (e: any) {
-      setError(e?.message || "Failed to load product");
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load product",
+      );
     } finally {
       setSaving(false);
     }
@@ -1768,15 +1727,14 @@ export default function AdminProductsPage() {
         fd.append("removed_images", url);
       });
 
-      await api("products", {
-        method: "POST",
-        body: fd,
+      await api.post("products", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       await load();
       closeForm();
     } catch (e: any) {
-      setError(e?.message || "Create failed");
+      setError(e?.response?.data?.message || e?.message || "Create failed");
     } finally {
       setSaving(false);
     }
@@ -1819,15 +1777,14 @@ export default function AdminProductsPage() {
         fd.append("removed_images", url);
       });
 
-      await api(`products/${editing.id}`, {
-        method: "PATCH",
-        body: fd,
+      await api.patch(`products/${editing.id}`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       await load();
       closeForm();
     } catch (e: any) {
-      setError(e?.message || "Update failed");
+      setError(e?.response?.data?.message || e?.message || "Update failed");
     } finally {
       setSaving(false);
     }
@@ -1837,13 +1794,14 @@ export default function AdminProductsPage() {
     setDeletingId(id);
     setError("");
     try {
-      await api(`products/${id}`, { method: "DELETE" });
+      await api.delete(`products/${id}`);
       await load();
     } catch (e: any) {
-      const msg = getErrMsg(e.data, "Failed to delete product");
+      const msg =
+        e?.response?.data?.message || e?.message || "Failed to delete product";
       setError(msg);
       console.error("Delete failed:", e);
-      if (e.status === 400) {
+      if (e?.response?.status === 400) {
         setTimeout(() => setError(""), 8000);
       } else {
         setTimeout(() => setError(""), 5000);
@@ -1855,12 +1813,9 @@ export default function AdminProductsPage() {
 
   const bulkUpdateStatus = async (published: boolean) => {
     try {
-      await api("products/bulk", {
-        method: "PATCH",
-        body: JSON.stringify({
-          ids: selectedIds,
-          published,
-        }),
+      await api.patch("products/bulk", {
+        ids: selectedIds,
+        published,
       });
 
       setItems((prev) =>
@@ -1869,18 +1824,17 @@ export default function AdminProductsPage() {
 
       setSelectedIds([]);
     } catch (e: any) {
-      setError(e?.message || "Bulk update failed");
+      setError(
+        e?.response?.data?.message || e?.message || "Bulk update failed",
+      );
     }
   };
 
   const bulkUpdateOutOfStockVisibility = async (hide: boolean) => {
     try {
-      await api("products/bulk", {
-        method: "PATCH",
-        body: JSON.stringify({
-          ids: selectedIds,
-          disable_out_of_stock: hide,
-        }),
+      await api.patch("products/bulk", {
+        ids: selectedIds,
+        disable_out_of_stock: hide,
       });
 
       setItems((prev) =>
@@ -1891,7 +1845,9 @@ export default function AdminProductsPage() {
 
       setSelectedIds([]);
     } catch (e: any) {
-      setError(e?.message || "Bulk update failed");
+      setError(
+        e?.response?.data?.message || e?.message || "Bulk update failed",
+      );
     }
   };
 
@@ -1899,19 +1855,19 @@ export default function AdminProductsPage() {
     setSaving(true);
     setError("");
     try {
-      await api<{ success: boolean; count: number }>("products/bulk", {
-        method: "DELETE",
-        body: JSON.stringify({ ids: selectedIds }),
+      await api.delete("products/bulk", {
+        data: { ids: selectedIds },
       });
       setSelectedIds([]);
       setConfirmBulkDelete(false);
       await load();
     } catch (e: any) {
-      const msg = getErrMsg(e.data, "Failed to delete products");
+      const msg =
+        e?.response?.data?.message || e?.message || "Failed to delete products";
       setError(msg);
       console.error("Bulk delete failed:", e);
       setConfirmBulkDelete(false);
-      if (e.status === 400) {
+      if (e?.response?.status === 400) {
         setTimeout(() => setError(""), 10000);
       } else {
         setTimeout(() => setError(""), 5000);
@@ -1999,7 +1955,8 @@ export default function AdminProductsPage() {
                   className={cn(
                     "h-10 min-w-[160px] rounded-xl border border-neutral-200 bg-white px-3 pr-8 text-sm outline-none transition",
                     "focus:border-primary focus:ring-2 focus:ring-primary/20",
-                    selectedMainCategory && "border-primary/50 bg-primary/5 font-medium",
+                    selectedMainCategory &&
+                      "border-primary/50 bg-primary/5 font-medium",
                   )}
                   disabled={loadingCategories}
                 >
@@ -2023,7 +1980,8 @@ export default function AdminProductsPage() {
                     className={cn(
                       "h-10 min-w-[160px] rounded-xl border border-neutral-200 bg-white px-3 pr-8 text-sm outline-none transition",
                       "focus:border-primary focus:ring-2 focus:ring-primary/20",
-                      selectedSubCategory && "border-primary/50 bg-primary/5 font-medium",
+                      selectedSubCategory &&
+                        "border-primary/50 bg-primary/5 font-medium",
                     )}
                   >
                     <option value="">All subcategories</option>

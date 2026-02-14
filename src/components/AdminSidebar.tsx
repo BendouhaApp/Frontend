@@ -13,18 +13,28 @@ import { cn } from "@/lib/utils";
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState<string>("");
+  const [username, setUsername] = useState<string>("Admin");
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem("admin_username");
-    if (storedUsername) {
-      setUsername(storedUsername);
+    // Optionally decode access_token to get username if stored in JWT
+    // For now, just show "Admin" as default
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      try {
+        const payload = token.split(".")[1];
+        const decoded = JSON.parse(atob(payload));
+        if (decoded.username) {
+          setUsername(decoded.username);
+        }
+      } catch {
+        // Token decode failed, keep default
+      }
     }
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_username");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     navigate("/admin/login", { replace: true });
   };
 
@@ -44,7 +54,7 @@ export default function AdminSidebar() {
             Admin
           </div>
           <div className="text-xl font-bold text-neutral-900">
-            {username || "Admin"}
+            {username}
           </div>
         </div>
       </div>

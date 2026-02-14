@@ -19,37 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-const API_BASE = import.meta.env.VITE_API_URL;
-
-async function api<T>(
-  path: string,
-  opts: RequestInit & { auth?: boolean } = { auth: true },
-): Promise<T> {
-  const token = localStorage.getItem("admin_token");
-  const normalizeHeaders = (headers?: HeadersInit): Record<string, string> => {
-    if (!headers) return {};
-    if (headers instanceof Headers) {
-      return Object.fromEntries(headers.entries());
-    }
-    if (Array.isArray(headers)) {
-      return Object.fromEntries(headers);
-    }
-    return headers;
-  };
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...normalizeHeaders(opts.headers),
-  };
-  if (opts.auth !== false && token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${API_BASE}/${path}`, { ...opts, headers });
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) throw new Error(data?.message || "Request failed");
-  return data;
-}
+import api from "@/lib/axios";
 
 type ShippingZone = {
   id: number;
@@ -81,19 +51,25 @@ function WilayaForm({
   const [name, setName] = useState(zone?.name ?? "");
   const [displayName, setDisplayName] = useState(zone?.display_name ?? "");
   const [active, setActive] = useState(zone?.active ?? true);
-  const [freeShipping, setFreeShipping] = useState(zone?.free_shipping ?? false);
+  const [freeShipping, setFreeShipping] = useState(
+    zone?.free_shipping ?? false,
+  );
   const [defaultRate, setDefaultRate] = useState(
     zone?.default_rate?.toString() ?? "700",
   );
-  
-  const [homeEnabled, setHomeEnabled] = useState(zone?.home_delivery_enabled ?? true);
-  const [homePrice, setHomePrice] = useState<string>(
-    zone?.home_delivery_price?.toString() ?? "0"
+
+  const [homeEnabled, setHomeEnabled] = useState(
+    zone?.home_delivery_enabled ?? true,
   );
-  
-  const [officeEnabled, setOfficeEnabled] = useState(zone?.office_delivery_enabled ?? true);
+  const [homePrice, setHomePrice] = useState<string>(
+    zone?.home_delivery_price?.toString() ?? "0",
+  );
+
+  const [officeEnabled, setOfficeEnabled] = useState(
+    zone?.office_delivery_enabled ?? true,
+  );
   const [officePrice, setOfficePrice] = useState<string>(
-    zone?.office_delivery_price?.toString() ?? "0"
+    zone?.office_delivery_price?.toString() ?? "0",
   );
 
   const submit = (e: React.FormEvent) => {
@@ -127,7 +103,9 @@ function WilayaForm({
           className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
           placeholder="e.g., alger, oran"
         />
-        <p className="mt-1 text-xs text-neutral-500">Internal name (lowercase, no spaces)</p>
+        <p className="mt-1 text-xs text-neutral-500">
+          Internal name (lowercase, no spaces)
+        </p>
       </div>
 
       {/* Display Name */}
@@ -158,13 +136,13 @@ function WilayaForm({
             onClick={() => setHomeEnabled(!homeEnabled)}
             className={cn(
               "relative inline-flex h-6 w-11 items-center rounded-full transition",
-              homeEnabled ? "bg-blue-600" : "bg-neutral-300"
+              homeEnabled ? "bg-blue-600" : "bg-neutral-300",
             )}
           >
             <span
               className={cn(
                 "inline-block h-4.5 w-4.5 transform rounded-full bg-white transition shadow-sm",
-                homeEnabled ? "translate-x-6" : "translate-x-1"
+                homeEnabled ? "translate-x-6" : "translate-x-1",
               )}
             />
           </button>
@@ -227,13 +205,13 @@ function WilayaForm({
             onClick={() => setOfficeEnabled(!officeEnabled)}
             className={cn(
               "relative inline-flex h-6 w-11 items-center rounded-full transition",
-              officeEnabled ? "bg-emerald-600" : "bg-neutral-300"
+              officeEnabled ? "bg-emerald-600" : "bg-neutral-300",
             )}
           >
             <span
               className={cn(
                 "inline-block h-4.5 w-4.5 transform rounded-full bg-white transition shadow-sm",
-                officeEnabled ? "translate-x-6" : "translate-x-1"
+                officeEnabled ? "translate-x-6" : "translate-x-1",
               )}
             />
           </button>
@@ -264,8 +242,12 @@ function WilayaForm({
         <div className="flex items-center gap-2">
           <Truck className="h-5 w-5 text-neutral-500" />
           <div>
-            <p className="text-sm font-medium text-neutral-700">Free Shipping</p>
-            <p className="text-xs text-neutral-500">Override all delivery prices</p>
+            <p className="text-sm font-medium text-neutral-700">
+              Free Shipping
+            </p>
+            <p className="text-xs text-neutral-500">
+              Override all delivery prices
+            </p>
           </div>
         </div>
         <button
@@ -273,13 +255,13 @@ function WilayaForm({
           onClick={() => setFreeShipping(!freeShipping)}
           className={cn(
             "relative inline-flex h-6 w-11 items-center rounded-full transition",
-            freeShipping ? "bg-blue-600" : "bg-neutral-300"
+            freeShipping ? "bg-blue-600" : "bg-neutral-300",
           )}
         >
           <span
             className={cn(
               "inline-block h-4.5 w-4.5 transform rounded-full bg-white transition shadow-sm",
-              freeShipping ? "translate-x-6" : "translate-x-1"
+              freeShipping ? "translate-x-6" : "translate-x-1",
             )}
           />
         </button>
@@ -289,20 +271,22 @@ function WilayaForm({
       <div className="flex items-center justify-between rounded-lg border border-neutral-300 p-3.5">
         <div>
           <p className="text-sm font-medium text-neutral-700">Active Status</p>
-          <p className="text-xs text-neutral-500">Enable or disable this wilaya</p>
+          <p className="text-xs text-neutral-500">
+            Enable or disable this wilaya
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setActive(!active)}
           className={cn(
             "relative inline-flex h-6 w-11 items-center rounded-full transition",
-            active ? "bg-blue-600" : "bg-neutral-300"
+            active ? "bg-blue-600" : "bg-neutral-300",
           )}
         >
           <span
             className={cn(
               "inline-block h-4.5 w-4.5 transform rounded-full bg-white transition shadow-sm",
-              active ? "translate-x-6" : "translate-x-1"
+              active ? "translate-x-6" : "translate-x-1",
             )}
           />
         </button>
@@ -318,7 +302,11 @@ function WilayaForm({
         >
           Cancel
         </Button>
-        <Button type="submit" className="flex-1 h-10 bg-blue-600 hover:bg-blue-700" disabled={loading}>
+        <Button
+          type="submit"
+          className="flex-1 h-10 bg-blue-600 hover:bg-blue-700"
+          disabled={loading}
+        >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {zone ? "Update Wilaya" : "Create Wilaya"}
         </Button>
@@ -336,16 +324,22 @@ export default function AdminWilaya() {
   const [editing, setEditing] = useState<ShippingZone | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<ShippingZone | null>(null);
-  const [filterType, setFilterType] = useState<"all" | "active" | "inactive">("all");
+  const [filterType, setFilterType] = useState<"all" | "active" | "inactive">(
+    "all",
+  );
 
   const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api<{ data: ShippingZone[] }>("admin/shipping-zones");
-      setItems(res.data ?? []);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load wilayas");
+      const res = await api.get<{ data: ShippingZone[] }>(
+        "admin/shipping-zones",
+      );
+      setItems(res.data.data ?? []);
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load wilayas",
+      );
     } finally {
       setLoading(false);
     }
@@ -367,9 +361,10 @@ export default function AdminWilaya() {
 
     // Filter by search query
     if (query) {
-      list = list.filter((w) =>
-        w.display_name.toLowerCase().includes(query.toLowerCase()) ||
-        w.name.toLowerCase().includes(query.toLowerCase())
+      list = list.filter(
+        (w) =>
+          w.display_name.toLowerCase().includes(query.toLowerCase()) ||
+          w.name.toLowerCase().includes(query.toLowerCase()),
       );
     }
 
@@ -381,21 +376,17 @@ export default function AdminWilaya() {
     setError("");
     try {
       if (editing) {
-        await api(`admin/shipping-zones/${editing.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        await api.patch(`admin/shipping-zones/${editing.id}`, payload);
       } else {
-        await api("admin/shipping-zones", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        await api.post("admin/shipping-zones", payload);
       }
       await load();
       setShowForm(false);
       setEditing(null);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to save wilaya");
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to save wilaya",
+      );
     } finally {
       setSaving(false);
     }
@@ -404,24 +395,27 @@ export default function AdminWilaya() {
   const deleteWilaya = async (id: number) => {
     setError("");
     try {
-      await api(`admin/shipping-zones/${id}`, { method: "DELETE" });
+      await api.delete(`admin/shipping-zones/${id}`);
       await load();
       setConfirmDelete(null);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to delete wilaya");
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to delete wilaya",
+      );
     }
   };
 
   const toggleActive = async (zone: ShippingZone) => {
     setError("");
     try {
-      await api(`admin/shipping-zones/${zone.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ active: !zone.active }),
+      await api.patch(`admin/shipping-zones/${zone.id}`, {
+        active: !zone.active,
       });
       await load();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to update status");
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to update status",
+      );
     }
   };
 
@@ -455,7 +449,9 @@ export default function AdminWilaya() {
                 className="gap-2"
                 disabled={loading}
               >
-                <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
+                <RefreshCcw
+                  className={cn("h-4 w-4", loading && "animate-spin")}
+                />
                 Refresh
               </Button>
               <Button
@@ -479,7 +475,9 @@ export default function AdminWilaya() {
                 <MapPin className="h-5 w-5" />
                 <span className="text-sm font-medium">Total Wilayas</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-blue-900">{stats.total}</div>
+              <div className="mt-2 text-2xl font-bold text-blue-900">
+                {stats.total}
+              </div>
             </div>
 
             <div className="rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
@@ -487,7 +485,9 @@ export default function AdminWilaya() {
                 <Check className="h-5 w-5" />
                 <span className="text-sm font-medium">Active</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-emerald-900">{stats.active}</div>
+              <div className="mt-2 text-2xl font-bold text-emerald-900">
+                {stats.active}
+              </div>
             </div>
 
             <div className="rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 p-4">
@@ -495,7 +495,9 @@ export default function AdminWilaya() {
                 <Home className="h-5 w-5" />
                 <span className="text-sm font-medium">Home Delivery</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-purple-900">{stats.homeEnabled}</div>
+              <div className="mt-2 text-2xl font-bold text-purple-900">
+                {stats.homeEnabled}
+              </div>
             </div>
 
             <div className="rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 p-4">
@@ -503,7 +505,9 @@ export default function AdminWilaya() {
                 <Building2 className="h-5 w-5" />
                 <span className="text-sm font-medium">Office Delivery</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-orange-900">{stats.officeEnabled}</div>
+              <div className="mt-2 text-2xl font-bold text-orange-900">
+                {stats.officeEnabled}
+              </div>
             </div>
           </div>
         </div>
@@ -530,7 +534,7 @@ export default function AdminWilaya() {
                 "px-4 py-2 text-sm font-semibold transition",
                 filterType === "all"
                   ? "bg-blue-600 text-white"
-                  : "text-blue-600 hover:bg-blue-50"
+                  : "text-blue-600 hover:bg-blue-50",
               )}
             >
               All
@@ -542,7 +546,7 @@ export default function AdminWilaya() {
                 "px-4 py-2 text-sm font-semibold transition",
                 filterType === "active"
                   ? "bg-blue-600 text-white"
-                  : "text-blue-600 hover:bg-blue-50"
+                  : "text-blue-600 hover:bg-blue-50",
               )}
             >
               Active
@@ -554,7 +558,7 @@ export default function AdminWilaya() {
                 "px-4 py-2 text-sm font-semibold transition",
                 filterType === "inactive"
                   ? "bg-blue-600 text-white"
-                  : "text-blue-600 hover:bg-blue-50"
+                  : "text-blue-600 hover:bg-blue-50",
               )}
             >
               Inactive
@@ -598,9 +602,13 @@ export default function AdminWilaya() {
             <div className="mx-auto w-fit rounded-full bg-neutral-100 p-4 mb-3">
               <MapPin className="h-8 w-8 text-neutral-400" />
             </div>
-            <p className="font-semibold text-neutral-900 mb-1">No wilayas found</p>
+            <p className="font-semibold text-neutral-900 mb-1">
+              No wilayas found
+            </p>
             <p className="text-sm text-neutral-500">
-              {query ? "Try adjusting your search" : "Get started by creating a new wilaya"}
+              {query
+                ? "Try adjusting your search"
+                : "Get started by creating a new wilaya"}
             </p>
           </div>
         )}
@@ -651,7 +659,9 @@ export default function AdminWilaya() {
                             <p className="font-semibold text-neutral-900 text-sm">
                               {zone.display_name}
                             </p>
-                            <p className="text-xs text-neutral-500">{zone.name}</p>
+                            <p className="text-xs text-neutral-500">
+                              {zone.name}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -673,12 +683,16 @@ export default function AdminWilaya() {
                             <div className="flex items-center gap-1 text-blue-600">
                               <Home className="h-4 w-4" />
                               <span className="text-sm font-semibold">
-                                {zone.free_shipping ? "Free" : `${zone.home_delivery_price} DZA`}
+                                {zone.free_shipping
+                                  ? "Free"
+                                  : `${zone.home_delivery_price} DZA`}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-neutral-400">Disabled</span>
+                          <span className="text-sm text-neutral-400">
+                            Disabled
+                          </span>
                         )}
                       </td>
 
@@ -689,12 +703,16 @@ export default function AdminWilaya() {
                             <div className="flex items-center gap-1 text-emerald-600">
                               <Building2 className="h-4 w-4" />
                               <span className="text-sm font-semibold">
-                                {zone.free_shipping ? "Free" : `${zone.office_delivery_price} DZA`}
+                                {zone.free_shipping
+                                  ? "Free"
+                                  : `${zone.office_delivery_price} DZA`}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-neutral-400">Disabled</span>
+                          <span className="text-sm text-neutral-400">
+                            Disabled
+                          </span>
                         )}
                       </td>
 
@@ -706,7 +724,7 @@ export default function AdminWilaya() {
                               "inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                               zone.active
                                 ? "bg-emerald-100 text-emerald-700"
-                                : "bg-neutral-100 text-neutral-600"
+                                : "bg-neutral-100 text-neutral-600",
                             )}
                           >
                             {zone.active ? "Active" : "Inactive"}
@@ -743,7 +761,7 @@ export default function AdminWilaya() {
                               "h-8 w-8",
                               zone.active
                                 ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50",
                             )}
                             onClick={() => toggleActive(zone)}
                             title={zone.active ? "Deactivate" : "Activate"}
@@ -810,7 +828,9 @@ export default function AdminWilaya() {
                           {editing ? "Edit Wilaya" : "Add New Wilaya"}
                         </h2>
                         <p className="text-xs text-neutral-500 mt-0.5">
-                          {editing ? "Update shipping zone" : "Create shipping zone"}
+                          {editing
+                            ? "Update shipping zone"
+                            : "Create shipping zone"}
                         </p>
                       </div>
                       <Button
@@ -878,7 +898,8 @@ export default function AdminWilaya() {
                   <span className="font-semibold text-neutral-900">
                     "{confirmDelete.display_name}"
                   </span>
-                  ? Once deleted, this wilaya <strong>cannot be restored</strong>.
+                  ? Once deleted, this wilaya{" "}
+                  <strong>cannot be restored</strong>.
                 </p>
 
                 <div className="flex gap-3">

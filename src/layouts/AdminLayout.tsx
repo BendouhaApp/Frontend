@@ -38,12 +38,12 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const logout = useCallback(() => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_username");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     navigate("/admin/login", { replace: true });
   }, [navigate]);
 
-  const isAuthenticated = isTokenValid(localStorage.getItem("admin_token"));
+  const isAuthenticated = isTokenValid(localStorage.getItem("access_token"));
 
   useEffect(() => {
     if (!isAuthenticated) {

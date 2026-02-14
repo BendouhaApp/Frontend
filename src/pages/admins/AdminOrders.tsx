@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   Search,
@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useGet } from "@/hooks/useGet";
-import { usePostAction } from "@/hooks/usePostAction";
+import api from "@/lib/axios";
 
 type OrderItem = {
   id: string;
@@ -57,11 +56,6 @@ type OrderStatus = {
   id: string;
   status_name: string;
   color: string;
-};
-
-type StatusesResponse = {
-  message: string;
-  data: OrderStatus[];
 };
 
 type DbOrderItem = {
@@ -129,64 +123,146 @@ const containerVariants: Variants = {
 
 export function AdminOrders() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  const adminToken = localStorage.getItem("admin_token");
-  const adminRequestHeader = adminToken
-    ? { headers: { Authorization: `Bearer ${adminToken}` } }
-    : undefined;
+  const [items, setItems] = useState<DbOrder[]>([]);
+  const [statuses, setStatuses] = useState<OrderStatus[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const ordersQuery = useGet<OrdersDbResponse>({
-    path: "orders/admin",
-    query: { page, limit },
-    requestHeader: adminRequestHeader,
-    options: {
-      staleTime: 1000 * 15,
-      placeholderData: (previous) => previous,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  });
+  const [loading, setLoading] = useState(true);
+  const [/*loadingStatuses*/, setLoadingStatuses] = useState(true);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState("");
 
-  const statusesQuery = useGet<StatusesResponse>({
-    path: "orders/statuses",
-    requestHeader: adminRequestHeader,
-    options: {
-      staleTime: 1000 * 60,
-    },
-  });
+  const [selectedOrder, setSelectedOrder] = useState<DbOrder | null>(null);
 
-  const orderDetailsQuery = useGet<{ message: string; data: DbOrder }>({
-    path: selectedOrderId ? `orders/admin/${selectedOrderId}` : "",
-    requestHeader: adminRequestHeader,
-    options: {
-      enabled: !!selectedOrderId,
-      staleTime: 0,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  });
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 400);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Load statuses once
+  useEffect(() => {
+    loadStatuses();
+  }, []);
+
+  // Load orders when page/query changes
+  useEffect(() => {
+    loadOrders();
+  }, [page, debouncedQuery]);
+
+  // Reset page when query changes
+  useEffect(() => {
+    if (page !== 1) setPage(1);
+  }, [debouncedQuery]);
+
+  // Load order details when selected
+  useEffect(() => {
+    if (selectedOrderId) {
+      loadOrderDetails(selectedOrderId);
+    } else {
+      setSelectedOrder(null);
+    }
+  }, [selectedOrderId]);
+
+  const loadStatuses = async () => {
+    setLoadingStatuses(true);
+    try {
+      const res = await api.get<{ message?: string; data: OrderStatus[] }>(
+        "orders/statuses",
+      );
+      setStatuses(res.data.data ?? []);
+    } catch (e: any) {
+      console.error("Failed to load statuses:", e);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };
+
+  const loadOrders = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+
+      if (debouncedQuery.trim()) {
+        params.set("search", debouncedQuery.trim());
+      }
+
+      const res = await api.get<OrdersDbResponse>(
+        `orders/admin?${params.toString()}`,
+      );
+
+      setItems(res.data.data ?? []);
+      setTotalPages(res.data.meta.totalPages ?? 1);
+      setTotal(res.data.meta.total ?? 0);
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load orders",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadOrderDetails = async (id: string) => {
+    setLoadingDetails(true);
+    try {
+      const res = await api.get<{ message?: string; data: DbOrder }>(
+        `orders/admin/${id}`,
+      );
+      setSelectedOrder(res.data.data);
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load details",
+      );
+      setSelectedOrderId(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, statusId: string) => {
+    setUpdating(true);
+    setError("");
+
+    try {
+      await api.patch(`orders/${orderId}`, {
+        order_status_id: statusId,
+      });
+
+      await loadOrders();
+
+      if (selectedOrderId === orderId) {
+        await loadOrderDetails(orderId);
+      }
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to update status",
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const orders = useMemo<Order[]>(() => {
-    const data = ordersQuery.data?.data ?? [];
-    return data.map((o) => ({
+    return items.map((o) => ({
       ...o,
       order_items: o.order_items.map((i) => ({
         ...i,
         price: Number(i.price),
       })),
     }));
-  }, [ordersQuery.data]);
-
-  const statuses = statusesQuery.data?.data ?? [];
-  const totalPages = ordersQuery.data?.meta.totalPages ?? 1;
-  const loading = ordersQuery.isLoading || statusesQuery.isLoading;
-  const error =
-    ordersQuery.error?.message || statusesQuery.error?.message || "";
-
-  const updateStatus = usePostAction();
+  }, [items]);
 
   const confirmedStatusId = statuses.find(
     (s) => s.status_name.toLowerCase() === "confirmed",
@@ -195,17 +271,6 @@ export function AdminOrders() {
   const canceledStatusId = statuses.find(
     (s) => s.status_name.toLowerCase() === "canceled",
   )?.id;
-
-  const updateStatusAction = (orderId: string, statusId?: string) => {
-    if (!statusId) return;
-    updateStatus.mutate({
-      method: "patch",
-      path: `orders/${orderId}`,
-      body: { order_status_id: statusId },
-      requestHeader: adminRequestHeader,
-      invalidateQueries: true,
-    });
-  };
 
   const filtered = useMemo(() => {
     if (!query) return orders;
@@ -223,18 +288,16 @@ export function AdminOrders() {
   const calcTotal = (items: OrderItem[]) =>
     items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-  const selectedOrder = useMemo<Order | null>(() => {
-    const o = orderDetailsQuery.data?.data;
-    if (!o) return null;
-
+  const normalizedSelectedOrder = useMemo<Order | null>(() => {
+    if (!selectedOrder) return null;
     return {
-      ...o,
-      order_items: (o.order_items ?? []).map((i) => ({
+      ...selectedOrder,
+      order_items: selectedOrder.order_items.map((i) => ({
         ...i,
         price: Number(i.price),
       })),
     };
-  }, [orderDetailsQuery.data]);
+  }, [selectedOrder]);
 
   return (
     <div className="mx-auto max-w-7xl p-6">
@@ -253,8 +316,8 @@ export function AdminOrders() {
           <Button
             variant="outline"
             onClick={() => {
-              ordersQuery.refetch();
-              statusesQuery.refetch();
+              loadOrders();
+              loadStatuses();
             }}
             className="gap-2"
             disabled={loading}
@@ -274,13 +337,7 @@ export function AdminOrders() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           value={query}
-          onChange={(e) => {
-            const value = e.target.value;
-            setQuery(value);
-            if (page !== 1) {
-              setPage(1);
-            }
-          }}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by order ID or phone number..."
           className="w-full rounded-xl border py-2 pl-9 pr-3 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
@@ -305,8 +362,9 @@ export function AdminOrders() {
               variant="ghost"
               size="sm"
               onClick={() => {
-                ordersQuery.refetch();
-                statusesQuery.refetch();
+                loadOrders();
+                loadStatuses();
+                setError("");
               }}
               className="shrink-0"
             >
@@ -441,9 +499,10 @@ export function AdminOrders() {
                     >
                       <div className="flex gap-2">
                         <motion.button
-                          disabled={!confirmedStatusId || updateStatus.isPending}
+                          disabled={!confirmedStatusId || updating}
                           onClick={() =>
-                            updateStatusAction(order.id, confirmedStatusId)
+                            confirmedStatusId &&
+                            updateOrderStatus(order.id, confirmedStatusId)
                           }
                           className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
                           title="Confirm order"
@@ -454,9 +513,10 @@ export function AdminOrders() {
                         </motion.button>
 
                         <motion.button
-                          disabled={!canceledStatusId || updateStatus.isPending}
+                          disabled={!canceledStatusId || updating}
                           onClick={() =>
-                            updateStatusAction(order.id, canceledStatusId)
+                            canceledStatusId &&
+                            updateOrderStatus(order.id, canceledStatusId)
                           }
                           className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
                           title="Cancel order"
@@ -485,9 +545,9 @@ export function AdminOrders() {
           <span className="text-sm text-neutral-600">
             Page <span className="font-semibold">{page}</span> of{" "}
             <span className="font-semibold">{totalPages}</span>
-            {ordersQuery.data?.meta.total && (
+            {total > 0 && (
               <span className="ml-2 text-neutral-500">
-                ({ordersQuery.data.meta.total} total orders)
+                ({total} total orders)
               </span>
             )}
           </span>
@@ -515,7 +575,7 @@ export function AdminOrders() {
       )}
 
       <AnimatePresence>
-        {selectedOrder && (
+        {normalizedSelectedOrder && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -536,10 +596,12 @@ export function AdminOrders() {
                 className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
+                <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4 z-10">
                   <div>
                     <h2 className="text-xl font-semibold">Order Details</h2>
-                    <p className="text-sm text-neutral-500">{selectedOrder.id}</p>
+                    <p className="text-sm text-neutral-500">
+                      {normalizedSelectedOrder.id}
+                    </p>
                   </div>
                   <motion.button
                     onClick={() => setSelectedOrderId(null)}
@@ -551,156 +613,180 @@ export function AdminOrders() {
                   </motion.button>
                 </div>
 
-                <div className="p-6 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-neutral-600">
-                      Status
-                    </span>
-                    {selectedOrder.order_statuses && (
-                      <span
-                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-                        style={{
-                          backgroundColor: `${selectedOrder.order_statuses.color}20`,
-                          color: selectedOrder.order_statuses.color,
-                        }}
+                {loadingDetails ? (
+                  <div className="p-12 text-center">
+                    <RefreshCcw className="mx-auto h-8 w-8 animate-spin text-primary" />
+                    <p className="mt-3 text-sm text-neutral-600">
+                      Loading details...
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-6 space-y-6">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-neutral-600">
+                          Status
+                        </span>
+                        {normalizedSelectedOrder.order_statuses && (
+                          <span
+                            className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                            style={{
+                              backgroundColor: `${normalizedSelectedOrder.order_statuses.color}20`,
+                              color: normalizedSelectedOrder.order_statuses.color,
+                            }}
+                          >
+                            {normalizedSelectedOrder.order_statuses.status_name}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="rounded-xl border p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                          <User className="h-4 w-4" />
+                          Customer Information
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-neutral-500">Name</span>
+                            <span className="font-medium">
+                              {normalizedSelectedOrder.customers
+                                ? `${normalizedSelectedOrder.customers.first_name} ${normalizedSelectedOrder.customers.last_name}`
+                                : `${normalizedSelectedOrder.customer_first_name ?? ""} ${normalizedSelectedOrder.customer_last_name ?? ""}`.trim() ||
+                                  "—"}
+                            </span>
+                          </div>
+                          {(normalizedSelectedOrder.customers?.email ||
+                            normalizedSelectedOrder.customer_phone) && (
+                            <div className="flex justify-between">
+                              <span className="text-neutral-500">Contact</span>
+                              <span className="font-medium">
+                                {normalizedSelectedOrder.customers?.email ||
+                                  normalizedSelectedOrder.customer_phone}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                          <MapPin className="h-4 w-4" />
+                          Shipping Information
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          {normalizedSelectedOrder.customer_wilaya && (
+                            <div className="flex justify-between">
+                              <span className="text-neutral-500">Wilaya</span>
+                              <span className="font-medium">
+                                {normalizedSelectedOrder.customer_wilaya}
+                              </span>
+                            </div>
+                          )}
+                          {normalizedSelectedOrder.delivery_type && (
+                            <div className="flex justify-between">
+                              <span className="text-neutral-500">
+                                Delivery Type
+                              </span>
+                              <span className="font-medium capitalize">
+                                {normalizedSelectedOrder.delivery_type}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                          <Package className="h-4 w-4" />
+                          Items ({normalizedSelectedOrder.order_items.length})
+                        </div>
+                        <div className="space-y-3">
+                          {normalizedSelectedOrder.order_items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 text-sm"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {item.products?.product_name || "Product"}
+                                </p>
+                                {item.products?.sku && (
+                                  <p className="text-xs text-neutral-500">
+                                    SKU: {item.products.sku}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium">
+                                  ${item.price.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-neutral-500">
+                                  Qty: {item.quantity}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                          <CreditCard className="h-4 w-4" />
+                          Pricing
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-neutral-500">Subtotal</span>
+                            <span className="font-medium">
+                              $
+                              {calcTotal(
+                                normalizedSelectedOrder.order_items,
+                              ).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-neutral-500">Shipping</span>
+                            <span className="font-medium">
+                              $
+                              {Number(
+                                normalizedSelectedOrder.shipping_price || 0,
+                              ).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2 text-base font-semibold">
+                            <span>Total</span>
+                            <span>
+                              $
+                              {Number(
+                                normalizedSelectedOrder.total_price ||
+                                  calcTotal(
+                                    normalizedSelectedOrder.order_items,
+                                  ),
+                              ).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-neutral-500">
+                        <Clock className="h-3.5 w-3.5" />
+                        Created{" "}
+                        {new Date(
+                          normalizedSelectedOrder.created_at,
+                        ).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="sticky bottom-0 border-t bg-neutral-50 px-6 py-4">
+                      <Button
+                        onClick={() => setSelectedOrderId(null)}
+                        className="w-full"
                       >
-                        {selectedOrder.order_statuses.status_name}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="rounded-xl border p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                      <User className="h-4 w-4" />
-                      Customer Information
+                        Close
+                      </Button>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Name</span>
-                        <span className="font-medium">
-                          {selectedOrder.customers
-                            ? `${selectedOrder.customers.first_name} ${selectedOrder.customers.last_name}`
-                            : `${selectedOrder.customer_first_name ?? ""} ${selectedOrder.customer_last_name ?? ""}`.trim() ||
-                              "—"}
-                        </span>
-                      </div>
-                      {(selectedOrder.customers?.email ||
-                        selectedOrder.customer_phone) && (
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Contact</span>
-                          <span className="font-medium">
-                            {selectedOrder.customers?.email ||
-                              selectedOrder.customer_phone}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                      <MapPin className="h-4 w-4" />
-                      Shipping Information
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      {selectedOrder.customer_wilaya && (
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Wilaya</span>
-                          <span className="font-medium">
-                            {selectedOrder.customer_wilaya}
-                          </span>
-                        </div>
-                      )}
-                      {selectedOrder.delivery_type && (
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">Delivery Type</span>
-                          <span className="font-medium capitalize">
-                            {selectedOrder.delivery_type}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                      <Package className="h-4 w-4" />
-                      Items ({selectedOrder.order_items.length})
-                    </div>
-                    <div className="space-y-3">
-                      {selectedOrder.order_items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 text-sm"
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium">
-                              {item.products?.product_name || "Product"}
-                            </p>
-                            {item.products?.sku && (
-                              <p className="text-xs text-neutral-500">
-                                SKU: {item.products.sku}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">
-                              ${item.price.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-neutral-500">
-                              Qty: {item.quantity}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border p-4">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                      <CreditCard className="h-4 w-4" />
-                      Pricing
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Subtotal</span>
-                        <span className="font-medium">
-                          ${calcTotal(selectedOrder.order_items).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Shipping</span>
-                        <span className="font-medium">
-                          ${Number(selectedOrder.shipping_price || 0).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2 text-base font-semibold">
-                        <span>Total</span>
-                        <span>
-                          $
-                          {Number(
-                            selectedOrder.total_price ||
-                              calcTotal(selectedOrder.order_items),
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-neutral-500">
-                    <Clock className="h-3.5 w-3.5" />
-                    Created {new Date(selectedOrder.created_at).toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="sticky bottom-0 border-t bg-neutral-50 px-6 py-4">
-                  <Button
-                    onClick={() => setSelectedOrderId(null)}
-                    className="w-full"
-                  >
-                    Close
-                  </Button>
-                </div>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
