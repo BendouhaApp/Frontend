@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   Search,
   ShoppingCart,
@@ -106,6 +107,24 @@ type OrdersDbResponse = {
     total: number;
     totalPages: number;
   };
+};
+
+const tableRowVariants: Variants = {
+  hidden: { opacity: 0, x: -10 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
+};
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
 };
 
 export function AdminOrders() {
@@ -219,7 +238,12 @@ export function AdminOrders() {
 
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <h1 className="mb-1 text-3xl font-semibold">Orders</h1>
           <p className="mb-6 text-neutral-500">Manage customer orders</p>
@@ -239,9 +263,14 @@ export function AdminOrders() {
             Refresh
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="relative mb-4 max-w-md">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="relative mb-4 max-w-md"
+      >
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           value={query}
@@ -253,35 +282,46 @@ export function AdminOrders() {
             }
           }}
           placeholder="Search by order ID or phone number..."
-          className="w-full rounded-xl border py-2 pl-9 pr-3"
+          className="w-full rounded-xl border py-2 pl-9 pr-3 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
-      </div>
+      </motion.div>
 
-      {error && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-          <div className="flex-1">
-            <p className="font-medium text-sm text-red-900">
-              Failed to load orders
-            </p>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              ordersQuery.refetch();
-              statusesQuery.refetch();
-            }}
-            className="shrink-0"
+      <AnimatePresence mode="wait">
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4"
           >
-            <RefreshCcw className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <div className="flex-1">
+              <p className="font-medium text-sm text-red-900">
+                Failed to load orders
+              </p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                ordersQuery.refetch();
+                statusesQuery.refetch();
+              }}
+              className="shrink-0"
+            >
+              <RefreshCcw className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {loading ? (
-        <div className="overflow-hidden rounded-xl bg-white shadow">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="overflow-hidden rounded-xl bg-white shadow"
+        >
           <table className="w-full text-sm">
             <thead className="bg-neutral-100 text-left">
               <tr>
@@ -318,14 +358,24 @@ export function AdminOrders() {
               ))}
             </tbody>
           </table>
-        </div>
+        </motion.div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl bg-white p-10 text-center shadow">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="rounded-xl bg-white p-10 text-center shadow"
+        >
           <ShoppingCart className="mx-auto mb-3 h-10 w-10 text-neutral-400" />
           <p>No orders found</p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="overflow-hidden rounded-xl bg-white shadow">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="overflow-hidden rounded-xl bg-white shadow"
+        >
           <table className="w-full text-sm">
             <thead className="bg-neutral-100 text-left">
               <tr>
@@ -336,83 +386,102 @@ export function AdminOrders() {
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-t hover:bg-neutral-50 cursor-pointer transition"
-                  onClick={() => setSelectedOrderId(order.id)}
-                  title="Click to view details"
-                >
-                  <td className="px-4 py-3 font-medium">{order.id}</td>
-
-                  <td className="px-4 py-3">
-                    {order.customers
-                      ? `${order.customers.first_name} ${order.customers.last_name}`
-                      : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
-                        "—"}
-                    <div className="text-xs text-neutral-500">
-                      {order.customers?.email || order.customer_phone || "—"}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-3">
-                    {order.order_statuses ? (
-                      <span
-                        className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: `${order.order_statuses.color}20`,
-                          color: order.order_statuses.color,
-                        }}
-                      >
-                        {order.order_statuses.status_name}
-                      </span>
-                    ) : (
-                      <span className="text-neutral-400">—</span>
-                    )}
-                  </td>
-
-                  <td className="px-4 py-3 font-medium">
-                    ${calcTotal(order.order_items).toFixed(2)}
-                  </td>
-
-                  <td
-                    className="px-4 py-3"
-                    onClick={(e) => e.stopPropagation()}
+            <motion.tbody
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              <AnimatePresence>
+                {filtered.map((order) => (
+                  <motion.tr
+                    key={order.id}
+                    variants={tableRowVariants}
+                    className="group border-t hover:bg-neutral-50 cursor-pointer transition"
+                    onClick={() => setSelectedOrderId(order.id)}
+                    title="Click to view details"
+                    whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
                   >
-                    <div className="flex gap-2">
-                      <button
-                        disabled={!confirmedStatusId || updateStatus.isPending}
-                        onClick={() =>
-                          updateStatusAction(order.id, confirmedStatusId)
-                        }
-                        className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        title="Confirm order"
-                      >
-                        <Check size={16} />
-                      </button>
+                    <td className="px-4 py-3 font-medium">{order.id}</td>
 
-                      <button
-                        disabled={!canceledStatusId || updateStatus.isPending}
-                        onClick={() =>
-                          updateStatusAction(order.id, canceledStatusId)
-                        }
-                        className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        title="Cancel order"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                    <td className="px-4 py-3">
+                      {order.customers
+                        ? `${order.customers.first_name} ${order.customers.last_name}`
+                        : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
+                          "—"}
+                      <div className="text-xs text-neutral-500">
+                        {order.customers?.email || order.customer_phone || "—"}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {order.order_statuses ? (
+                        <motion.span
+                          className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                          style={{
+                            backgroundColor: `${order.order_statuses.color}20`,
+                            color: order.order_statuses.color,
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ type: "spring", stiffness: 400 }}
+                        >
+                          {order.order_statuses.status_name}
+                        </motion.span>
+                      ) : (
+                        <span className="text-neutral-400">—</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3 font-medium">
+                      ${calcTotal(order.order_items).toFixed(2)}
+                    </td>
+
+                    <td
+                      className="px-4 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex gap-2">
+                        <motion.button
+                          disabled={!confirmedStatusId || updateStatus.isPending}
+                          onClick={() =>
+                            updateStatusAction(order.id, confirmedStatusId)
+                          }
+                          className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          title="Confirm order"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Check size={16} />
+                        </motion.button>
+
+                        <motion.button
+                          disabled={!canceledStatusId || updateStatus.isPending}
+                          onClick={() =>
+                            updateStatusAction(order.id, canceledStatusId)
+                          }
+                          className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          title="Cancel order"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <X size={16} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </motion.tbody>
           </table>
-        </div>
+        </motion.div>
       )}
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-4 flex items-center justify-between"
+        >
           <span className="text-sm text-neutral-600">
             Page <span className="font-semibold">{page}</span> of{" "}
             <span className="font-semibold">{totalPages}</span>
@@ -442,188 +511,201 @@ export function AdminOrders() {
               Next
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {selectedOrder && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            onClick={() => setSelectedOrderId(null)}
-          />
+      <AnimatePresence>
+        {selectedOrder && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={() => setSelectedOrderId(null)}
+            />
 
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
-                <div>
-                  <h2 className="text-xl font-semibold">Order Details</h2>
-                  <p className="text-sm text-neutral-500">{selectedOrder.id}</p>
+              <div
+                className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="sticky top-0 flex items-center justify-between border-b bg-white px-6 py-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">Order Details</h2>
+                    <p className="text-sm text-neutral-500">{selectedOrder.id}</p>
+                  </div>
+                  <motion.button
+                    onClick={() => setSelectedOrderId(null)}
+                    className="rounded-lg p-2 hover:bg-neutral-100 transition"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X className="h-5 w-5" />
+                  </motion.button>
                 </div>
-                <button
-                  onClick={() => setSelectedOrderId(null)}
-                  className="rounded-lg p-2 hover:bg-neutral-100 transition"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
 
-              <div className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-neutral-600">
-                    Status
-                  </span>
-                  {selectedOrder.order_statuses && (
-                    <span
-                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
-                      style={{
-                        backgroundColor: `${selectedOrder.order_statuses.color}20`,
-                        color: selectedOrder.order_statuses.color,
-                      }}
-                    >
-                      {selectedOrder.order_statuses.status_name}
+                <div className="p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-neutral-600">
+                      Status
                     </span>
-                  )}
-                </div>
-
-                <div className="rounded-xl border p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                    <User className="h-4 w-4" />
-                    Customer Information
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Name</span>
-                      <span className="font-medium">
-                        {selectedOrder.customers
-                          ? `${selectedOrder.customers.first_name} ${selectedOrder.customers.last_name}`
-                          : `${selectedOrder.customer_first_name ?? ""} ${selectedOrder.customer_last_name ?? ""}`.trim() ||
-                            "—"}
-                      </span>
-                    </div>
-                    {(selectedOrder.customers?.email ||
-                      selectedOrder.customer_phone) && (
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Contact</span>
-                        <span className="font-medium">
-                          {selectedOrder.customers?.email ||
-                            selectedOrder.customer_phone}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                    <MapPin className="h-4 w-4" />
-                    Shipping Information
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    {selectedOrder.customer_wilaya && (
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Wilaya</span>
-                        <span className="font-medium">
-                          {selectedOrder.customer_wilaya}
-                        </span>
-                      </div>
-                    )}
-                    {selectedOrder.delivery_type && (
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Delivery Type</span>
-                        <span className="font-medium capitalize">
-                          {selectedOrder.delivery_type}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                    <Package className="h-4 w-4" />
-                    Items ({selectedOrder.order_items.length})
-                  </div>
-                  <div className="space-y-3">
-                    {selectedOrder.order_items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between gap-3 text-sm"
+                    {selectedOrder.order_statuses && (
+                      <span
+                        className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+                        style={{
+                          backgroundColor: `${selectedOrder.order_statuses.color}20`,
+                          color: selectedOrder.order_statuses.color,
+                        }}
                       >
-                        <div className="flex-1">
-                          <p className="font-medium">
-                            {item.products?.product_name || "Product"}
-                          </p>
-                          {item.products?.sku && (
-                            <p className="text-xs text-neutral-500">
-                              SKU: {item.products.sku}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            ${item.price.toFixed(2)}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            Qty: {item.quantity}
-                          </p>
-                        </div>
+                        {selectedOrder.order_statuses.status_name}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border p-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                      <User className="h-4 w-4" />
+                      Customer Information
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Name</span>
+                        <span className="font-medium">
+                          {selectedOrder.customers
+                            ? `${selectedOrder.customers.first_name} ${selectedOrder.customers.last_name}`
+                            : `${selectedOrder.customer_first_name ?? ""} ${selectedOrder.customer_last_name ?? ""}`.trim() ||
+                              "—"}
+                        </span>
                       </div>
-                    ))}
+                      {(selectedOrder.customers?.email ||
+                        selectedOrder.customer_phone) && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">Contact</span>
+                          <span className="font-medium">
+                            {selectedOrder.customers?.email ||
+                              selectedOrder.customer_phone}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border p-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                      <MapPin className="h-4 w-4" />
+                      Shipping Information
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {selectedOrder.customer_wilaya && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">Wilaya</span>
+                          <span className="font-medium">
+                            {selectedOrder.customer_wilaya}
+                          </span>
+                        </div>
+                      )}
+                      {selectedOrder.delivery_type && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">Delivery Type</span>
+                          <span className="font-medium capitalize">
+                            {selectedOrder.delivery_type}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border p-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                      <Package className="h-4 w-4" />
+                      Items ({selectedOrder.order_items.length})
+                    </div>
+                    <div className="space-y-3">
+                      {selectedOrder.order_items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 text-sm"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">
+                              {item.products?.product_name || "Product"}
+                            </p>
+                            {item.products?.sku && (
+                              <p className="text-xs text-neutral-500">
+                                SKU: {item.products.sku}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">
+                              ${item.price.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              Qty: {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border p-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
+                      <CreditCard className="h-4 w-4" />
+                      Pricing
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Subtotal</span>
+                        <span className="font-medium">
+                          ${calcTotal(selectedOrder.order_items).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Shipping</span>
+                        <span className="font-medium">
+                          ${Number(selectedOrder.shipping_price || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 text-base font-semibold">
+                        <span>Total</span>
+                        <span>
+                          $
+                          {Number(
+                            selectedOrder.total_price ||
+                              calcTotal(selectedOrder.order_items),
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-neutral-500">
+                    <Clock className="h-3.5 w-3.5" />
+                    Created {new Date(selectedOrder.created_at).toLocaleString()}
                   </div>
                 </div>
 
-                <div className="rounded-xl border p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-                    <CreditCard className="h-4 w-4" />
-                    Pricing
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Subtotal</span>
-                      <span className="font-medium">
-                        ${calcTotal(selectedOrder.order_items).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Shipping</span>
-                      <span className="font-medium">
-                        ${Number(selectedOrder.shipping_price || 0).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2 text-base font-semibold">
-                      <span>Total</span>
-                      <span>
-                        $
-                        {Number(
-                          selectedOrder.total_price ||
-                            calcTotal(selectedOrder.order_items),
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-neutral-500">
-                  <Clock className="h-3.5 w-3.5" />
-                  Created {new Date(selectedOrder.created_at).toLocaleString()}
+                <div className="sticky bottom-0 border-t bg-neutral-50 px-6 py-4">
+                  <Button
+                    onClick={() => setSelectedOrderId(null)}
+                    className="w-full"
+                  >
+                    Close
+                  </Button>
                 </div>
               </div>
-
-              <div className="sticky bottom-0 border-t bg-neutral-50 px-6 py-4">
-                <Button
-                  onClick={() => setSelectedOrderId(null)}
-                  className="w-full"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

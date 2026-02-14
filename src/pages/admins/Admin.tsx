@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 type Stats = {
   totalOrders: number;
@@ -37,31 +38,53 @@ type Stats = {
   inactiveWilayas: number;
 };
 
-
 type Order = {
   id: string;
   created_at: string;
-
   customer_first_name?: string | null;
   customer_last_name?: string | null;
   customer_phone?: string | null;
-
   customers?: {
     first_name: string;
     last_name: string;
     email: string;
   } | null;
-
   order_statuses?: {
     status_name: string;
     color: string;
   } | null;
-
   order_items: {
     id: string;
     price: string | number;
     quantity: number;
   }[];
+};
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+};
+
+const tableRowVariants: Variants = {
+  hidden: { opacity: 0, x: -10 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
 };
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -171,6 +194,7 @@ export default function AdminDashboard() {
     return {
       backgroundColor: `${statusColor}20`,
       color: statusColor,
+      border: `1px solid ${statusColor}40`,
     };
   };
 
@@ -214,7 +238,7 @@ export default function AdminDashboard() {
         {loading && (
           <div className="space-y-6">
             <div className="grid gap-6 md:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <Skeleton key={i} className="h-32 rounded-2xl" />
               ))}
             </div>
@@ -222,80 +246,111 @@ export default function AdminDashboard() {
         )}
 
         {!loading && error && (
-          <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl bg-white p-12 text-center shadow-sm"
+          >
             <AlertCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
               {error}
             </h3>
-          </div>
+          </motion.div>
         )}
 
         {!loading && stats && (
           <>
-            <div className="grid gap-6 md:grid-cols-4">
-              <StatCard
-                label="Total Revenue"
-                value={`${stats.totalRevenue.toLocaleString()} DZA`}
-                icon={<DollarSign className="h-5 w-5" />}
-                subtext={`${stats.confirmedOrders || 0} confirmed orders`}
-              />
-              <StatCard
-                label="Products"
-                value={stats.totalProducts}
-                icon={<Package className="h-5 w-5" />}
-                subtext={`${stats.publishedProducts || 0} published • ${stats.draftProducts || 0} drafts`}
-              />
-              <StatCard
-                label="Categories"
-                value={stats.totalCategories}
-                icon={<Tag className="h-5 w-5" />}
-                subtext={`${stats.mainCategories || 0} main • ${stats.subCategories || 0} sub`}
-              />
-              <StatCard
-                label="Wilayas"
-                value={stats.totalWilayas}
-                icon={<MapPin className="h-5 w-5" />}
-                subtext={`${stats.activeWilayas} active • ${stats.inactiveWilayas} inactive`}
-              />
-              <StatCard
-                label="Total Orders"
-                value={stats.totalOrders}
-                icon={<ShoppingCart className="h-5 w-5" />}
-                subtext={`${stats.todayOrders || 0} orders today`}
-              />
-              <StatCard
-                label="Pending Orders"
-                value={stats.pendingOrders}
-                icon={<Clock className="h-5 w-5" />}
-                alert={
-                  stats.pendingOrders > 0 ? "Needs attention" : "All clear"
-                }
-                isWarning={stats.pendingOrders > 0}
-              />
-              <StatCard
-                label="Low Stock Alert"
-                value={stats.lowStockProducts || 0}
-                icon={<AlertCircle className="h-5 w-5" />}
-                alert={
-                  (stats.lowStockProducts || 0) > 0
-                    ? "Restock needed"
-                    : "Healthy"
-                }
-                isWarning={(stats.lowStockProducts || 0) > 0}
-              />
-              <StatCard
-                label="Out of Stock"
-                value={stats.outOfStockProducts}
-                icon={<AlertTriangle className="h-5 w-5" />}
-                alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
-                isWarning={stats.outOfStockProducts > 0}
-              />
-            </div>
+            <motion.div
+  variants={containerVariants}
+  initial="hidden"
+  animate="show"
+  className="grid gap-6 md:grid-cols-4"
+  style={{ perspective: 1000 }}
+>
+  <StatCard
+    variants={fadeUp}
+    label="Total Revenue"
+    value={`${stats.totalRevenue.toLocaleString()} DZA`}
+    icon={<DollarSign className="h-5 w-5" />}
+    subtext={`${stats.confirmedOrders || 0} confirmed orders`}
+  />
 
-            <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
+  <StatCard
+    variants={fadeUp}
+    label="Products"
+    value={stats.totalProducts}
+    icon={<Package className="h-5 w-5" />}
+    subtext={`${stats.publishedProducts || 0} published • ${stats.draftProducts || 0} drafts`}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Categories"
+    value={stats.totalCategories}
+    icon={<Tag className="h-5 w-5" />}
+    subtext={`${stats.mainCategories || 0} main • ${stats.subCategories || 0} sub`}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Wilayas"
+    value={stats.totalWilayas}
+    icon={<MapPin className="h-5 w-5" />}
+    subtext={`${stats.activeWilayas} active • ${stats.inactiveWilayas} inactive`}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Total Orders"
+    value={stats.totalOrders}
+    icon={<ShoppingCart className="h-5 w-5" />}
+    subtext={`${stats.todayOrders || 0} orders today`}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Pending Orders"
+    value={stats.pendingOrders}
+    icon={<Clock className="h-5 w-5" />}
+    alert={stats.pendingOrders > 0 ? "Needs attention" : "All clear"}
+    isWarning={stats.pendingOrders > 0}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Low Stock Alert"
+    value={stats.lowStockProducts || 0}
+    icon={<AlertCircle className="h-5 w-5" />}
+    alert={(stats.lowStockProducts || 0) > 0 ? "Restock needed" : "Healthy"}
+    isWarning={(stats.lowStockProducts || 0) > 0}
+  />
+
+  <StatCard
+    variants={fadeUp}
+    label="Out of Stock"
+    value={stats.outOfStockProducts}
+    icon={<AlertTriangle className="h-5 w-5" />}
+    alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
+    isWarning={stats.outOfStockProducts > 0}
+  />
+</motion.div>
+
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm"
+            >
+              <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-5">
+                <h3 className="flex items-center gap-2.5 text-xl font-bold text-neutral-900">
+                  <motion.div
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                  </motion.div>
                   Recent Orders
                 </h3>
 
@@ -311,10 +366,19 @@ export default function AdminDashboard() {
               </div>
 
               {recentOrders.length === 0 ? (
-                <div className="p-12 text-center">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-12 text-center"
+                >
                   <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-neutral-300" />
-                  <p className="text-neutral-500">No recent orders yet.</p>
-                </div>
+                  <h4 className="mb-1 text-lg font-semibold text-neutral-900">
+                    No orders yet
+                  </h4>
+                  <p className="text-sm text-neutral-500">
+                    Orders will appear here once customers start purchasing.
+                  </p>
+                </motion.div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -340,62 +404,78 @@ export default function AdminDashboard() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {recentOrders.map((order) => (
-                        <tr
-                          key={order.id}
-                          className="border-b border-neutral-100 transition-colors hover:bg-neutral-50"
-                        >
-                          <td className="px-6 py-4 font-mono text-sm font-medium text-neutral-900">
-                            #{order.id.slice(0, 8)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-neutral-900">
-                              {order.customers
-                                ? `${order.customers.first_name} ${order.customers.last_name}`
-                                : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
-                                  "Guest"}
-                            </div>
+                    <motion.tbody
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="show"
+                    >
+                      <AnimatePresence>
+                        {recentOrders.map((order, index) => (
+                          <motion.tr
+                            key={order.id}
+                            variants={tableRowVariants}
+                            custom={index}
+                            className="group border-b border-neutral-100 transition-colors hover:bg-neutral-50"
+                            whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+                          >
+                            <td className="px-6 py-4 font-mono text-sm font-medium text-neutral-900">
+                              #{order.id.slice(0, 8)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-neutral-900">
+                                {order.customers
+                                  ? `${order.customers.first_name} ${order.customers.last_name}`
+                                  : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
+                                    "Guest"}
+                              </div>
 
-                            <div className="text-xs text-neutral-500">
-                              {order.customers?.email ||
-                                order.customer_phone ||
-                                ""}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
-                              style={getStatusStyle(
-                                order.order_statuses?.color,
-                              )}
-                            >
-                              {getStatusIcon(order.order_statuses?.status_name)}
-                              {order.order_statuses?.status_name || "Unknown"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-neutral-900">
-                            {calculateOrderTotal(order).toLocaleString()} DZA
-                          </td>
-                          <td className="px-6 py-4 text-sm text-neutral-600">
-                            {formatDate(order.created_at)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/admin/orders`)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
+                              <div className="text-xs text-neutral-500">
+                                {order.customers?.email ||
+                                  order.customer_phone ||
+                                  ""}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <motion.span
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                                style={getStatusStyle(
+                                  order.order_statuses?.color,
+                                )}
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ type: "spring", stiffness: 400 }}
+                              >
+                                {getStatusIcon(
+                                  order.order_statuses?.status_name,
+                                )}
+                                {order.order_statuses?.status_name || "Unknown"}
+                              </motion.span>
+                            </td>
+                            <td className="px-6 py-4 text-sm font-semibold text-neutral-900">
+                              {calculateOrderTotal(order).toLocaleString()} DZA
+                            </td>
+                            <td className="px-6 py-4 text-sm text-neutral-600">
+                              {formatDate(order.created_at)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <motion.div whileHover={{ scale: 1.1 }}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => navigate(`/admin/orders`)}
+                                  className="opacity-0 transition-opacity group-hover:opacity-100"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </motion.div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </AnimatePresence>
+                    </motion.tbody>
                   </table>
                 </div>
               )}
-            </div>
+            </motion.div>
           </>
         )}
       </div>
@@ -411,6 +491,7 @@ function StatCard({
   isWarning,
   subtext,
 }: {
+  variants?: Variants;
   label: string;
   value: string | number;
   icon: React.ReactNode;
@@ -419,27 +500,66 @@ function StatCard({
   subtext?: string;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-neutral-500">{label}</span>
-        <div className="text-neutral-400">{icon}</div>
-      </div>
-      <div className="mt-3 text-3xl font-semibold text-neutral-900">
-        {value}
-      </div>
-      {subtext && (
-        <div className="mt-1 text-xs text-neutral-500">{subtext}</div>
-      )}
-      {alert && (
-        <div
-          className={cn(
-            "mt-2 text-sm font-medium",
-            isWarning ? "text-orange-600" : "text-emerald-600",
-          )}
-        >
-          {alert}
+    <motion.div
+      className="group relative rounded-2xl bg-white p-6 shadow-sm"
+      whileHover={{
+        y: -4,
+        scale: 1.02,
+        rotateX: 1,
+        rotateY: -1,
+        boxShadow: "0px 30px 60px -15px rgba(0,0,0,0.18)",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 170,
+        damping: 14,
+      }}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+
+      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-neutral-500">{label}</span>
+
+          <motion.div
+            className="text-neutral-400 transition-colors group-hover:text-primary"
+            whileHover={{ scale: 1.3, rotate: 8 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 12,
+            }}
+          >
+            {icon}
+          </motion.div>
         </div>
-      )}
-    </div>
+
+        <motion.div
+          className="mt-3 text-3xl font-semibold text-neutral-900"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {value}
+        </motion.div>
+
+        {subtext && (
+          <div className="mt-1 text-xs text-neutral-500">{subtext}</div>
+        )}
+
+        {alert && (
+          <div
+            className={cn(
+              "mt-2 text-sm font-medium",
+              isWarning ? "text-orange-600" : "text-emerald-600",
+            )}
+          >
+            {alert}
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }
