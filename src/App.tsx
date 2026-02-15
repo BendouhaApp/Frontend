@@ -8,6 +8,15 @@ import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { Checkout } from "./pages/Checkout";
 import { Simulator } from "./pages/Simulator";
+import { Account } from "./pages/Account";
+import {
+  FaqPage,
+  ShippingInfoPage,
+  ReturnsPage,
+  PrivacyPolicyPage,
+  TermsPage,
+  NotFoundPage,
+} from "./pages/InfoPages";
 import AdminLogin from "./pages/admins/AdminLogin";
 import AdminDashboard from "@/pages/admins/Admin";
 import AdminProducts from "@/pages/admins/AdminProducts";
@@ -29,6 +38,12 @@ function App() {
         <Route path="simulator" element={<Simulator />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
+        <Route path="account" element={<Account />} />
+        <Route path="faq" element={<FaqPage />} />
+        <Route path="shipping" element={<ShippingInfoPage />} />
+        <Route path="returns" element={<ReturnsPage />} />
+        <Route path="privacy" element={<PrivacyPolicyPage />} />
+        <Route path="terms" element={<TermsPage />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -40,6 +55,7 @@ function App() {
         <Route path="shipping-zones" element={<AdminWilaya />} />
         <Route path="logs" element={<AdminLogs />} />
       </Route>
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

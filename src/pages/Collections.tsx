@@ -40,7 +40,7 @@ export function Collections() {
             transition={{ delay: 0.2 }}
             className="mb-4 inline-block text-sm font-medium uppercase tracking-wider text-neutral-500"
           >
-            Explore
+            Explorer
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -56,7 +56,7 @@ export function Collections() {
             transition={{ delay: 0.4, duration: DURATION.slow, ease: EASE.out }}
             className="mt-4 max-w-xl text-lg text-neutral-600"
           >
-            Discover our thoughtfully curated collections, each designed to transform your space.
+            Decouvrez nos collections soigneusement composees pour transformer votre espace.
           </motion.p>
         </div>
       </motion.section>
@@ -103,7 +103,7 @@ export function Collections() {
                     {/* Content Overlay */}
                     <div className="absolute inset-x-0 bottom-0 p-6">
                       <span className="mb-2 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                        {collection.itemCount} items
+                        {collection.itemCount} articles
                       </span>
                       <h3 className="text-2xl font-medium text-white">
                         {collection.name}
@@ -117,7 +117,7 @@ export function Collections() {
                   {/* Footer */}
                   <div className="flex items-center justify-between bg-white p-4">
                     <span className="text-sm font-medium text-neutral-900">
-                      Explore Collection
+                      Explorer la collection
                     </span>
                     <motion.span
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600"

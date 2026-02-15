@@ -38,8 +38,7 @@
     "about": "À propos",
     "contact": "Contact",
     "newArrivals": "Nouveautés",
-    "bestSellers": "Meilleures ventes",
-    "simulator": "Simulator"
+    "bestSellers": "Meilleures ventes"
   },
   "hero": {
     "eyebrow": "Nouvelle Collection 2026",
@@ -115,7 +114,15 @@
     "failedToLoad": "Impossible de charger les produits",
     "activeFilters": "Filtres actifs :",
     "clearAll": "Tout effacer",
-    "noProductsFound": "No elements left"
+    "noProductsFound": "Aucun produit ne correspond aux filtres",
+    "searchPlaceholder": "Rechercher un produit, une categorie...",
+    "inStockOnly": "En stock uniquement",
+    "quickView": "Apercu rapide",
+    "viewDetails": "Voir la fiche",
+    "addToWishlist": "Ajouter a la liste de souhaits",
+    "removeFromWishlist": "Retirer de la liste de souhaits",
+    "addedToWishlist": "Ajoute a la liste de souhaits",
+    "removedFromWishlist": "Retire de la liste de souhaits"
   },
   "cart": {
     "addedToCart": "Produit ajouté au panier",

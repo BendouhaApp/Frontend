@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Grid,
   LayoutGrid,
@@ -10,6 +10,8 @@ import {
   X,
   ChevronDown,
   AlertCircle,
+  Search,
+  Heart,
 } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,7 @@ const sortOptionIds = [
 ];
 
 const ITEMS_PER_PAGE = 9;
+const WISHLIST_STORAGE_KEY = "bendouha_wishlist";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -60,6 +63,14 @@ const itemVariants = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TFn = (key: string, opts?: any) => string;
+
+function toNumber(value: unknown, fallback = 0): number {
+  const numeric =
+    typeof value === "number" && Number.isFinite(value)
+      ? value
+      : Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
 
 // Helper to get sort label
 function getSortLabel(t: TFn, id: string): string {
@@ -294,15 +305,173 @@ function ErrorState({
   );
 }
 
+function QuickViewModal({
+  product,
+  onClose,
+  onAddToCart,
+  onToggleWishlist,
+  isWishlisted,
+}: {
+  product: Product | null;
+  onClose: () => void;
+  onAddToCart: (product: Product) => void;
+  onToggleWishlist: (product: Product) => void;
+  isWishlisted: boolean;
+}) {
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!product) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [product, onClose]);
+
+  if (!product) return null;
+
+  const price = toNumber(product.price);
+  const originalPrice =
+    product.originalPrice == null ? null : toNumber(product.originalPrice);
+  const hasDiscount = originalPrice != null && originalPrice > price;
+  const currency = t("common.currency");
+  const categoryLabel =
+    product.categories?.[0]?.category_name ||
+    product.category ||
+    t("products.allCategories");
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.97 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      >
+        <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute end-4 top-4 z-10 rounded-full bg-white/90 p-2 text-navy-600 transition-colors hover:text-navy"
+            aria-label={t("common.close")}
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          <div className="grid gap-0 md:grid-cols-[1.05fr_1fr]">
+            <div className="aspect-square bg-navy-50">
+              <img
+                src={product.image || product.thumbnail || "/vite.svg"}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="flex flex-col justify-between p-6 md:p-8">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-500">
+                  {categoryLabel}
+                </span>
+                <h3 className="mt-2 text-2xl font-medium text-navy">
+                  {product.name}
+                </h3>
+                {product.description ? (
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-navy-600">
+                    {product.description}
+                  </p>
+                ) : null}
+
+                <div className="mt-5 flex items-baseline gap-2">
+                  <span className="text-xl font-semibold text-navy">
+                    {price.toFixed(2)} {currency}
+                  </span>
+                  {hasDiscount ? (
+                    <span className="text-sm text-navy-400 line-through">
+                      {originalPrice.toFixed(2)} {currency}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Button
+                  onClick={() => onAddToCart(product)}
+                  disabled={product.inStock === false}
+                  className="rounded-full bg-primary hover:bg-primary-600"
+                >
+                  {product.inStock === false
+                    ? t("common.outOfStock")
+                    : t("common.addToCart")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => onToggleWishlist(product)}
+                  className={cn(
+                    "rounded-full",
+                    isWishlisted && "border-gold-300 bg-gold-50 text-gold-700",
+                  )}
+                >
+                  <Heart
+                    className={cn("me-2 h-4 w-4", isWishlisted && "fill-current")}
+                  />
+                  {isWishlisted
+                    ? t("products.removeFromWishlist")
+                    : t("products.addToWishlist")}
+                </Button>
+                <Button variant="ghost" asChild className="rounded-full">
+                  <Link to={`/product/${product.id}`} onClick={onClose}>
+                    {t("products.viewDetails")}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export function Shop() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
   const [page, setPage] = useState(1);
   const [selectedSort, setSelectedSort] = useState("featured");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+  const [onlyInStock, setOnlyInStock] = useState(
+    searchParams.get("stock") === "in",
+  );
+  const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(WISHLIST_STORAGE_KEY) ?? "[]",
+      ) as string[];
+      return Array.isArray(parsed)
+        ? parsed.filter((id) => typeof id === "string")
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const { cartId } = useCart();
 
@@ -404,6 +573,38 @@ export function Shop() {
   };
 
   useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (searchQuery.trim()) {
+      next.set("q", searchQuery.trim());
+    } else {
+      next.delete("q");
+    }
+
+    if (onlyInStock) {
+      next.set("stock", "in");
+    } else {
+      next.delete("stock");
+    }
+
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, onlyInStock, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("focus") !== "search") return;
+
+    searchInputRef.current?.focus();
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
+  }, [wishlistIds]);
+
+  useEffect(() => {
     setPage(1);
   }, [activeCategoryId]);
 
@@ -425,6 +626,66 @@ export function Shop() {
   );
 
   const products = data?.data ?? [];
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const sorted = [...products];
+
+    const withFilters = sorted.filter((product) => {
+      if (onlyInStock && product.inStock === false) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      const searchable = [
+        product.name,
+        product.description,
+        product.category,
+        ...(product.categories?.map((item) => item.category_name) ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+
+    const byDateDesc = (a: Product, b: Product) => {
+      const aDate = Date.parse((a as Product & { created_at?: string }).created_at || "");
+      const bDate = Date.parse((b as Product & { created_at?: string }).created_at || "");
+      if (Number.isFinite(aDate) && Number.isFinite(bDate)) {
+        return bDate - aDate;
+      }
+      return String(b.id).localeCompare(String(a.id), undefined, {
+        numeric: true,
+      });
+    };
+
+    withFilters.sort((a, b) => {
+      if (selectedSort === "price-low") {
+        return toNumber(a.price) - toNumber(b.price);
+      }
+
+      if (selectedSort === "price-high") {
+        return toNumber(b.price) - toNumber(a.price);
+      }
+
+      if (selectedSort === "rating") {
+        return toNumber(b.rating) - toNumber(a.rating);
+      }
+
+      if (selectedSort === "newest") {
+        return byDateDesc(a, b);
+      }
+
+      return 0;
+    });
+
+    return withFilters;
+  }, [products, onlyInStock, searchQuery, selectedSort]);
+
+  const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
+
   const totalItems = data?.meta?.total ?? 0;
   const totalPages = Math.max(
     1,
@@ -469,11 +730,22 @@ export function Shop() {
   };
 
   const handleQuickView = (product: Product) => {
-    console.log("Quick view:", product.name);
+    setQuickViewProduct(product);
   };
 
   const handleWishlist = (product: Product) => {
-    console.log("Wishlist:", product.name);
+    const isAlreadyWishlisted = wishlistSet.has(product.id);
+    setWishlistIds((prev) =>
+      isAlreadyWishlisted
+        ? prev.filter((id) => id !== product.id)
+        : [...prev, product.id],
+    );
+
+    toast.success(
+      isAlreadyWishlisted
+        ? t("products.removedFromWishlist")
+        : t("products.addedToWishlist"),
+    );
   };
 
   // Map view mode to card variant and grid columns
@@ -499,10 +771,23 @@ export function Shop() {
 
   const { variant, gridClass } = getViewConfig();
 
-  const activeFiltersCount = activeCategoryId !== "all" ? 1 : 0;
+  const activeFiltersCount =
+    (activeCategoryId !== "all" ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0) +
+    (onlyInStock ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-white">
+      <QuickViewModal
+        product={quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={handleAddToCart}
+        onToggleWishlist={handleWishlist}
+        isWishlisted={
+          quickViewProduct ? wishlistSet.has(quickViewProduct.id) : false
+        }
+      />
+
       <MobileFilterDrawer
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
@@ -556,7 +841,9 @@ export function Shop() {
               )}
             </Button>
             <p className="text-sm text-navy-600">
-              {isLoading ? "..." : `${totalItems} ${t("common.items")}`}
+              {isLoading
+                ? "..."
+                : `${filteredProducts.length} ${t("common.items")}`}
             </p>
           </div>
 
@@ -756,6 +1043,32 @@ export function Shop() {
               )}
             </div>
 
+            <div className="mb-6 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder={t("products.searchPlaceholder")}
+                  className="w-full rounded-lg border border-navy-200 bg-white py-2.5 ps-9 pe-3 text-sm text-navy-700 placeholder:text-navy-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <Button
+                type="button"
+                variant={onlyInStock ? "default" : "outline"}
+                onClick={() => setOnlyInStock((prev) => !prev)}
+                className={cn(
+                  "rounded-lg",
+                  onlyInStock &&
+                    "border-primary bg-primary text-white hover:bg-primary-600",
+                )}
+              >
+                {t("products.inStockOnly")}
+              </Button>
+            </div>
+
             {/* Active Selection Display */}
             {activeFiltersCount > 0 && (
               <motion.div
@@ -766,18 +1079,42 @@ export function Shop() {
                 <span className="text-sm text-navy-500">
                   {t("products.activeFilters")}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
-                  {selectedCategoryLabel}
-                  <button
-                    onClick={() => {
-                      setCategoryParam(null);
-                      setPage(1);
-                    }}
-                    className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
+                {activeCategoryId !== "all" && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-sm text-primary">
+                    {selectedCategoryLabel}
+                    <button
+                      onClick={() => {
+                        setCategoryParam(null);
+                        setPage(1);
+                      }}
+                      className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                {searchQuery.trim() && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-navy-100 px-3 py-1 text-sm text-navy-700">
+                    {searchQuery.trim()}
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="ms-1 rounded-full p-0.5 hover:bg-navy-200"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                {onlyInStock && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-navy-100 px-3 py-1 text-sm text-navy-700">
+                    {t("products.inStockOnly")}
+                    <button
+                      onClick={() => setOnlyInStock(false)}
+                      className="ms-1 rounded-full p-0.5 hover:bg-navy-200"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
               </motion.div>
             )}
 
@@ -797,7 +1134,7 @@ export function Shop() {
             {/* Products Grid */}
             {!isLoading && !isError && (
               <>
-                {products.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <div className="py-16 text-center">
                     <p className="text-navy-600">
                       {t("products.noProductsFound")}
@@ -811,7 +1148,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}
@@ -819,6 +1156,7 @@ export function Shop() {
                           onAddToCart={handleAddToCart}
                           onQuickView={handleQuickView}
                           onWishlist={handleWishlist}
+                          isWishlisted={wishlistSet.has(product.id)}
                         />
                       </motion.div>
                     ))}
@@ -827,7 +1165,11 @@ export function Shop() {
               </>
             )}
 
-            {!isLoading && !isError && totalItems > ITEMS_PER_PAGE && (
+            {!isLoading &&
+              !isError &&
+              !searchQuery.trim() &&
+              !onlyInStock &&
+              totalItems > ITEMS_PER_PAGE && (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p className="text-sm text-navy-500">
                   {t("common.pageOf", {

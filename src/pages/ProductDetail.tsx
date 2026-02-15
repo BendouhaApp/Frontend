@@ -24,6 +24,14 @@ import type { ProductResponse, AddToCartPayload, CartItem, ApiResponse } from "@
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+function toNumber(value: unknown, fallback = 0): number {
+  const numeric =
+    typeof value === "number" && Number.isFinite(value)
+      ? value
+      : Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
 // Loading Skeleton for Product Detail
 function ProductDetailSkeleton() {
   return (
@@ -368,12 +376,19 @@ export function ProductDetail() {
     );
   }
 
-  const images = product.images || product.gallery || [product.image];
-  const discount = product.originalPrice
-    ? Math.round(
-        ((product.originalPrice - product.price) / product.originalPrice) * 100,
-      )
-    : 0;
+  const images = (
+    product.images ??
+    product.gallery ??
+    [product.image]
+  ).filter((image): image is string => typeof image === "string" && image.length > 0);
+  const safeImages = images.length > 0 ? images : ["/vite.svg"];
+  const price = toNumber(product.price);
+  const originalPrice =
+    product.originalPrice == null ? null : toNumber(product.originalPrice);
+  const discount =
+    originalPrice != null && originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : 0;
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -419,7 +434,7 @@ export function ProductDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <ImageGallery images={images} productName={product.name} />
+            <ImageGallery images={safeImages} productName={product.name} />
           </motion.div>
 
           {/* Right: Product Info */}
@@ -488,11 +503,11 @@ export function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-medium text-neutral-900">
-                  ${product.price.toFixed(2)}
+                  ${price.toFixed(2)}
                 </span>
-                {product.originalPrice && (
+                {originalPrice != null && originalPrice > price && (
                   <span className="text-xl text-neutral-400 line-through">
-                    ${product.originalPrice.toFixed(2)}
+                    ${originalPrice.toFixed(2)}
                   </span>
                 )}
               </div>

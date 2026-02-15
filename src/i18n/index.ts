@@ -7,8 +7,8 @@ import ar from './locales/ar.json'
 
 // Language configuration
 export const languages = [
-  { code: 'fr', name: 'Français', dir: 'ltr' },
-  { code: 'ar', name: 'العربية', dir: 'rtl' },
+  { code: 'fr', name: 'Francais', dir: 'ltr' },
+  { code: 'ar', name: 'Arabic', dir: 'rtl' },
 ] as const
 
 export type LanguageCode = (typeof languages)[number]['code']

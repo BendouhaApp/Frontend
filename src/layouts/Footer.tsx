@@ -1,21 +1,11 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  MapPin,
-  Phone,
-  Mail,
-  Instagram,
-  Facebook,
-} from "lucide-react";
+import { ArrowRight, MapPin, Phone, Mail, Instagram, Facebook } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BendouhaLogo } from "@/components/logo/BrandLogo";
 
-// Social link component with hover animation
 function SocialLink({
   href,
   icon: Icon,
@@ -44,7 +34,6 @@ function SocialLink({
   );
 }
 
-// Footer link component
 function FooterLink({
   to,
   children,
@@ -57,7 +46,7 @@ function FooterLink({
       <Link
         to={to}
         className={cn(
-          "group inline-flex items-center gap-1 py-1 text-sm text-navy-300 transition-colors",
+          "group inline-flex items-center gap-1 py-1 text-sm text-navy-200 transition-colors",
           "hover:text-cyan",
           "focus-visible:outline-none focus-visible:text-cyan focus-visible:underline",
         )}
@@ -74,11 +63,9 @@ function FooterLink({
 
 export function Footer() {
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
 
   const currentYear = new Date().getFullYear();
 
-  // Quick links
   const quickLinks = [
     { to: "/shop", label: t("footer.shop") },
     { to: "/collections", label: t("footer.collections") },
@@ -86,14 +73,12 @@ export function Footer() {
     { to: "/contact", label: t("footer.contact") },
   ];
 
-  // Support links
   const supportLinks = [
     { to: "/faq", label: t("footer.faq") },
     { to: "/shipping", label: t("footer.shippingInfo") },
     { to: "/returns", label: t("footer.returns") },
   ];
 
-  // Social links - Only Instagram and Facebook
   const socialLinks = [
     {
       href: "https://www.tiktok.com/@bendou95",
@@ -112,25 +97,13 @@ export function Footer() {
     },
   ];
 
-  // Newsletter submit handler (UI only)
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Inscription newsletter:", email);
-    setEmail("");
-  };
-
   return (
     <footer className="border-t border-navy-800 bg-navy" role="contentinfo">
-      {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12 sm:py-16 md:px-6 md:py-20">
-        <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-3 lg:gap-16">
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
+          <div>
             <Link to="/" className="inline-block">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
+              <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
                 <BendouhaLogo className="h-20 w-auto text-white" />
               </motion.div>
             </Link>
@@ -138,7 +111,6 @@ export function Footer() {
               {t("footer.brandDescription")}
             </p>
 
-            {/* Contact Info */}
             <div className="mt-8 space-y-3">
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <MapPin className="h-4 w-4 shrink-0 text-cyan" />
@@ -146,8 +118,9 @@ export function Footer() {
                   className="text-inherit focus:outline-none"
                   href="https://maps.app.goo.gl/t5aMCSCskGvYFuAQ6"
                   target="_blank"
+                  rel="noreferrer"
                 >
-                  <span>Boulevard des 20 mètres, Blida, Algérie</span>
+                  <span>Boulevard des 20 metres, Blida, Algerie</span>
                 </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
@@ -160,7 +133,6 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Social Links */}
             <div className="mt-8">
               <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-gold">
                 {t("footer.followUs")}
@@ -178,9 +150,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <div className="grid grid-cols-2 gap-8 lg:col-span-1">
-            {/* Quick Links */}
+          <div className="grid grid-cols-2 gap-8">
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
                 {t("footer.quickLinks")}
@@ -194,7 +164,6 @@ export function Footer() {
               </ul>
             </div>
 
-            {/* Support */}
             <div>
               <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
                 {t("footer.support")}
@@ -208,65 +177,26 @@ export function Footer() {
               </ul>
             </div>
           </div>
-
-          {/* Newsletter Section */}
-          <div className="lg:col-span-1">
-            <h3 className="mb-5 text-sm font-medium uppercase tracking-wider text-gold">
-              {t("footer.newsletter")}
-            </h3>
-            <p className="mb-4 text-sm text-navy-300">
-              {t("footer.newsletterDesc")}
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-              <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("footer.emailPlaceholder")}
-                  className={cn(
-                    "w-full rounded-full border border-navy-600 bg-navy-800 px-4 py-3 text-sm text-white",
-                    "placeholder:text-navy-400",
-                    "focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20",
-                  )}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full rounded-full bg-primary hover:bg-primary-600"
-              >
-                {t("common.subscribe")}
-                <ArrowRight className="ms-2 h-4 w-4 rtl:rotate-180" />
-              </Button>
-            </form>
-            <p className="mt-3 text-xs text-navy-400">
-              {t("footer.privacyConsent")}
-            </p>
-          </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
       <div className="border-t border-navy-800 bg-navy-900">
         <div className="container mx-auto px-4 py-6 md:px-6">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            {/* Copyright */}
-            <p className="text-sm text-navy-400">
+            <p className="text-sm text-navy-300">
               {t("footer.copyright", { year: currentYear })}
             </p>
 
-            {/* Legal Links */}
             <div className="flex flex-wrap items-center justify-center gap-6">
               <Link
                 to="/privacy"
-                className="text-sm text-navy-400 transition-colors hover:text-cyan"
+                className="text-sm text-navy-200 transition-colors hover:text-cyan"
               >
                 {t("footer.privacyPolicy")}
               </Link>
               <Link
                 to="/terms"
-                className="text-sm text-navy-400 transition-colors hover:text-cyan"
+                className="text-sm text-navy-200 transition-colors hover:text-cyan"
               >
                 {t("footer.termsOfService")}
               </Link>

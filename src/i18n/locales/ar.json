@@ -38,8 +38,7 @@
     "about": "Ù…Ù† Ù†Ø­Ù†",
     "contact": "Ø§ØªØµÙ„ Ø¨Ù†Ø§",
     "newArrivals": "ÙˆØµÙ„ Ø­Ø¯ÙŠØ«Ø§Ù‹",
-    "bestSellers": "Ø§Ù„Ø£ÙƒØ«Ø± Ù…Ø¨ÙŠØ¹Ø§Ù‹",
-    "simulator": "Simulator"
+    "bestSellers": "Ø§Ù„Ø£ÙƒØ«Ø± Ù…Ø¨ÙŠØ¹Ø§Ù‹"
   },
   "hero": {
     "eyebrow": "Ù…Ø¬Ù…ÙˆØ¹Ø© Ø¬Ø¯ÙŠØ¯Ø© 2026",
@@ -115,7 +114,15 @@
     "failedToLoad": "ÙØ´Ù„ ÙÙŠ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª",
     "activeFilters": "Ø§Ù„ÙÙ„Ø§ØªØ± Ø§Ù„Ù†Ø´Ø·Ø©:",
     "clearAll": "Ù…Ø³Ø­ Ø§Ù„ÙƒÙ„",
-    "noProductsFound": "No elements left"
+    "noProductsFound": "No products match the current filters",
+    "searchPlaceholder": "Search products, category...",
+    "inStockOnly": "In stock only",
+    "quickView": "Quick view",
+    "viewDetails": "View details",
+    "addToWishlist": "Add to wishlist",
+    "removeFromWishlist": "Remove from wishlist",
+    "addedToWishlist": "Added to wishlist",
+    "removedFromWishlist": "Removed from wishlist"
   },
   "cart": {
     "addedToCart": "ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ù†ØªØ¬ Ø¥Ù„Ù‰ Ø§Ù„Ø³Ù„Ø©",

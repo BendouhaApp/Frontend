@@ -1,6 +1,7 @@
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 // Animation variants for staggered entrance
@@ -72,6 +73,7 @@ export function Hero({
   const displayHighlight = highlightWord ?? t("hero.highlightWord");
   const displaySubtitle = subtitle ?? t("hero.subtitle");
   const displayCta = ctaText ?? t("hero.cta");
+  const isExternalCta = /^https?:\/\//.test(ctaHref);
 
   return (
     <section className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
@@ -168,10 +170,17 @@ export function Hero({
                 className="group h-14 rounded-full bg-primary px-8 text-base text-white hover:bg-primary-600"
                 asChild
               >
-                <a href={ctaHref}>
-                  {displayCta}
-                  <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-                </a>
+                {isExternalCta ? (
+                  <a href={ctaHref}>
+                    {displayCta}
+                    <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+                  </a>
+                ) : (
+                  <Link to={ctaHref}>
+                    {displayCta}
+                    <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+                  </Link>
+                )}
               </Button>
             </motion.div>
 
@@ -241,6 +250,7 @@ export function HeroCentered({
   const displayHighlight = highlightWord ?? t("hero.highlightWord");
   const displaySubtitle = subtitle ?? t("hero.subtitle");
   const displayCta = ctaText ?? t("hero.cta");
+  const isExternalCta = /^https?:\/\//.test(ctaHref);
 
   return (
     <section className="relative flex min-h-[calc(100vh-5rem)] items-center justify-center overflow-hidden bg-navy">
@@ -301,10 +311,17 @@ export function HeroCentered({
               className="group h-14 rounded-full border-2 border-cyan px-10 text-base text-white hover:bg-cyan hover:text-navy"
               asChild
             >
-              <a href={ctaHref}>
-                {displayCta}
-                <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-              </a>
+              {isExternalCta ? (
+                <a href={ctaHref}>
+                  {displayCta}
+                  <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+                </a>
+              ) : (
+                <Link to={ctaHref}>
+                  {displayCta}
+                  <ArrowRight className="ms-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+                </Link>
+              )}
             </Button>
           </motion.div>
 

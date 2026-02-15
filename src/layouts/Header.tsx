@@ -27,7 +27,11 @@ export function Header() {
   const navLinks = [
     { name: t("nav.shop"), href: "/shop" },
     { name: t("nav.collections"), href: "/collections" },
-    { name: t("nav.simulator"), href: "/simulator", badge: t("simulator.exclusiveBadge") },
+    {
+      name: t("nav.simulator"),
+      href: "/simulator",
+      badge: t("simulator.exclusiveBadge"),
+    },
     { name: t("nav.about"), href: "/about" },
     { name: t("nav.contact"), href: "/contact" },
   ];
@@ -41,16 +45,6 @@ export function Header() {
     handleScroll(); // Check initial state
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Close mobile menu on route change - using cleanup function to avoid cascading renders
-  useEffect(() => {
-    return () => {
-      // Only set to false when location changes, not on mount
-      if (isMobileMenuOpen) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-  }, [location.pathname, isMobileMenuOpen]);
 
   return (
     <motion.header
@@ -108,26 +102,26 @@ export function Header() {
             <LanguageSwitcher className="hidden md:block" />
 
             {/* Search Button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
-              aria-label={t("common.search")}
-              type="button"
-            >
-              <Search className="h-5 w-5" aria-hidden="true" />
-            </motion.button>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/shop?focus=search"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
+                aria-label={t("common.search")}
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </motion.div>
 
             {/* Account Button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
-              aria-label={t("common.account")}
-              type="button"
-            >
-              <User className="h-5 w-5" aria-hidden="true" />
-            </motion.button>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to="/account"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:flex"
+                aria-label={t("common.account")}
+              >
+                <User className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </motion.div>
 
             {/* Cart Drawer */}
             <CartDrawer />
@@ -157,6 +151,7 @@ export function Header() {
                 <MobileNavigation
                   navLinks={navLinks}
                   currentPath={location.pathname}
+                  onNavigate={() => setIsMobileMenuOpen(false)}
                 />
               </SheetContent>
             </Sheet>
@@ -215,9 +210,14 @@ function NavigationLink({
 interface MobileNavigationProps {
   navLinks: { name: string; href: string; badge?: string }[];
   currentPath: string;
+  onNavigate: () => void;
 }
 
-function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
+function MobileNavigation({
+  navLinks,
+  currentPath,
+  onNavigate,
+}: MobileNavigationProps) {
   const { t } = useTranslation();
 
   return (
@@ -234,6 +234,7 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
             >
               <Link
                 to={link.href}
+                onClick={onNavigate}
                 className={cn(
                   "block rounded-lg px-4 py-3 text-lg font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
@@ -259,27 +260,35 @@ function MobileNavigation({ navLinks, currentPath }: MobileNavigationProps) {
 
       {/* Mobile Actions */}
       <div className="mt-8 space-y-2 border-t border-navy-200 pt-6">
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.3 }}
-          type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <Search className="h-5 w-5" aria-hidden="true" />
-          <span className="font-medium">{t("common.search")}</span>
-        </motion.button>
+          <Link
+            to="/shop?focus=search"
+            onClick={onNavigate}
+            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+            <span className="font-medium">{t("common.search")}</span>
+          </Link>
+        </motion.div>
 
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
-          type="button"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <User className="h-5 w-5" aria-hidden="true" />
-          <span className="font-medium">{t("common.account")}</span>
-        </motion.button>
+          <Link
+            to="/account"
+            onClick={onNavigate}
+            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-navy-700 transition-colors hover:bg-navy-50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <User className="h-5 w-5" aria-hidden="true" />
+            <span className="font-medium">{t("common.account")}</span>
+          </Link>
+        </motion.div>
       </div>
 
       {/* Language Switcher - Mobile */}

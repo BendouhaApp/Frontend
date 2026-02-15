@@ -1,8 +1,11 @@
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useGet } from '@/hooks/useGet'
 import type { ApiResponse, Category } from '@/types/api'
 import { cn } from '@/lib/utils'
+
+const MotionLink = motion(Link)
 
 // Animation variants
 const containerVariants: Variants = {
@@ -119,8 +122,8 @@ interface CategoryCardProps {
 
 function CategoryCard({ category, showItemCount, exploreText, itemsText }: CategoryCardProps) {
   return (
-    <motion.a
-      href={`/shop?category=${category.id}`}
+    <MotionLink
+      to={`/shop?category=${category.id}`}
       variants={itemVariants}
       className="group relative block overflow-hidden rounded-xl bg-navy-100"
     >
@@ -190,7 +193,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
           </span>
         </div>
       </div>
-    </motion.a>
+    </MotionLink>
   )
 }
 
@@ -209,9 +212,9 @@ export function CategoryGridMinimal() {
       <div className="container mx-auto">
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
           {minimalCategories.map((cat, index) => (
-            <motion.a
+            <MotionLink
               key={cat.id}
-              href={`/shop?category=${cat.id}`}
+              to={`/shop?category=${cat.id}`}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -220,7 +223,7 @@ export function CategoryGridMinimal() {
             >
               {cat.category_name}
               <span className="absolute -bottom-1 start-0 h-px w-0 bg-primary transition-all duration-300 group-hover:w-full" />
-            </motion.a>
+            </MotionLink>
           ))}
         </div>
       </div>
@@ -254,9 +257,9 @@ export function CategoryGridFeatured() {
       <div className="container mx-auto">
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {featuredCategories.map((category, index) => (
-            <motion.a
+            <MotionLink
               key={category.id}
-              href={`/collection/${category.id}`}
+              to={`/collections`}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -302,7 +305,7 @@ export function CategoryGridFeatured() {
                   </span>
                 </div>
               </div>
-            </motion.a>
+            </MotionLink>
           ))}
         </div>
       </div>

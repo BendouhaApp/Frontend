@@ -1,5 +1,6 @@
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
@@ -111,10 +112,10 @@ export function ProductGrid({
                 className="group rounded-full border-primary text-primary hover:bg-primary hover:text-white"
                 asChild
               >
-                <a href={viewAllLink}>
+                <Link to={viewAllLink}>
                   {t('common.viewAll')}
                   <ArrowRight className="ms-2 h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-                </a>
+                </Link>
               </Button>
             )}
           </motion.div>
@@ -355,10 +356,10 @@ export function ProductCarousel({
               {title}
             </h2>
             <Button variant="ghost" className="group text-primary hover:text-primary-600" asChild>
-              <a href="/shop">
+              <Link to="/shop">
                 {t('common.viewAll')}
                 <ArrowRight className="ms-2 h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-              </a>
+              </Link>
             </Button>
           </motion.div>
         )}
