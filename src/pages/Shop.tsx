@@ -43,6 +43,7 @@ const sortOptionIds = [
 ];
 
 const ITEMS_PER_PAGE = 9;
+const SHOP_FETCH_LIMIT = 500;
 const WISHLIST_STORAGE_KEY = "bendouha_wishlist";
 
 const containerVariants = {
@@ -610,15 +611,12 @@ export function Shop() {
     setPage(1);
   }, [activeCategoryId]);
 
-  // Fetch products from API
-  const start = (page - 1) * ITEMS_PER_PAGE;
-
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
       path: "products/public",
       query: {
-        limit: ITEMS_PER_PAGE,
-        start,
+        limit: SHOP_FETCH_LIMIT,
+        start: 0,
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
       },
       options: {
@@ -688,11 +686,12 @@ export function Shop() {
 
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
 
-  const totalItems = data?.meta?.total ?? 0;
-  const totalPages = Math.max(
-    1,
-    data?.meta?.totalPages ?? Math.ceil(totalItems / ITEMS_PER_PAGE),
-  );
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, page]);
   const currentPage = page;
 
   useEffect(() => {
@@ -1150,7 +1149,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}
@@ -1167,11 +1166,7 @@ export function Shop() {
               </>
             )}
 
-            {!isLoading &&
-              !isError &&
-              !searchQuery.trim() &&
-              !onlyInStock &&
-              totalItems > ITEMS_PER_PAGE && (
+            {!isLoading && !isError && totalPages > 1 && (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p className="text-sm text-navy-500">
                   {t("common.pageOf", {

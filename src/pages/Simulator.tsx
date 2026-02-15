@@ -114,7 +114,6 @@ export function Simulator() {
         width: dimensions.width,
         length: dimensions.length,
         height: dimensions.height,
-        unit: 'm',
       },
       obstacles: selectedObstacleIds,
       product: {

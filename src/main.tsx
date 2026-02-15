@@ -20,22 +20,24 @@ const queryClient = new QueryClient({
   },
 })
 
+const AppTree = (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+    <Toaster
+      position="bottom-right"
+      toastOptions={{
+        style: {
+          background: 'hsl(30 15% 99%)',
+          border: '1px solid hsl(30 8% 88%)',
+          color: 'hsl(30 10% 12%)',
+        },
+      }}
+    />
+  </QueryClientProvider>
+)
+
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-      <Toaster 
-        position="bottom-right"
-        toastOptions={{
-          style: {
-            background: 'hsl(30 15% 99%)',
-            border: '1px solid hsl(30 8% 88%)',
-            color: 'hsl(30 10% 12%)',
-          },
-        }}
-      />
-    </QueryClientProvider>
-  </StrictMode>,
+  import.meta.env.DEV ? AppTree : <StrictMode>{AppTree}</StrictMode>,
 )

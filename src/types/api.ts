@@ -202,7 +202,7 @@ export interface RoomTemplatesResponse {
 
 export interface SimulateRoomRequest {
   roomType: RoomTypeKey
-  dimensions: RoomDimensions
+  dimensions: Pick<RoomDimensions, 'width' | 'length' | 'height'>
   obstacles: string[]
   product: {
     cct: number
