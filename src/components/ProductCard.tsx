@@ -5,6 +5,7 @@ import { ShoppingBag, Heart, Eye, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import type { Product } from "@/types/api";
 
 interface ProductCardProps {
@@ -150,7 +151,7 @@ export function ProductCard({
           )}
 
           <motion.img
-            src={product.image || product.thumbnail || "/vite.svg"}
+            src={resolveMediaUrl(product.image || product.thumbnail)}
             alt={product.name}
             loading="lazy"
             decoding="async"
@@ -159,6 +160,7 @@ export function ProductCard({
               imageLoaded ? "opacity-100" : "opacity-0",
             )}
             onLoad={() => setImageLoaded(true)}
+            onError={(event) => handleImageError(event)}
             animate={{ scale: isHovered ? 1.05 : 1 }}
             transition={{ duration: 0.5 }}
           />
@@ -328,9 +330,10 @@ function CompactProductCard({
     >
       <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-navy-50">
         <img
-          src={product.image || product.thumbnail || "/vite.svg"}
+          src={resolveMediaUrl(product.image || product.thumbnail)}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(event) => handleImageError(event)}
         />
         {discount > 0 && (
           <span className="absolute start-1 top-1 rounded-full bg-gold px-2 py-0.5 text-[10px] font-medium text-navy">
@@ -450,9 +453,10 @@ function DetailedProductCard({
       >
         <div className="relative aspect-square overflow-hidden bg-navy-50">
           <img
-            src={product.image || product.thumbnail || "/vite.svg"}
+            src={resolveMediaUrl(product.image || product.thumbnail)}
             alt={product.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(event) => handleImageError(event)}
           />
 
           {displayBadge && (

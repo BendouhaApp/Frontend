@@ -28,6 +28,7 @@ import type {
   Category,
 } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { toast } from "sonner";
 
 type ViewMode = "grid" | "large" | "list";
@@ -374,9 +375,10 @@ function QuickViewModal({
           <div className="grid gap-0 md:grid-cols-[1.05fr_1fr]">
             <div className="aspect-square bg-navy-50">
               <img
-                src={product.image || product.thumbnail || "/vite.svg"}
+                src={resolveMediaUrl(product.image || product.thumbnail)}
                 alt={product.name}
                 className="h-full w-full object-cover"
+                onError={(event) => handleImageError(event)}
               />
             </div>
 

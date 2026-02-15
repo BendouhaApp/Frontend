@@ -23,6 +23,7 @@ import { useCart } from "@/hooks/useCart";
 import type { ProductResponse, AddToCartPayload, CartItem, ApiResponse } from "@/types/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 
 function toNumber(value: unknown, fallback = 0): number {
   const numeric =
@@ -110,6 +111,7 @@ function ImageGallery({
               src={image}
               alt={`${productName} view ${index + 1}`}
               className="h-full w-full object-cover"
+              onError={(event) => handleImageError(event)}
             />
           </motion.button>
         ))}
@@ -122,6 +124,7 @@ function ImageGallery({
             src={images[selectedIndex]}
             alt={productName}
             className="aspect-square w-full object-cover lg:aspect-[4/5]"
+            onError={(event) => handleImageError(event)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -380,7 +383,9 @@ export function ProductDetail() {
     product.images ??
     product.gallery ??
     [product.image]
-  ).filter((image): image is string => typeof image === "string" && image.length > 0);
+  )
+    .map((image) => resolveMediaUrl(image, ""))
+    .filter((image): image is string => typeof image === "string" && image.length > 0);
   const safeImages = images.length > 0 ? images : ["/vite.svg"];
   const price = toNumber(product.price);
   const originalPrice =

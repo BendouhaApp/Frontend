@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import api from "@/lib/axios";
 
 export type DbCategory = {
@@ -264,9 +265,10 @@ function CategoryForm({
           {(imagePreview || image) && (
             <div className="relative mt-3 w-fit">
               <img
-                src={imagePreview}
+                src={resolveMediaUrl(imagePreview)}
                 alt="Category preview"
                 className="h-24 w-24 rounded-xl border object-cover"
+                onError={(event) => handleImageError(event)}
               />
 
               <button
@@ -704,9 +706,10 @@ export function AdminCategory() {
                         {c.image ? (
                           <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
                             <img
-                              src={c.image}
+                              src={resolveMediaUrl(c.image)}
                               alt={c.category_name}
                               className="h-full w-full object-cover"
+                              onError={(event) => handleImageError(event)}
                             />
                           </div>
                         ) : (

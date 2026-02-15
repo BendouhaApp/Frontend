@@ -1,4 +1,5 @@
 import type { CartItem } from '@/types/api'
+import { resolveMediaUrl } from '@/lib/media'
 
 export type CartItemView = {
   id: string
@@ -20,12 +21,12 @@ export const mapCartItems = (items: CartItem[]): CartItemView[] => {
       product?.price ??
       (fallback.sale_price != null ? Number(fallback.sale_price) : 0)
 
-    const image =
+    const image = resolveMediaUrl(
       product?.image ||
-      product?.thumbnail ||
-      fallback.image ||
-      fallback.thumbnail ||
-      '/placeholder.jpg'
+        product?.thumbnail ||
+        fallback.image ||
+        fallback.thumbnail,
+    )
 
     return {
       id: item.id,

@@ -16,6 +16,7 @@ import { useGet } from "@/hooks/useGet";
 import { usePostAction } from "@/hooks/usePostAction";
 import type { ApiResponse, Cart } from "@/types/api";
 import { calcSubtotal, mapCartItems } from "@/lib/cart";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
 // Cart Item Component
@@ -45,9 +46,10 @@ function CartItemRow({
         className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-neutral-100"
       >
         <img
-          src={item.image}
+          src={resolveMediaUrl(item.image)}
           alt={item.name}
           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          onError={(event) => handleImageError(event)}
         />
       </Link>
 

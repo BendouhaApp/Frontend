@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import api from "@/lib/axios";
 
 const money = (v: string | number | null | undefined) => {
@@ -45,12 +46,8 @@ const slugify = (input: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL;
-
 const img = (url?: string | null) => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${PUBLIC_URL}${url.startsWith("/") ? url : `/${url}`}`;
+  return resolveMediaUrl(url, "");
 };
 
 type DbProduct = {
@@ -1188,6 +1185,7 @@ function ProductForm({
                 src={thumbnailPreview ?? img(product?.thumbnail)}
                 alt="Thumbnail preview"
                 className="h-24 w-24 rounded-xl object-cover border"
+                onError={(event) => handleImageError(event)}
               />
             </div>
           )}
@@ -1225,6 +1223,7 @@ function ProductForm({
                       src={img(url)}
                       alt="Gallery preview"
                       className="h-full w-full object-cover"
+                      onError={(event) => handleImageError(event)}
                     />
                   </div>
 
@@ -1397,6 +1396,7 @@ function ProductRow({
                 src={img(thumb)}
                 alt={product.product_name}
                 className="h-full w-full object-cover"
+                onError={(event) => handleImageError(event)}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-neutral-400">
