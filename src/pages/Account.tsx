@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ShieldCheck, UserRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function Account() {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-white">
       <motion.section
@@ -12,12 +15,14 @@ export function Account() {
         className="border-b border-neutral-200 bg-neutral-50/60"
       >
         <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
-          <p className="text-sm uppercase tracking-[0.14em] text-neutral-500">Compte</p>
+          <p className="text-sm uppercase tracking-[0.14em] text-neutral-500">
+            {t("accountPage.eyebrow")}
+          </p>
           <h1 className="mt-3 font-display text-4xl font-light tracking-tight text-neutral-900 md:text-5xl">
-            Espace client
+            {t("accountPage.title")}
           </h1>
           <p className="mt-4 max-w-3xl text-neutral-600">
-            Cette section sera bientôt connectée à votre profil client. En attendant, vous pouvez continuer vos achats depuis la boutique.
+            {t("accountPage.subtitle")}
           </p>
         </div>
       </motion.section>
@@ -28,9 +33,11 @@ export function Account() {
             <div className="inline-flex rounded-xl bg-primary-50 p-3 text-primary">
               <UserRound className="h-6 w-6" />
             </div>
-            <h2 className="mt-4 text-lg font-medium text-neutral-900">Connexion client</h2>
+            <h2 className="mt-4 text-lg font-medium text-neutral-900">
+              {t("accountPage.loginCard.title")}
+            </h2>
             <p className="mt-2 text-neutral-600">
-              Un espace de connexion dédié sera disponible prochainement pour suivre vos commandes et vos favoris.
+              {t("accountPage.loginCard.description")}
             </p>
           </article>
 
@@ -38,15 +45,17 @@ export function Account() {
             <div className="inline-flex rounded-xl bg-primary-50 p-3 text-primary">
               <ShieldCheck className="h-6 w-6" />
             </div>
-            <h2 className="mt-4 text-lg font-medium text-neutral-900">Besoin d'aide ?</h2>
+            <h2 className="mt-4 text-lg font-medium text-neutral-900">
+              {t("accountPage.supportCard.title")}
+            </h2>
             <p className="mt-2 text-neutral-600">
-              Pour toute question sur une commande, contactez-nous directement depuis la page support.
+              {t("accountPage.supportCard.description")}
             </p>
             <Link
               to="/contact"
               className="mt-4 inline-flex items-center rounded-full border border-primary px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white"
             >
-              Contacter le support
+              {t("accountPage.supportCard.cta")}
             </Link>
           </article>
         </div>

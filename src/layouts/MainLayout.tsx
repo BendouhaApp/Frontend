@@ -1,10 +1,12 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Header } from './Header'
 import { Footer } from './Footer'
 
 export function MainLayout() {
   const location = useLocation()
+  const reduceMotion = useReducedMotion()
+  const pageKey = `${location.pathname}${location.search}`
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -19,13 +21,16 @@ export function MainLayout() {
       <Header />
       
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="sync">
           <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            key={pageKey}
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+            transition={{
+              duration: reduceMotion ? 0 : 0.2,
+              ease: 'easeOut',
+            }}
           >
             <Outlet />
           </motion.div>

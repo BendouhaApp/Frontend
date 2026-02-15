@@ -201,6 +201,20 @@
     "title": "Contact",
     "subtitle": "Contactez-nous"
   },
+  "accountPage": {
+    "eyebrow": "Compte",
+    "title": "Espace client",
+    "subtitle": "Cette section sera bientôt connectée à votre profil client. En attendant, vous pouvez continuer vos achats depuis la boutique.",
+    "loginCard": {
+      "title": "Connexion client",
+      "description": "Un espace de connexion dédié sera disponible prochainement pour suivre vos commandes et vos favoris."
+    },
+    "supportCard": {
+      "title": "Besoin d'aide ?",
+      "description": "Pour toute question sur une commande, contactez-nous directement depuis la page support.",
+      "cta": "Contacter le support"
+    }
+  },
   "simulator": {
     "exclusiveBadge": "Exclusif",
     "title": "Simulateur d’éclairage",
