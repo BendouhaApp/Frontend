@@ -37,6 +37,7 @@ const money = (v: string | number | null | undefined) => {
   if (Number.isNaN(n)) return "0.00";
   return n.toFixed(2);
 };
+const CURRENCY = "DZD";
 
 const slugify = (input: string) =>
   input
@@ -1420,17 +1421,17 @@ function ProductRow({
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-neutral-900 text-sm">
-              ${money(product.sale_price)}
+              {money(product.sale_price)} {CURRENCY}
             </span>
             {product.compare_price != null &&
             Number(product.compare_price) > 0 ? (
               <span className="text-xs text-neutral-400 line-through">
-                ${money(product.compare_price)}
+                {money(product.compare_price)} {CURRENCY}
               </span>
             ) : null}
           </div>
           <div className="text-xs text-neutral-500">
-            Cost: ${money(product.buying_price ?? 0)}
+            Cost: {money(product.buying_price ?? 0)} {CURRENCY}
           </div>
         </div>
       </td>

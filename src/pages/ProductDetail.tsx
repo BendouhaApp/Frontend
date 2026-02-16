@@ -309,6 +309,7 @@ function ProductFeatures() {
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const currency = t("common.currency");
 
   // Fetch product from public API endpoint
   const { data, isLoading, isError, error } = useGet<ProductResponse>({
@@ -508,11 +509,11 @@ export function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-medium text-neutral-900">
-                  ${price.toFixed(2)}
+                  {price.toFixed(2)} {currency}
                 </span>
                 {originalPrice != null && originalPrice > price && (
                   <span className="text-xl text-neutral-400 line-through">
-                    ${originalPrice.toFixed(2)}
+                    {originalPrice.toFixed(2)} {currency}
                   </span>
                 )}
               </div>

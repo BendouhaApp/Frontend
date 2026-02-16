@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGet } from '@/hooks/useGet'
 import type { ApiResponse, Category } from '@/types/api'
-import { cn } from '@/lib/utils'
+import { handleImageError, resolveMediaUrl } from '@/lib/media'
 
 const MotionLink = motion(Link)
+const DEFAULT_CATEGORY_IMAGE = '/images/categories/default-category.svg'
 
 // Animation variants
 const containerVariants: Variants = {
@@ -58,7 +59,7 @@ export function CategoryGrid({
       id: cat.id,
       name: cat.category_name,
       description: cat.category_description ?? '',
-      image: cat.image ?? null,
+      image: resolveMediaUrl(cat.image, DEFAULT_CATEGORY_IMAGE),
       itemCount: cat.other_categories?.length ?? 0,
     })) ?? []
 
@@ -109,7 +110,7 @@ interface CategoryCardData {
   id: string
   name: string
   description: string
-  image: string | null
+  image: string
   itemCount: number
 }
 
@@ -129,23 +130,14 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
     >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden">
-        {category.image ? (
-          <motion.img
-            src={category.image}
-            alt={category.name}
-            className="h-full w-full object-cover"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          />
-        ) : (
-          <div
-            className={cn(
-              'flex h-full w-full items-center justify-center bg-gradient-to-br from-navy-300 via-navy-200 to-navy-100 text-navy-700'
-            )}
-          >
-            <span className="text-sm font-medium">{category.name}</span>
-          </div>
-        )}
+        <motion.img
+          src={category.image}
+          alt={category.name}
+          className="h-full w-full object-cover"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          onError={(event) => handleImageError(event, DEFAULT_CATEGORY_IMAGE)}
+        />
 
         {/* Overlay - darkens on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/30 to-transparent transition-opacity duration-300 group-hover:opacity-90" />

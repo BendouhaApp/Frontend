@@ -5,7 +5,9 @@ import { ArrowRight } from 'lucide-react'
 import { staggerContainer, staggerItem, fadeInUp, DURATION, EASE, hoverLift } from '@/lib/motion'
 import { useGet } from '@/hooks/useGet'
 import type { ApiResponse, Category } from '@/types/api'
-import { cn } from '@/lib/utils'
+import { handleImageError, resolveMediaUrl } from '@/lib/media'
+
+const DEFAULT_CATEGORY_IMAGE = '/images/categories/default-category.svg'
 
 export function Collections() {
   const { t } = useTranslation()
@@ -20,7 +22,7 @@ export function Collections() {
       id: cat.id,
       name: cat.category_name,
       description: cat.category_description ?? '',
-      image: cat.image ?? null,
+      image: resolveMediaUrl(cat.image, DEFAULT_CATEGORY_IMAGE),
       itemCount: cat.other_categories?.length ?? 0,
     })) ?? []
 
@@ -79,25 +81,16 @@ export function Collections() {
                 >
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    {collection.image ? (
-                      <motion.img
-                        src={collection.image}
-                        alt={collection.name}
-                        className="h-full w-full object-cover"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.5 }}
-                      />
-                    ) : (
-                      <div
-                        className={cn(
-                          'flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-200 via-neutral-100 to-white'
-                        )}
-                      >
-                        <span className="text-sm font-medium text-neutral-600">
-                          {collection.name}
-                        </span>
-                      </div>
-                    )}
+                    <motion.img
+                      src={collection.image}
+                      alt={collection.name}
+                      className="h-full w-full object-cover"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.5 }}
+                      onError={(event) =>
+                        handleImageError(event, DEFAULT_CATEGORY_IMAGE)
+                      }
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     
                     {/* Content Overlay */}

@@ -103,6 +103,8 @@ type OrdersDbResponse = {
   };
 };
 
+const CURRENCY = "DZD";
+
 const tableRowVariants: Variants = {
   hidden: { opacity: 0, x: -10 },
   show: {
@@ -490,7 +492,7 @@ export function AdminOrders() {
                     </td>
 
                     <td className="px-4 py-3 font-medium">
-                      ${calcTotal(order.order_items).toFixed(2)}
+                      {calcTotal(order.order_items).toFixed(2)} {CURRENCY}
                     </td>
 
                     <td
@@ -718,7 +720,7 @@ export function AdminOrders() {
                               </div>
                               <div className="text-right">
                                 <p className="font-medium">
-                                  ${item.price.toFixed(2)}
+                                  {item.price.toFixed(2)} {CURRENCY}
                                 </p>
                                 <p className="text-xs text-neutral-500">
                                   Qty: {item.quantity}
@@ -738,31 +740,28 @@ export function AdminOrders() {
                           <div className="flex justify-between">
                             <span className="text-neutral-500">Subtotal</span>
                             <span className="font-medium">
-                              $
                               {calcTotal(
                                 normalizedSelectedOrder.order_items,
-                              ).toFixed(2)}
+                              ).toFixed(2)} {CURRENCY}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-neutral-500">Shipping</span>
                             <span className="font-medium">
-                              $
                               {Number(
                                 normalizedSelectedOrder.shipping_price || 0,
-                              ).toFixed(2)}
+                              ).toFixed(2)} {CURRENCY}
                             </span>
                           </div>
                           <div className="flex justify-between border-t pt-2 text-base font-semibold">
                             <span>Total</span>
                             <span>
-                              $
                               {Number(
                                 normalizedSelectedOrder.total_price ||
                                   calcTotal(
                                     normalizedSelectedOrder.order_items,
                                   ),
-                              ).toFixed(2)}
+                              ).toFixed(2)} {CURRENCY}
                             </span>
                           </div>
                         </div>

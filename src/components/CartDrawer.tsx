@@ -25,11 +25,13 @@ function CartItemRow({
   onUpdateQuantity,
   onRemove,
   isUpdating,
+  currency,
 }: {
   item: ReturnType<typeof mapCartItems>[number];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
   isUpdating?: boolean;
+  currency: string;
 }) {
   return (
     <motion.div
@@ -96,7 +98,7 @@ function CartItemRow({
 
           {/* Price */}
           <span className="text-sm font-medium text-neutral-900">
-            ${(item.price * item.quantity).toFixed(2)}
+            {(item.price * item.quantity).toFixed(2)} {currency}
           </span>
         </div>
       </div>
@@ -172,6 +174,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const { t } = useTranslation();
+  const currency = t("common.currency");
   const [isOpen, setIsOpen] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
@@ -296,6 +299,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                           item={item}
                           onUpdateQuantity={handleUpdateQuantity}
                           onRemove={handleRemoveItem}
+                          currency={currency}
                           isUpdating={
                             updatingItemId === item.id ||
                             removeFromCart.isPending
@@ -315,7 +319,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                         {t("common.subtotal")}
                       </span>
                       <span className="font-medium text-neutral-900">
-                        ${subtotal.toFixed(2)}
+                        {subtotal.toFixed(2)} {currency}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
@@ -332,7 +336,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                           {t("common.total")}
                         </span>
                         <span className="text-lg font-medium text-neutral-900">
-                          ${total.toFixed(2)}
+                          {total.toFixed(2)} {currency}
                         </span>
                       </div>
                     </div>

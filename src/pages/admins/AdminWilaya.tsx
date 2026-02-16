@@ -152,7 +152,7 @@ function WilayaForm({
           <div>
             <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
               <DollarSign className="h-4 w-4" />
-              Delivery Price (DZA)
+              Delivery Price (DZD)
             </label>
             <input
               type="number"
@@ -177,7 +177,7 @@ function WilayaForm({
           </h3>
         </div>
         <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
-          Default Rate (DZA)
+          Default Rate (DZD)
         </label>
         <input
           type="number"
@@ -221,7 +221,7 @@ function WilayaForm({
           <div>
             <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
               <DollarSign className="h-4 w-4" />
-              Delivery Price (DZA)
+              Delivery Price (DZD)
             </label>
             <input
               type="number"
@@ -671,7 +671,7 @@ export default function AdminWilaya() {
                         <div className="flex items-center gap-2 text-amber-700">
                           <DollarSign className="h-4 w-4" />
                           <span className="text-sm font-semibold">
-                            {zone.default_rate ?? 0} DZA
+                            {zone.default_rate ?? 0} DZD
                           </span>
                         </div>
                       </td>
@@ -685,7 +685,7 @@ export default function AdminWilaya() {
                               <span className="text-sm font-semibold">
                                 {zone.free_shipping
                                   ? "Free"
-                                  : `${zone.home_delivery_price} DZA`}
+                                  : `${zone.home_delivery_price} DZD`}
                               </span>
                             </div>
                           </div>
@@ -705,7 +705,7 @@ export default function AdminWilaya() {
                               <span className="text-sm font-semibold">
                                 {zone.free_shipping
                                   ? "Free"
-                                  : `${zone.office_delivery_price} DZA`}
+                                  : `${zone.office_delivery_price} DZD`}
                               </span>
                             </div>
                           </div>

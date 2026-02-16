@@ -71,6 +71,13 @@ function toNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
+function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 // Helper to get sort label
 function getSortLabel(t: TFn, id: string): string {
   const labels: Record<string, string> = {
@@ -631,7 +638,7 @@ export function Shop() {
   const totalPages = data?.meta?.totalPages ?? 1;
   const totalItems = data?.meta?.total ?? 0;
   const filteredProducts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = normalizeForSearch(searchQuery.trim());
     const sorted = [...products];
 
     const withFilters = sorted.filter((product) => {
@@ -643,13 +650,12 @@ export function Shop() {
 
       const searchable = [
         product.name,
-        product.description,
         product.category,
         ...(product.categories?.map((item) => item.category_name) ?? []),
       ]
         .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        .map((value) => normalizeForSearch(String(value)))
+        .join(" ");
 
       return searchable.includes(query);
     });
@@ -694,6 +700,10 @@ export function Shop() {
   const [pageInput, setPageInput] = useState<string>("1");
 
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -1148,7 +1158,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}

@@ -249,7 +249,7 @@ export default function AdminDashboard() {
               <motion.div variants={fadeUp}>
                 <StatCard
                   label="Total Revenue"
-                  value={`${stats.totalRevenue.toLocaleString()} DZA`}
+                  value={`${stats.totalRevenue.toLocaleString()} DZD`}
                   icon={<DollarSign className="h-5 w-5" />}
                   subtext={`${stats.confirmedOrders || 0} confirmed orders`}
                 />
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
                               </motion.span>
                             </td>
                             <td className="px-6 py-4 text-sm font-semibold text-neutral-900">
-                              {calculateOrderTotal(order).toLocaleString()} DZA
+                              {calculateOrderTotal(order).toLocaleString()} DZD
                             </td>
                             <td className="px-6 py-4 text-sm text-neutral-600">
                               {formatDate(order.created_at)}
