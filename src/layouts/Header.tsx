@@ -23,15 +23,20 @@ export function Header() {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const showSimulatorNav = false;
 
   const navLinks = [
     { name: t("nav.shop"), href: "/shop" },
     { name: t("nav.collections"), href: "/collections" },
-    {
-      name: t("nav.simulator"),
-      href: "/simulator",
-      badge: t("simulator.exclusiveBadge"),
-    },
+    ...(showSimulatorNav
+      ? [
+          {
+            name: t("nav.simulator"),
+            href: "/simulator",
+            badge: t("simulator.exclusiveBadge"),
+          },
+        ]
+      : []),
     { name: t("nav.about"), href: "/about" },
     { name: t("nav.contact"), href: "/contact" },
   ];

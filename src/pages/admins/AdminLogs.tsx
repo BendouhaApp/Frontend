@@ -601,7 +601,7 @@ export default function AdminLogs() {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="min-w-[960px] w-full">
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-600">

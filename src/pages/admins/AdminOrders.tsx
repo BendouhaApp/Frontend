@@ -302,7 +302,7 @@ export function AdminOrders() {
   }, [selectedOrder]);
 
   return (
-    <div className="mx-auto max-w-7xl p-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -334,7 +334,7 @@ export function AdminOrders() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="relative mb-4 max-w-md"
+        className="relative mb-4 w-full sm:max-w-md"
       >
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
@@ -380,9 +380,9 @@ export function AdminOrders() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="overflow-hidden rounded-xl bg-white shadow"
+          className="overflow-x-auto overflow-y-hidden rounded-xl bg-white shadow"
         >
-          <table className="w-full text-sm">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-neutral-100 text-left">
               <tr>
                 <th className="px-4 py-3">Order</th>
@@ -434,9 +434,9 @@ export function AdminOrders() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="overflow-hidden rounded-xl bg-white shadow"
+          className="overflow-x-auto overflow-y-hidden rounded-xl bg-white shadow"
         >
-          <table className="w-full text-sm">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-neutral-100 text-left">
               <tr>
                 <th className="px-4 py-3">Order</th>
@@ -542,7 +542,7 @@ export function AdminOrders() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 flex items-center justify-between"
+          className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <span className="text-sm text-neutral-600">
             Page <span className="font-semibold">{page}</span> of{" "}
@@ -554,7 +554,7 @@ export function AdminOrders() {
             )}
           </span>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"

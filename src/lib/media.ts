@@ -23,6 +23,11 @@ const backendOrigins = new Set(
 const ensureLeadingSlash = (value: string): string =>
   value.startsWith("/") ? value : `/${value}`;
 
+const LEGACY_REMOVED_MEDIA_PREFIXES = ["/images/categories/real/"];
+
+const isRemovedLegacyMediaPath = (pathname: string): boolean =>
+  LEGACY_REMOVED_MEDIA_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
 export const resolveMediaUrl = (
   value?: string | null,
   fallback = FALLBACK_IMAGE,
@@ -47,7 +52,12 @@ export const resolveMediaUrl = (
         return `${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
-      if (parsed.pathname === "/placeholder.jpg") return fallback;
+      if (
+        parsed.pathname === "/placeholder.jpg" ||
+        isRemovedLegacyMediaPath(parsed.pathname)
+      ) {
+        return fallback;
+      }
     } catch {
       return fallback;
     }
@@ -56,7 +66,12 @@ export const resolveMediaUrl = (
   }
 
   const normalized = ensureLeadingSlash(raw);
-  if (normalized === "/placeholder.jpg") return fallback;
+  if (
+    normalized === "/placeholder.jpg" ||
+    isRemovedLegacyMediaPath(normalized)
+  ) {
+    return fallback;
+  }
   return normalized;
 };
 

@@ -192,7 +192,7 @@ export default function AdminDashboard() {
             <div>
               <h1
                 style={{ fontFamily: "'Playfair Display', 'Georgia', serif" }}
-                className="text-4xl font-bold tracking-tight text-neutral-900"
+                className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-4xl"
               >
                 Bendouha Electric Dashboard
               </h1>
@@ -454,7 +454,7 @@ export default function AdminDashboard() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => navigate(`/admin/orders`)}
-                                  className="opacity-0 transition-opacity group-hover:opacity-100"
+                                  className="opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>

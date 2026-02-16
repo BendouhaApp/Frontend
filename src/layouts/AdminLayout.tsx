@@ -1,6 +1,8 @@
-import { Outlet, useNavigate } from "react-router-dom";
-import { useCallback, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
+import { cn } from "@/lib/utils";
 
 type JwtPayload = {
   exp?: number;
@@ -36,6 +38,8 @@ const isTokenValid = (token: string | null): boolean => {
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const logout = useCallback(() => {
     localStorage.removeItem("access_token");
@@ -53,12 +57,81 @@ export default function AdminLayout() {
 
   if (!isAuthenticated) return null;
 
+  const sectionTitle = (() => {
+    if (location.pathname.startsWith("/admin/categories")) return "Categories";
+    if (location.pathname.startsWith("/admin/products")) return "Products";
+    if (location.pathname.startsWith("/admin/orders")) return "Orders";
+    if (location.pathname.startsWith("/admin/shipping-zones")) return "Wilayas";
+    if (location.pathname.startsWith("/admin/logs")) return "Logs";
+    return "Dashboard";
+  })();
+
   return (
-    <div className="flex min-h-screen bg-neutral-50">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+    <div className="min-h-screen bg-neutral-50 lg:flex">
+      <div className="hidden lg:block">
+        <AdminSidebar className="sticky top-0 h-screen" />
+      </div>
+
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-700 transition hover:bg-neutral-100"
+            aria-label="Open admin menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-sm font-semibold text-neutral-900">
+            {sectionTitle}
+          </span>
+          <span className="h-9 w-9" aria-hidden="true" />
+        </header>
+
+        <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setIsMobileSidebarOpen(false)}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 transition-opacity lg:hidden",
+          isMobileSidebarOpen
+            ? "opacity-100"
+            : "pointer-events-none opacity-0",
+        )}
+        aria-label="Close admin menu overlay"
+      />
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 start-0 z-50 w-72 max-w-[85vw] bg-white shadow-xl transition-transform lg:hidden",
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+        aria-hidden={!isMobileSidebarOpen}
+      >
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+            <span className="text-sm font-semibold text-neutral-900">
+              Admin Panel
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-700 transition hover:bg-neutral-100"
+              aria-label="Close admin menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <AdminSidebar
+            className="h-full w-full border-r-0"
+            onNavigate={() => setIsMobileSidebarOpen(false)}
+          />
+        </div>
+      </aside>
     </div>
   );
 }
