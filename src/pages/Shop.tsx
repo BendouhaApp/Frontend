@@ -776,7 +776,7 @@ export function Shop() {
       default:
         return {
           variant: "default",
-          gridClass: "grid-cols-2 lg:grid-cols-3",
+          gridClass: "grid-cols-1 xs:grid-cols-2 lg:grid-cols-3",
         };
     }
   };
@@ -835,9 +835,9 @@ export function Shop() {
       </motion.div>
 
       {/* Toolbar */}
-      <div className="sticky top-0 z-20 border-b border-navy-200 bg-white/95 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4 md:px-6">
-          <div className="flex items-center gap-3">
+      <div className="sticky top-20 z-20 border-b border-navy-200 bg-white/95 backdrop-blur-sm sm:top-24">
+        <div className="container mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:px-6">
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
             <Button
               variant="outline"
               size="sm"
@@ -857,7 +857,7 @@ export function Shop() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
             {/* Sort Dropdown */}
             <div className="relative">
               <Button
@@ -1070,7 +1070,7 @@ export function Shop() {
                 variant={onlyInStock ? "default" : "outline"}
                 onClick={() => setOnlyInStock((prev) => !prev)}
                 className={cn(
-                  "rounded-lg",
+                  "w-full rounded-lg sm:w-auto",
                   onlyInStock &&
                     "border-primary bg-primary text-white hover:bg-primary-600",
                 )}
@@ -1183,7 +1183,7 @@ export function Shop() {
                     total: totalPages,
                   })}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
                   <Button
                     variant="outline"
                     size="sm"

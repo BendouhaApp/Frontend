@@ -1914,7 +1914,7 @@ export default function AdminProductsPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 onClick={load}
@@ -2284,8 +2284,8 @@ export default function AdminProductsPage() {
         )}
 
         {hasSelection && (
-          <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
-            <div className="flex items-center gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl">
+          <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-1rem)] max-w-5xl -translate-x-1/2 sm:bottom-6">
+            <div className="flex max-w-full flex-wrap items-center justify-center gap-2 rounded-2xl border bg-white px-3 py-3 shadow-xl sm:px-4">
               <span className="text-sm text-neutral-600">
                 {selectedIds.length} selected
               </span>

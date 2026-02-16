@@ -572,11 +572,11 @@ export function AdminCategory() {
           </div>
 
           {/* View Toggle */}
-          <div className="flex overflow-hidden rounded-xl border-2 border-primary bg-white shadow-sm">
+          <div className="flex w-full overflow-x-auto rounded-xl border-2 border-primary bg-white shadow-sm sm:w-auto">
             <button
               onClick={() => setView("main")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition",
+                "flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium transition",
                 view === "main"
                   ? "bg-primary text-white"
                   : "text-primary hover:bg-primary/5",
@@ -591,7 +591,7 @@ export function AdminCategory() {
             <button
               onClick={() => setView("sub")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition",
+                "flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-medium transition",
                 view === "sub"
                   ? "bg-primary text-white"
                   : "text-primary hover:bg-primary/5",
@@ -660,8 +660,8 @@ export function AdminCategory() {
             )}
           </motion.div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-            <table className="w-full">
+          <div className="overflow-x-auto overflow-y-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <table className="min-w-[820px] w-full">
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50">
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-600">

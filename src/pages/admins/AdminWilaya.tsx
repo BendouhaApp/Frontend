@@ -442,7 +442,7 @@ export default function AdminWilaya() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 onClick={load}
@@ -527,11 +527,11 @@ export default function AdminWilaya() {
             />
           </div>
 
-          <div className="flex overflow-hidden rounded-lg border-2 border-blue-600 bg-white shadow-sm">
+          <div className="flex max-w-full overflow-x-auto rounded-lg border-2 border-blue-600 bg-white shadow-sm">
             <button
               onClick={() => setFilterType("all")}
               className={cn(
-                "px-4 py-2 text-sm font-semibold transition",
+                "whitespace-nowrap px-4 py-2 text-sm font-semibold transition",
                 filterType === "all"
                   ? "bg-blue-600 text-white"
                   : "text-blue-600 hover:bg-blue-50",
@@ -543,7 +543,7 @@ export default function AdminWilaya() {
             <button
               onClick={() => setFilterType("active")}
               className={cn(
-                "px-4 py-2 text-sm font-semibold transition",
+                "whitespace-nowrap px-4 py-2 text-sm font-semibold transition",
                 filterType === "active"
                   ? "bg-blue-600 text-white"
                   : "text-blue-600 hover:bg-blue-50",
@@ -555,7 +555,7 @@ export default function AdminWilaya() {
             <button
               onClick={() => setFilterType("inactive")}
               className={cn(
-                "px-4 py-2 text-sm font-semibold transition",
+                "whitespace-nowrap px-4 py-2 text-sm font-semibold transition",
                 filterType === "inactive"
                   ? "bg-blue-600 text-white"
                   : "text-blue-600 hover:bg-blue-50",
@@ -617,7 +617,7 @@ export default function AdminWilaya() {
         {!loading && filtered.length > 0 && (
           <div className="overflow-hidden rounded-lg bg-white border border-neutral-200 shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="min-w-[920px] w-full">
                 <thead className="bg-neutral-50 border-b border-neutral-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
