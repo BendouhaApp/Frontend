@@ -43,7 +43,6 @@ const sortOptionIds = [
 ];
 
 const ITEMS_PER_PAGE = 9;
-const SHOP_FETCH_LIMIT = 500;
 const WISHLIST_STORAGE_KEY = "bendouha_wishlist";
 
 const containerVariants = {
@@ -68,9 +67,7 @@ type TFn = (key: string, opts?: any) => string;
 
 function toNumber(value: unknown, fallback = 0): number {
   const numeric =
-    typeof value === "number" && Number.isFinite(value)
-      ? value
-      : Number(value);
+    typeof value === "number" && Number.isFinite(value) ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
@@ -428,7 +425,10 @@ function QuickViewModal({
                   )}
                 >
                   <Heart
-                    className={cn("me-2 h-4 w-4", isWishlisted && "fill-current")}
+                    className={cn(
+                      "me-2 h-4 w-4",
+                      isWishlisted && "fill-current",
+                    )}
                   />
                   {isWishlisted
                     ? t("products.removeFromWishlist")
@@ -474,7 +474,9 @@ export function Shop() {
       return [];
     }
   });
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
+    null,
+  );
 
   const { cartId } = useCart();
 
@@ -615,8 +617,8 @@ export function Shop() {
     {
       path: "products/public",
       query: {
-        limit: SHOP_FETCH_LIMIT,
-        start: 0,
+        page,
+        limit: ITEMS_PER_PAGE,
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
       },
       options: {
@@ -626,6 +628,8 @@ export function Shop() {
   );
 
   const products = data?.data ?? [];
+  const totalPages = data?.meta?.totalPages ?? 1;
+  const totalItems = data?.meta?.total ?? 0;
   const filteredProducts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const sorted = [...products];
@@ -651,8 +655,12 @@ export function Shop() {
     });
 
     const byDateDesc = (a: Product, b: Product) => {
-      const aDate = Date.parse((a as Product & { created_at?: string }).created_at || "");
-      const bDate = Date.parse((b as Product & { created_at?: string }).created_at || "");
+      const aDate = Date.parse(
+        (a as Product & { created_at?: string }).created_at || "",
+      );
+      const bDate = Date.parse(
+        (b as Product & { created_at?: string }).created_at || "",
+      );
       if (Number.isFinite(aDate) && Number.isFinite(bDate)) {
         return bDate - aDate;
       }
@@ -683,16 +691,9 @@ export function Shop() {
 
     return withFilters;
   }, [products, onlyInStock, searchQuery, selectedSort]);
+  const [pageInput, setPageInput] = useState<string>("1");
 
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
-
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const paginatedProducts = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, page]);
-  const currentPage = page;
 
   useEffect(() => {
     if (isLoading) return;
@@ -842,9 +843,7 @@ export function Shop() {
               )}
             </Button>
             <p className="text-sm text-navy-600">
-              {isLoading
-                ? "..."
-                : `${filteredProducts.length} ${t("common.items")}`}
+              {isLoading ? "..." : `${totalItems} ${t("common.items")}`}
             </p>
           </div>
 
@@ -1149,7 +1148,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {paginatedProducts.map((product) => (
+                    {products.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}
@@ -1170,7 +1169,7 @@ export function Shop() {
               <div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p className="text-sm text-navy-500">
                   {t("common.pageOf", {
-                    page: currentPage,
+                    page: page,
                     total: totalPages,
                   })}
                 </p>
@@ -1178,7 +1177,7 @@ export function Shop() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === 1}
+                    disabled={page === 1}
                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   >
                     {t("common.previous")}
@@ -1186,13 +1185,61 @@ export function Shop() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === totalPages}
+                    disabled={page === totalPages}
                     onClick={() =>
                       setPage((prev) => Math.min(totalPages, prev + 1))
                     }
                   >
                     {t("common.next")}
                   </Button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-neutral-500 whitespace-nowrap">
+                      Go to
+                    </span>
+
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={pageInput}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const v = e.target.value.replace(/[^\d]/g, "");
+                        setPageInput(v);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key !== "Enter") return;
+                        const n = Number(pageInput);
+                        if (!Number.isFinite(n)) return;
+                        const clamped = Math.min(totalPages, Math.max(1, n));
+                        setPage(clamped);
+                      }}
+                      onBlur={() => {
+                        if (!pageInput) {
+                          setPageInput(String(page));
+                          return;
+                        }
+                        const n = Number(pageInput);
+                        if (!Number.isFinite(n)) {
+                          setPageInput(String(page));
+                          return;
+                        }
+                        const clamped = Math.min(totalPages, Math.max(1, n));
+                        setPageInput(String(clamped));
+                      }}
+                      className={cn(
+                        "h-7 w-10 rounded-md border border-neutral-300 bg-white text-center text-xs outline-none transition focus:border-primary focus:ring-1 focus:ring-primary/30",
+                        pageInput &&
+                          (Number(pageInput) < 1 ||
+                            Number(pageInput) > totalPages) &&
+                          "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40",
+                      )}
+                      aria-label="Go to page"
+                    />
+
+                    <span className="text-xs text-neutral-400">
+                      / {totalPages}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
