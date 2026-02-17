@@ -27,6 +27,7 @@ type OrderSummary = {
 };
 
 const CHECKOUT_DRAFT_STORAGE_KEY = "bendouha_checkout_draft_v1";
+const PHONE_DIGITS_LENGTH = 10;
 
 type CheckoutDraft = {
   phone: string;
@@ -51,6 +52,9 @@ const parseDraftId = (value: unknown): number | "" => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : "";
 };
 
+const normalizePhone = (value: string): string =>
+  value.replace(/\D/g, "").slice(0, PHONE_DIGITS_LENGTH);
+
 const readCheckoutDraft = (): CheckoutDraft => {
   if (typeof window === "undefined") {
     return { ...EMPTY_CHECKOUT_DRAFT };
@@ -64,7 +68,7 @@ const readCheckoutDraft = (): CheckoutDraft => {
   try {
     const parsed = JSON.parse(raw) as Partial<CheckoutDraft>;
     return {
-      phone: typeof parsed.phone === "string" ? parsed.phone : "",
+      phone: typeof parsed.phone === "string" ? normalizePhone(parsed.phone) : "",
       firstName: typeof parsed.firstName === "string" ? parsed.firstName : "",
       lastName: typeof parsed.lastName === "string" ? parsed.lastName : "",
       wilayaId: parseDraftId(parsed.wilayaId),
@@ -97,7 +101,7 @@ export function Checkout() {
   const subtotal = calcSubtotal(items);
   const initialDraft = useMemo(() => readCheckoutDraft(), []);
 
-  const [phone, setPhone] = useState(initialDraft.phone);
+  const [phone, setPhone] = useState(normalizePhone(initialDraft.phone));
   const [firstName, setFirstName] = useState(initialDraft.firstName);
   const [lastName, setLastName] = useState(initialDraft.lastName);
   const [wilayaId, setWilayaId] = useState<number | "">(initialDraft.wilayaId);
@@ -222,6 +226,8 @@ export function Checkout() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedPhone = normalizePhone(phone);
+
     if (!cartId) {
       toast.error(t("cart.notReady"));
       return;
@@ -230,8 +236,16 @@ export function Checkout() {
       toast.error(t("checkout.requiredNameError"));
       return;
     }
-    if (!phone.trim()) {
+    if (!normalizedPhone) {
       toast.error(t("checkout.requiredPhoneError"));
+      return;
+    }
+    if (normalizedPhone.length !== PHONE_DIGITS_LENGTH) {
+      toast.error(
+        t("checkout.invalidPhoneError", {
+          defaultValue: `Le numero de telephone doit contenir ${PHONE_DIGITS_LENGTH} chiffres.`,
+        }),
+      );
       return;
     }
     if (!wilayaId) {
@@ -250,7 +264,7 @@ export function Checkout() {
     createOrder.mutate({
       customer_first_name: firstName.trim(),
       customer_last_name: lastName.trim(),
-      customer_phone: phone.trim(),
+      customer_phone: normalizedPhone,
       wilaya_id: Number(wilayaId),
       commune_id: Number(communeId),
       delivery_type: resolvedDeliveryType,
@@ -440,8 +454,13 @@ export function Checkout() {
                 {t("checkout.phoneNumber")}
               </label>
               <input
+                type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                inputMode="numeric"
+                autoComplete="tel"
+                maxLength={PHONE_DIGITS_LENGTH}
+                pattern="[0-9]{10}"
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder={t("checkout.phonePlaceholder")}
                 required

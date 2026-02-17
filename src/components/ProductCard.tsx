@@ -271,7 +271,7 @@ export function ProductCard({
           </div>
 
           {product.rating ? (
-            <div className="hidden items-center gap-1 xs:flex">
+            <div className="hidden items-center gap-1 sm:flex">
               <Star
                 className="h-3.5 w-3.5 fill-gold text-gold sm:h-4 sm:w-4"
                 aria-hidden="true"

@@ -778,7 +778,7 @@ export function Shop() {
       default:
         return {
           variant: "default",
-          gridClass: "grid-cols-1 xs:grid-cols-2 lg:grid-cols-3",
+          gridClass: "grid-cols-2 lg:grid-cols-3",
         };
     }
   };
@@ -791,7 +791,7 @@ export function Shop() {
     (onlyInStock ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-white">
       <QuickViewModal
         product={quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
@@ -983,7 +983,7 @@ export function Shop() {
           />
 
           {/* Product Grid */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             {/* Mobile Categories */}
             <div className="mb-6 space-y-4 lg:hidden">
               <div>
@@ -1158,7 +1158,7 @@ export function Shop() {
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className={cn("grid gap-6", gridClass)}
+                    className={cn("grid gap-4 sm:gap-6", gridClass)}
                   >
                     {displayedProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
