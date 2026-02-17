@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Link } from "@/lib/router";
 import { ShieldCheck, UserRound } from "lucide-react";

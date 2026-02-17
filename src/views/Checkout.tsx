@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/lib/router";
 import { useTranslation } from "react-i18next";

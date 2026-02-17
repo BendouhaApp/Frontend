@@ -82,6 +82,7 @@ export function Hero({
   const displaySubtitle = subtitle ?? t("hero.subtitle");
   const displayCta = ctaText ?? t("hero.cta");
   const isExternalCta = /^https?:\/\//.test(ctaHref);
+  const hasHighlight = displayHighlight.trim().length > 0;
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
@@ -94,11 +95,13 @@ export function Hero({
   const scrollToNextSection = () => {
     const target = document.getElementById(scrollTargetId);
     if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      const targetTop =
+        target.getBoundingClientRect().top + window.scrollY - 16;
+      window.scrollTo({ top: targetTop, behavior: "smooth" });
       return;
     }
 
-    window.scrollTo({ top: window.innerHeight * 0.9, behavior: "smooth" });
+    window.scrollBy({ top: window.innerHeight * 0.9, behavior: "smooth" });
   };
 
   return (
@@ -173,13 +176,17 @@ export function Hero({
               initial={{ opacity: 0, y: 20 }}
               animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: 0.3, duration: DURATION.slow, ease: EASE.out }}
-              className="font-display text-5xl font-light leading-[1.1] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
+              className="font-display text-[clamp(2.6rem,10vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
             >
               {displayHeadline}
-              <br />
-              <span className="font-normal text-cyan">
-                {displayHighlight}
-              </span>
+              {hasHighlight && (
+                <>
+                  {" "}
+                  <span className="bg-linear-to-r from-primary via-cyan to-cyan-300 bg-clip-text font-normal text-transparent">
+                    {displayHighlight}
+                  </span>
+                </>
+              )}
             </motion.h1>
 
             {/* Subtitle */}
@@ -187,7 +194,7 @@ export function Hero({
               initial={{ opacity: 0, y: 20 }}
               animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: 0.4, duration: DURATION.slow, ease: EASE.out }}
-              className="mt-8 max-w-xl text-lg leading-relaxed text-navy-200 md:text-xl"
+              className="mt-8 max-w-2xl text-base leading-relaxed text-navy-200 md:text-lg"
             >
               {displaySubtitle}
             </motion.p>
@@ -226,7 +233,7 @@ export function Hero({
               className="mt-16 flex items-center gap-8 border-t border-navy-600 pt-8"
             >
               <div>
-                <p className="text-2xl font-light text-white">10k+</p>
+                <p className="text-2xl font-light text-white">+20K</p>
                 <p className="text-sm text-navy-300">
                   {t("hero.stats.customers")}
                 </p>
@@ -257,9 +264,12 @@ export function Hero({
         transition={{ delay: 1.5, duration: 0.8 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
-        <motion.button
-          type="button"
-          onClick={scrollToNextSection}
+        <motion.a
+          href={`#${scrollTargetId}`}
+          onClick={(event) => {
+            event.preventDefault();
+            scrollToNextSection();
+          }}
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2 focus:outline-none"
@@ -268,7 +278,7 @@ export function Hero({
             {t("hero.scroll")}
           </span>
           <div className="h-12 w-px bg-linear-to-b from-cyan to-transparent" />
-        </motion.button>
+        </motion.a>
       </motion.div>
     </section>
   );
@@ -289,6 +299,7 @@ export function HeroCentered({
   const displaySubtitle = subtitle ?? t("hero.subtitle");
   const displayCta = ctaText ?? t("hero.cta");
   const isExternalCta = /^https?:\/\//.test(ctaHref);
+  const hasHighlight = displayHighlight.trim().length > 0;
 
   return (
     <section className="relative flex min-h-[calc(100vh-5rem)] items-center justify-center overflow-hidden bg-navy">
@@ -324,19 +335,23 @@ export function HeroCentered({
           {/* Main Headline */}
           <motion.h1
             variants={itemVariants}
-            className="font-display text-5xl font-light leading-[1.1] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
+            className="font-display text-[clamp(2.6rem,10vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
           >
             {displayHeadline}
-            <br />
-            <span className="font-normal text-cyan italic">
-              {displayHighlight}
-            </span>
+            {hasHighlight && (
+              <>
+                {" "}
+                <span className="bg-linear-to-r from-primary via-cyan to-cyan-300 bg-clip-text font-normal italic text-transparent">
+                  {displayHighlight}
+                </span>
+              </>
+            )}
           </motion.h1>
 
           {/* Subtitle */}
           <motion.p
             variants={itemVariants}
-            className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-navy-200 md:text-xl"
+            className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-navy-200 md:text-lg"
           >
             {displaySubtitle}
           </motion.p>

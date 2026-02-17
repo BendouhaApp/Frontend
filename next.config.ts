@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "react-icons",
+      "framer-motion",
+      "@radix-ui/react-dialog",
+    ],
+  },
   async rewrites() {
     const rules = [];
 

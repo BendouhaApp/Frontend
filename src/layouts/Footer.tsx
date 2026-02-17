@@ -5,6 +5,12 @@ import { SiTiktok } from "react-icons/si";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { BendouhaLogo } from "@/components/logo/BrandLogo";
+import {
+  STORE_ADDRESS,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE_DISPLAY,
+  SUPPORT_PHONE_RAW,
+} from "@/lib/site";
 
 function SocialLink({
   href,
@@ -120,16 +126,26 @@ export function Footer() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <span>Boulevard des 20 metres, Blida, Algerie</span>
+                  <span>{STORE_ADDRESS}</span>
                 </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <Phone className="h-4 w-4 shrink-0 text-cyan" />
-                <span>+213 555 123 456</span>
+                <a
+                  href={`tel:${SUPPORT_PHONE_RAW}`}
+                  className="text-inherit focus:outline-none hover:text-cyan"
+                >
+                  {SUPPORT_PHONE_DISPLAY}
+                </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-navy-300">
                 <Mail className="h-4 w-4 shrink-0 text-cyan" />
-                <span>bonjour@bendouha.com</span>
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="text-inherit focus:outline-none hover:text-cyan"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
               </div>
             </div>
 

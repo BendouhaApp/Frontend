@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 5180",
-    "dev:5173": "next dev -p 5173",
-    "dev:5174": "next dev -p 5174",
+    "dev": "next dev --turbopack -p 5180",
+    "dev:5173": "next dev --turbopack -p 5173",
+    "dev:5174": "next dev --turbopack -p 5174",
     "build": "next build",
     "prestart": "next build",
     "start": "next start -p 5180",

@@ -1,10 +1,13 @@
-import { useState } from "react";
+"use client";
+
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { STORE_ADDRESS, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from "@/lib/site";
 
 export function Contact() {
   const { t } = useTranslation();
@@ -24,10 +27,10 @@ export function Contact() {
     {
       icon: MapPin,
       label: "Adresse",
-      value: "Boulevard des 20 mètres, Blida, Algérie",
+      value: STORE_ADDRESS,
     },
-    { icon: Phone, label: "Téléphone", value: "+213 555 123 456" },
-    { icon: Mail, label: "Email", value: "bonjour@bendouha.com" },
+    { icon: Phone, label: "TÃ©lÃ©phone", value: SUPPORT_PHONE_DISPLAY },
+    { icon: Mail, label: "Email", value: SUPPORT_EMAIL },
     { icon: Clock, label: "Horaires", value: "Sam-Jeudi : 9h - 18h" },
   ];
 
@@ -71,9 +74,9 @@ export function Contact() {
               Nous serions ravis d&apos;avoir de vos nouvelles
             </h2>
             <p className="mb-8 text-neutral-600">
-              Que vous ayez une question sur nos produits, besoin de conseils
-              en matière d&apos;équipement électrique, ou que vous souhaitiez
-              simplement nous dire bonjour, nous sommes là pour vous aider.
+              Que vous ayez une question sur nos produits ou besoin de conseils
+              sur l&apos;equipement electrique, notre equipe est la pour vous
+              aider.
             </p>
 
             <div className="space-y-6">
@@ -206,3 +209,5 @@ export function Contact() {
     </div>
   );
 }
+
+

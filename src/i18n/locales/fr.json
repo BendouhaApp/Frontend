@@ -41,10 +41,10 @@
     "bestSellers": "Meilleures ventes"
   },
   "hero": {
-    "eyebrow": "Nouvelle Collection 2026",
-    "headline": "Créé pour ceux qui apprécient",
-    "highlightWord": "l'Excellence",
-    "subtitle": "Découvrez notre collection raffinée de pièces intemporelles, conçues avec une attention méticuleuse aux détails et un engagement sans faille envers la qualité.",
+    "eyebrow": "Depuis 2012",
+    "headline": "Bendouha",
+    "highlightWord": "Electric",
+    "subtitle": "Cree pour ceux qui apprecient l'Excellence. Decouvrez notre collection raffinee de pieces intemporelles, concues avec une attention meticuleuse aux details et un engagement sans faille envers la qualite.",
     "cta": "Explorer la collection",
     "stats": {
       "customers": "Clients satisfaits",
@@ -185,7 +185,7 @@
     "firstNamePlaceholder": "Votre prénom",
     "lastNamePlaceholder": "Votre nom",
     "phoneNumber": "Numéro de téléphone",
-    "phonePlaceholder": "+213...",
+    "phonePlaceholder": "0549 15 37 51",
     "wilaya": "Wilaya",
     "selectWilaya": "Sélectionnez une wilaya",
     "commune": "Commune",
@@ -221,7 +221,7 @@
     "careers": "Carrières",
     "press": "Presse",
     "followUs": "Suivez-nous",
-    "copyright": "© {{year}} Bendouha. Tous droits réservés.",
+    "copyright": "(c) {{year}} Bendouha Electric. Tous droits reserves.",
     "privacyPolicy": "Politique de confidentialité",
     "termsOfService": "Conditions d'utilisation",
     "cookieSettings": "Paramètres des cookies",
