@@ -311,11 +311,277 @@ export default function AdminWilaya() {
         )}
       </div>
 
-      <AnimatePresence>{showZoneModal && <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className="w-full max-w-lg rounded-xl bg-white p-5"><div className="mb-4 flex items-center justify-between"><h2 className="font-semibold">{editingZone ? "Modifier la wilaya" : "Nouvelle wilaya"}</h2><Button variant="ghost" size="icon" onClick={() => { setShowZoneModal(false); setEditingZone(null); }}><X className="h-4 w-4" /></Button></div><ZoneForm key={editingZone?.id ?? "new-zone"} zone={editingZone} loading={saving} onSubmit={saveZone} onCancel={() => { setShowZoneModal(false); setEditingZone(null); }} /></div></motion.div>}</AnimatePresence>
+      <AnimatePresence>
+        {showZoneModal && (
+          <motion.div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="font-semibold">
+                    {editingZone ? "Modifier la wilaya" : "Nouvelle wilaya"}
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setShowZoneModal(false);
+                      setEditingZone(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ZoneForm
+                  key={editingZone?.id ?? "new-zone"}
+                  zone={editingZone}
+                  loading={saving}
+                  onSubmit={saveZone}
+                  onCancel={() => {
+                    setShowZoneModal(false);
+                    setEditingZone(null);
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <AnimatePresence>{deleteZone && <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className="w-full max-w-sm rounded-xl bg-white p-5"><p className="text-sm">Supprimer <strong>{deleteZone.display_name}</strong> ?</p><div className="mt-4 flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setDeleteZone(null)}>Annuler</Button><Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={async () => { await api.delete(`admin/shipping-zones/${deleteZone.id}`); setDeleteZone(null); await loadZones(); }}>Supprimer</Button></div></div></motion.div>}</AnimatePresence>
+      <AnimatePresence>
+        {deleteZone && (
+          <motion.div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex min-h-full items-center justify-center">
+              <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+                <p className="text-sm">
+                  Supprimer <strong>{deleteZone.display_name}</strong> ?
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setDeleteZone(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    onClick={async () => {
+                      await api.delete(`admin/shipping-zones/${deleteZone.id}`);
+                      setDeleteZone(null);
+                      await loadZones();
+                    }}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <AnimatePresence>{selectedZone && <motion.div className="fixed inset-0 z-50 bg-black/50 p-4" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className="mx-auto mt-10 w-full max-w-4xl rounded-xl bg-white p-5"><div className="mb-4 flex items-center justify-between"><div><h3 className="font-semibold">Communes - {selectedZone.display_name}</h3><p className="text-xs text-neutral-500">Le client doit choisir une commune pour calculer la livraison.</p></div><Button variant="ghost" size="icon" onClick={() => { setSelectedZone(null); setShowCommuneForm(false); setEditingCommune(null); }}><X className="h-4 w-4" /></Button></div>{communesError && <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-700">{communesError}</div>}<div className="mb-3 flex items-center justify-between"><div className="text-sm text-neutral-600">{communes.length} commune(s)</div><div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => loadCommunes(selectedZone.id)} disabled={communesLoading}><RefreshCcw className={cn("h-4 w-4", communesLoading && "animate-spin")} /></Button><Button size="sm" onClick={() => { setEditingCommune(null); setShowCommuneForm(true); }}><Plus className="mr-1 h-4 w-4" />Ajouter</Button></div></div>{showCommuneForm && <CommuneForm key={editingCommune?.id ?? "new-commune"} commune={editingCommune} loading={communesSaving} onSubmit={saveCommune} onCancel={() => { setShowCommuneForm(false); setEditingCommune(null); }} />}{communesLoading ? <div className="space-y-2">{[1,2].map((i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}</div> : <div className="mt-3 overflow-hidden rounded-lg border"><table className="w-full min-w-[760px]"><thead className="bg-neutral-50"><tr className="text-left text-xs uppercase text-neutral-600"><th className="px-3 py-2">Commune</th><th className="px-3 py-2">Domicile</th><th className="px-3 py-2">Bureau</th><th className="px-3 py-2">Statut</th><th className="px-3 py-2 text-right">Actions</th></tr></thead><tbody className="divide-y">{communes.map((commune) => <tr key={commune.id}><td className="px-3 py-2"><p className="font-medium">{commune.display_name}</p><p className="text-xs text-neutral-500">{commune.name}</p></td><td className="px-3 py-2">{commune.home_delivery_enabled ? (commune.free_shipping ? "Gratuite" : asDzd(commune.home_delivery_price)) : "Desactivee"}</td><td className="px-3 py-2">{commune.office_delivery_enabled ? (commune.free_shipping ? "Gratuite" : asDzd(commune.office_delivery_price)) : "Desactivee"}</td><td className="px-3 py-2"><span className={cn("rounded-full px-2 py-0.5 text-xs", commune.active ? "bg-emerald-100 text-emerald-700" : "bg-neutral-100 text-neutral-600")}>{commune.active ? "Actif" : "Inactif"}</span></td><td className="px-3 py-2"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" onClick={() => { setEditingCommune(commune); setShowCommuneForm(true); }}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={async () => { await api.patch(`admin/shipping-zones/${selectedZone.id}/communes/${commune.id}`, { active: !commune.active }); await Promise.all([loadCommunes(selectedZone.id), loadZones()]); }}><Check className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="text-red-600" onClick={async () => { if (!window.confirm(`Supprimer la commune ${commune.display_name} ?`)) return; await api.delete(`admin/shipping-zones/${selectedZone.id}/communes/${commune.id}`); await Promise.all([loadCommunes(selectedZone.id), loadZones()]); }}><Trash2 className="h-4 w-4" /></Button></div></td></tr>)}</tbody></table></div>}</div></motion.div>}</AnimatePresence>
+      <AnimatePresence>
+        {selectedZone && (
+          <motion.div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="mx-auto my-6 w-full max-w-4xl rounded-xl bg-white p-5 shadow-xl">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">
+                    Communes - {selectedZone.display_name}
+                  </h3>
+                  <p className="text-xs text-neutral-500">
+                    Le client doit choisir une commune pour calculer la livraison.
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setSelectedZone(null);
+                    setShowCommuneForm(false);
+                    setEditingCommune(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {communesError && (
+                <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+                  {communesError}
+                </div>
+              )}
+
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm text-neutral-600">
+                  {communes.length} commune(s)
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadCommunes(selectedZone.id)}
+                    disabled={communesLoading}
+                  >
+                    <RefreshCcw
+                      className={cn("h-4 w-4", communesLoading && "animate-spin")}
+                    />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEditingCommune(null);
+                      setShowCommuneForm(true);
+                    }}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+
+              {showCommuneForm && (
+                <CommuneForm
+                  key={editingCommune?.id ?? "new-commune"}
+                  commune={editingCommune}
+                  loading={communesSaving}
+                  onSubmit={saveCommune}
+                  onCancel={() => {
+                    setShowCommuneForm(false);
+                    setEditingCommune(null);
+                  }}
+                />
+              )}
+
+              {communesLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 max-h-[60vh] overflow-auto rounded-lg border">
+                  <table className="min-w-[760px] w-full">
+                    <thead className="bg-neutral-50">
+                      <tr className="text-left text-xs uppercase text-neutral-600">
+                        <th className="px-3 py-2">Commune</th>
+                        <th className="px-3 py-2">Domicile</th>
+                        <th className="px-3 py-2">Bureau</th>
+                        <th className="px-3 py-2">Statut</th>
+                        <th className="px-3 py-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {communes.map((commune) => (
+                        <tr key={commune.id}>
+                          <td className="px-3 py-2">
+                            <p className="font-medium">{commune.display_name}</p>
+                            <p className="text-xs text-neutral-500">{commune.name}</p>
+                          </td>
+                          <td className="px-3 py-2">
+                            {commune.home_delivery_enabled
+                              ? commune.free_shipping
+                                ? "Gratuite"
+                                : asDzd(commune.home_delivery_price)
+                              : "Desactivee"}
+                          </td>
+                          <td className="px-3 py-2">
+                            {commune.office_delivery_enabled
+                              ? commune.free_shipping
+                                ? "Gratuite"
+                                : asDzd(commune.office_delivery_price)
+                              : "Desactivee"}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs",
+                                commune.active
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-neutral-100 text-neutral-600",
+                              )}
+                            >
+                              {commune.active ? "Actif" : "Inactif"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingCommune(commune);
+                                  setShowCommuneForm(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={async () => {
+                                  await api.patch(
+                                    `admin/shipping-zones/${selectedZone.id}/communes/${commune.id}`,
+                                    { active: !commune.active },
+                                  );
+                                  await Promise.all([
+                                    loadCommunes(selectedZone.id),
+                                    loadZones(),
+                                  ]);
+                                }}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-600"
+                                onClick={async () => {
+                                  if (
+                                    !window.confirm(
+                                      `Supprimer la commune ${commune.display_name} ?`,
+                                    )
+                                  ) {
+                                    return;
+                                  }
+                                  await api.delete(
+                                    `admin/shipping-zones/${selectedZone.id}/communes/${commune.id}`,
+                                  );
+                                  await Promise.all([
+                                    loadCommunes(selectedZone.id),
+                                    loadZones(),
+                                  ]);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

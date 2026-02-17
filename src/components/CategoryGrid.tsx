@@ -200,7 +200,10 @@ export function CategoryGridMinimal() {
   const minimalCategories = (data?.data ?? []).slice(0, 8)
 
   return (
-    <section className="section-padding-sm border-y border-navy-200 bg-navy-50">
+    <section
+      id="home-discover"
+      className="section-padding-sm border-y border-navy-200 bg-navy-50"
+    >
       <div className="container mx-auto">
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
           {minimalCategories.map((cat, index) => (

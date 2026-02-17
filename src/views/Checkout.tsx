@@ -55,6 +55,14 @@ const parseDraftId = (value: unknown): number | "" => {
 const normalizePhone = (value: string): string =>
   value.replace(/\D/g, "").slice(0, PHONE_DIGITS_LENGTH);
 
+const isCommuneAvailableForDeliveryType = (
+  commune: NonNullable<Wilaya["communes"]>[number],
+  type: "home" | "office",
+) =>
+  type === "home"
+    ? commune.home_delivery_enabled !== false
+    : commune.office_delivery_enabled !== false;
+
 const readCheckoutDraft = (): CheckoutDraft => {
   if (typeof window === "undefined") {
     return { ...EMPTY_CHECKOUT_DRAFT };
@@ -116,10 +124,49 @@ export function Checkout() {
     [wilayas, wilayaId],
   );
 
-  const selectedCommune = useMemo(
+  const selectedCommuneRaw = useMemo(
     () =>
       selectedWilaya?.communes?.find((commune) => commune.id === communeId),
     [selectedWilaya, communeId],
+  );
+
+  const hasHomeDeliveryCommunes = useMemo(
+    () =>
+      (selectedWilaya?.communes ?? []).some((commune) =>
+        isCommuneAvailableForDeliveryType(commune, "home"),
+      ),
+    [selectedWilaya],
+  );
+
+  const hasOfficeDeliveryCommunes = useMemo(
+    () =>
+      (selectedWilaya?.communes ?? []).some((commune) =>
+        isCommuneAvailableForDeliveryType(commune, "office"),
+      ),
+    [selectedWilaya],
+  );
+
+  const filteredCommunes = useMemo(
+    () =>
+      (selectedWilaya?.communes ?? []).filter((commune) =>
+        isCommuneAvailableForDeliveryType(commune, deliveryType),
+      ),
+    [selectedWilaya, deliveryType],
+  );
+
+  const effectiveCommuneId = useMemo(() => {
+    if (communeId === "") return "";
+    return filteredCommunes.some((commune) => commune.id === communeId)
+      ? communeId
+      : "";
+  }, [communeId, filteredCommunes]);
+
+  const selectedCommune = useMemo(
+    () =>
+      selectedWilaya?.communes?.find(
+        (commune) => commune.id === effectiveCommuneId,
+      ),
+    [selectedWilaya, effectiveCommuneId],
   );
 
   const resolveDeliveryType = (
@@ -151,7 +198,7 @@ export function Checkout() {
       firstName.trim().length > 0 ||
       lastName.trim().length > 0 ||
       wilayaId !== "" ||
-      communeId !== "" ||
+      effectiveCommuneId !== "" ||
       resolvedDeliveryType !== "home";
 
     if (!hasDraftData) {
@@ -164,7 +211,7 @@ export function Checkout() {
       firstName,
       lastName,
       wilayaId,
-      communeId,
+      communeId: effectiveCommuneId,
       deliveryType: resolvedDeliveryType,
     };
 
@@ -177,7 +224,7 @@ export function Checkout() {
     firstName,
     lastName,
     wilayaId,
-    communeId,
+    effectiveCommuneId,
     resolvedDeliveryType,
   ]);
 
@@ -252,7 +299,7 @@ export function Checkout() {
       toast.error(t("checkout.requiredWilayaError"));
       return;
     }
-    if (!communeId) {
+    if (!effectiveCommuneId) {
       toast.error(t("checkout.requiredCommuneError"));
       return;
     }
@@ -266,7 +313,7 @@ export function Checkout() {
       customer_last_name: lastName.trim(),
       customer_phone: normalizedPhone,
       wilaya_id: Number(wilayaId),
-      commune_id: Number(communeId),
+      commune_id: Number(effectiveCommuneId),
       delivery_type: resolvedDeliveryType,
     });
   };
@@ -475,6 +522,36 @@ export function Checkout() {
                 value={wilayaId}
                 onChange={(e) => {
                   const nextId = e.target.value ? Number(e.target.value) : "";
+                  const nextWilaya =
+                    nextId === ""
+                      ? undefined
+                      : wilayas.find((zone) => zone.id === nextId);
+
+                  if (nextWilaya) {
+                    const nextHasHome = (nextWilaya.communes ?? []).some(
+                      (commune) =>
+                        isCommuneAvailableForDeliveryType(commune, "home"),
+                    );
+                    const nextHasOffice = (nextWilaya.communes ?? []).some(
+                      (commune) =>
+                        isCommuneAvailableForDeliveryType(commune, "office"),
+                    );
+
+                    if (
+                      deliveryType === "home" &&
+                      !nextHasHome &&
+                      nextHasOffice
+                    ) {
+                      setDeliveryType("office");
+                    } else if (
+                      deliveryType === "office" &&
+                      !nextHasOffice &&
+                      nextHasHome
+                    ) {
+                      setDeliveryType("home");
+                    }
+                  }
+
                   setWilayaId(nextId);
                   setCommuneId("");
                 }}
@@ -495,23 +572,17 @@ export function Checkout() {
                 {t("checkout.commune")}
               </label>
               <select
-                value={communeId}
+                value={effectiveCommuneId}
                 onChange={(e) => {
                   const nextId = e.target.value ? Number(e.target.value) : "";
                   setCommuneId(nextId);
-                  const nextCommune = selectedWilaya?.communes?.find(
-                    (commune) => commune.id === nextId,
-                  );
-                  setDeliveryType(
-                    resolveDeliveryType(nextCommune, resolvedDeliveryType),
-                  );
                 }}
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 required
                 disabled={!selectedWilaya}
               >
                 <option value="">{t("checkout.selectCommune")}</option>
-                {(selectedWilaya?.communes ?? []).map((commune) => (
+                {filteredCommunes.map((commune) => (
                   <option key={commune.id} value={commune.id}>
                     {commune.display_name}
                   </option>
@@ -530,11 +601,22 @@ export function Checkout() {
                     name="deliveryType"
                     value="home"
                     checked={resolvedDeliveryType === "home"}
-                    onChange={() => setDeliveryType("home")}
-                    disabled={selectedCommune?.home_delivery_enabled === false}
+                    onChange={() => {
+                      setDeliveryType("home");
+                      if (
+                        selectedCommuneRaw &&
+                        !isCommuneAvailableForDeliveryType(
+                          selectedCommuneRaw,
+                          "home",
+                        )
+                      ) {
+                        setCommuneId("");
+                      }
+                    }}
+                    disabled={Boolean(selectedWilaya) && !hasHomeDeliveryCommunes}
                   />
                   {t("checkout.homeDelivery")}
-                  {selectedCommune?.home_delivery_enabled === false && (
+                  {Boolean(selectedWilaya) && !hasHomeDeliveryCommunes && (
                     <span className="text-xs text-neutral-400">
                       {t("checkout.notAvailable")}
                     </span>
@@ -546,11 +628,22 @@ export function Checkout() {
                     name="deliveryType"
                     value="office"
                     checked={resolvedDeliveryType === "office"}
-                    onChange={() => setDeliveryType("office")}
-                    disabled={selectedCommune?.office_delivery_enabled === false}
+                    onChange={() => {
+                      setDeliveryType("office");
+                      if (
+                        selectedCommuneRaw &&
+                        !isCommuneAvailableForDeliveryType(
+                          selectedCommuneRaw,
+                          "office",
+                        )
+                      ) {
+                        setCommuneId("");
+                      }
+                    }}
+                    disabled={Boolean(selectedWilaya) && !hasOfficeDeliveryCommunes}
                   />
                   {t("checkout.officeDelivery")}
-                  {selectedCommune?.office_delivery_enabled === false && (
+                  {Boolean(selectedWilaya) && !hasOfficeDeliveryCommunes && (
                     <span className="text-xs text-neutral-400">
                       {t("checkout.notAvailable")}
                     </span>
@@ -568,7 +661,7 @@ export function Checkout() {
               !cartId ||
               shipping === null ||
               !wilayaId ||
-              !communeId
+              !effectiveCommuneId
             }
           >
             {createOrder.isPending

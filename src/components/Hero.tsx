@@ -59,6 +59,8 @@ interface HeroProps {
   backgroundImage?: string;
   /** Whether to show the decorative elements */
   showDecorative?: boolean;
+  /** Target element id for scroll indicator action */
+  scrollTargetId?: string;
 }
 
 export function Hero({
@@ -69,6 +71,7 @@ export function Hero({
   ctaHref = "/shop",
   backgroundImage,
   showDecorative = true,
+  scrollTargetId = "home-discover",
 }: HeroProps) {
   const { t } = useTranslation();
   const [contentReady, setContentReady] = useState(false);
@@ -87,6 +90,16 @@ export function Hero({
 
     return () => window.cancelAnimationFrame(rafId);
   }, []);
+
+  const scrollToNextSection = () => {
+    const target = document.getElementById(scrollTargetId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    window.scrollTo({ top: window.innerHeight * 0.9, behavior: "smooth" });
+  };
 
   return (
     <section className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
@@ -244,16 +257,18 @@ export function Hero({
         transition={{ delay: 1.5, duration: 0.8 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
-        <motion.div
+        <motion.button
+          type="button"
+          onClick={scrollToNextSection}
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-2"
+          className="flex flex-col items-center gap-2 focus:outline-none"
         >
           <span className="text-xs font-medium uppercase tracking-wider text-navy-400">
             {t("hero.scroll")}
           </span>
           <div className="h-12 w-px bg-linear-to-b from-cyan to-transparent" />
-        </motion.div>
+        </motion.button>
       </motion.div>
     </section>
   );
