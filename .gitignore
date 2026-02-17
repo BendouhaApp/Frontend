@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Keep Next.js admin logs route (folder name is "logs")
+!src/app/admin/(panel)/logs/
+!src/app/admin/(panel)/logs/page.tsx
+
 node_modules
 dist
 dist-ssr
