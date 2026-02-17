@@ -34,6 +34,7 @@ type Order = {
   customer_last_name?: string | null;
   customer_phone?: string | null;
   customer_wilaya?: string | null;
+  customer_commune?: string | null;
   delivery_type?: string | null;
   shipping_price?: string | number;
   total_price?: string | number;
@@ -47,6 +48,9 @@ type Order = {
     color: string;
   };
   shipping_zones?: {
+    display_name: string;
+  };
+  shipping_communes?: {
     display_name: string;
   };
   order_items: OrderItem[];
@@ -75,6 +79,7 @@ type DbOrder = {
   customer_last_name?: string | null;
   customer_phone?: string | null;
   customer_wilaya?: string | null;
+  customer_commune?: string | null;
   delivery_type?: string | null;
   shipping_price?: string | number;
   total_price?: string | number;
@@ -88,6 +93,9 @@ type DbOrder = {
     color: string;
   };
   shipping_zones?: {
+    display_name: string;
+  };
+  shipping_communes?: {
     display_name: string;
   };
   order_items: DbOrderItem[];
@@ -104,6 +112,21 @@ type OrdersDbResponse = {
 };
 
 const CURRENCY = "DZD";
+
+type ApiErrorShape = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== "object" || error === null) return fallback;
+  const maybeApiError = error as ApiErrorShape;
+  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
+};
 
 const tableRowVariants: Variants = {
   hidden: { opacity: 0, x: -10 },
@@ -180,8 +203,8 @@ export function AdminOrders() {
         "orders/statuses",
       );
       setStatuses(res.data.data ?? []);
-    } catch (e: any) {
-      console.error("Failed to load statuses:", e);
+    } catch (error: unknown) {
+      console.error("Failed to load statuses:", error);
     } finally {
       setLoadingStatuses(false);
     }
@@ -207,10 +230,8 @@ export function AdminOrders() {
       setItems(res.data.data ?? []);
       setTotalPages(res.data.meta.totalPages ?? 1);
       setTotal(res.data.meta.total ?? 0);
-    } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to load orders",
-      );
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Failed to load orders"));
     } finally {
       setLoading(false);
     }
@@ -223,10 +244,8 @@ export function AdminOrders() {
         `orders/admin/${id}`,
       );
       setSelectedOrder(res.data.data);
-    } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to load details",
-      );
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Failed to load details"));
       setSelectedOrderId(null);
     } finally {
       setLoadingDetails(false);
@@ -247,10 +266,8 @@ export function AdminOrders() {
       if (selectedOrderId === orderId) {
         await loadOrderDetails(orderId);
       }
-    } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to update status",
-      );
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Failed to update status"));
     } finally {
       setUpdating(false);
     }
@@ -681,6 +698,18 @@ export function AdminOrders() {
                               <span className="text-neutral-500">Wilaya</span>
                               <span className="font-medium">
                                 {normalizedSelectedOrder.customer_wilaya}
+                              </span>
+                            </div>
+                          )}
+                          {(normalizedSelectedOrder.customer_commune ||
+                            normalizedSelectedOrder.shipping_communes
+                              ?.display_name) && (
+                            <div className="flex justify-between">
+                              <span className="text-neutral-500">Commune</span>
+                              <span className="font-medium">
+                                {normalizedSelectedOrder.customer_commune ||
+                                  normalizedSelectedOrder.shipping_communes
+                                    ?.display_name}
                               </span>
                             </div>
                           )}

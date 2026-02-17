@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/lib/router";
 import { useTranslation } from "react-i18next";
 import { useGet } from "@/hooks/useGet";
@@ -26,6 +26,60 @@ type OrderSummary = {
   pricing?: CreateOrderResponse["pricing"];
 };
 
+const CHECKOUT_DRAFT_STORAGE_KEY = "bendouha_checkout_draft_v1";
+
+type CheckoutDraft = {
+  phone: string;
+  firstName: string;
+  lastName: string;
+  wilayaId: number | "";
+  communeId: number | "";
+  deliveryType: "home" | "office";
+};
+
+const EMPTY_CHECKOUT_DRAFT: CheckoutDraft = {
+  phone: "",
+  firstName: "",
+  lastName: "",
+  wilayaId: "",
+  communeId: "",
+  deliveryType: "home",
+};
+
+const parseDraftId = (value: unknown): number | "" => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : "";
+};
+
+const readCheckoutDraft = (): CheckoutDraft => {
+  if (typeof window === "undefined") {
+    return { ...EMPTY_CHECKOUT_DRAFT };
+  }
+
+  const raw = window.localStorage.getItem(CHECKOUT_DRAFT_STORAGE_KEY);
+  if (!raw) {
+    return { ...EMPTY_CHECKOUT_DRAFT };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<CheckoutDraft>;
+    return {
+      phone: typeof parsed.phone === "string" ? parsed.phone : "",
+      firstName: typeof parsed.firstName === "string" ? parsed.firstName : "",
+      lastName: typeof parsed.lastName === "string" ? parsed.lastName : "",
+      wilayaId: parseDraftId(parsed.wilayaId),
+      communeId: parseDraftId(parsed.communeId),
+      deliveryType:
+        parsed.deliveryType === "home" || parsed.deliveryType === "office"
+          ? parsed.deliveryType
+          : "home",
+    };
+  } catch {
+    window.localStorage.removeItem(CHECKOUT_DRAFT_STORAGE_KEY);
+    return { ...EMPTY_CHECKOUT_DRAFT };
+  }
+};
+
 export function Checkout() {
   const { t } = useTranslation();
   const { cart, cartId, isLoading: isCartLoading, refetch } = useCart();
@@ -41,13 +95,16 @@ export function Checkout() {
   const wilayas = useMemo(() => wilayaResponse?.data ?? [], [wilayaResponse?.data]);
   const items = mapCartItems(cart?.card_items ?? []);
   const subtotal = calcSubtotal(items);
+  const initialDraft = useMemo(() => readCheckoutDraft(), []);
 
-  const [phone, setPhone] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [wilayaId, setWilayaId] = useState<number | "">("");
-  const [communeId, setCommuneId] = useState<number | "">("");
-  const [deliveryType, setDeliveryType] = useState<"home" | "office">("home");
+  const [phone, setPhone] = useState(initialDraft.phone);
+  const [firstName, setFirstName] = useState(initialDraft.firstName);
+  const [lastName, setLastName] = useState(initialDraft.lastName);
+  const [wilayaId, setWilayaId] = useState<number | "">(initialDraft.wilayaId);
+  const [communeId, setCommuneId] = useState<number | "">(initialDraft.communeId);
+  const [deliveryType, setDeliveryType] = useState<"home" | "office">(
+    initialDraft.deliveryType,
+  );
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
 
   const selectedWilaya = useMemo(
@@ -60,17 +117,6 @@ export function Checkout() {
       selectedWilaya?.communes?.find((commune) => commune.id === communeId),
     [selectedWilaya, communeId],
   );
-
-  const shipping = useMemo(() => {
-    if (!selectedWilaya || !selectedCommune) return null;
-    if (selectedWilaya.free_shipping || selectedCommune.free_shipping) return 0;
-    if (deliveryType === "office") {
-      if (selectedCommune.office_delivery_enabled === false) return null;
-      return Number(selectedCommune.office_delivery_price ?? 0);
-    }
-    if (selectedCommune.home_delivery_enabled === false) return null;
-    return Number(selectedCommune.home_delivery_price ?? 0);
-  }, [selectedWilaya, selectedCommune, deliveryType]);
 
   const resolveDeliveryType = (
     commune:
@@ -87,6 +133,60 @@ export function Checkout() {
     }
     return current;
   };
+
+  const resolvedDeliveryType = useMemo(
+    () => resolveDeliveryType(selectedCommune, deliveryType),
+    [selectedCommune, deliveryType],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hasDraftData =
+      phone.trim().length > 0 ||
+      firstName.trim().length > 0 ||
+      lastName.trim().length > 0 ||
+      wilayaId !== "" ||
+      communeId !== "" ||
+      resolvedDeliveryType !== "home";
+
+    if (!hasDraftData) {
+      window.localStorage.removeItem(CHECKOUT_DRAFT_STORAGE_KEY);
+      return;
+    }
+
+    const payload: CheckoutDraft = {
+      phone,
+      firstName,
+      lastName,
+      wilayaId,
+      communeId,
+      deliveryType: resolvedDeliveryType,
+    };
+
+    window.localStorage.setItem(
+      CHECKOUT_DRAFT_STORAGE_KEY,
+      JSON.stringify(payload),
+    );
+  }, [
+    phone,
+    firstName,
+    lastName,
+    wilayaId,
+    communeId,
+    resolvedDeliveryType,
+  ]);
+
+  const shipping = useMemo(() => {
+    if (!selectedWilaya || !selectedCommune) return null;
+    if (selectedWilaya.free_shipping || selectedCommune.free_shipping) return 0;
+    if (resolvedDeliveryType === "office") {
+      if (selectedCommune.office_delivery_enabled === false) return null;
+      return Number(selectedCommune.office_delivery_price ?? 0);
+    }
+    if (selectedCommune.home_delivery_enabled === false) return null;
+    return Number(selectedCommune.home_delivery_price ?? 0);
+  }, [selectedWilaya, selectedCommune, resolvedDeliveryType]);
 
   const total = subtotal + (shipping ?? 0);
 
@@ -153,7 +253,7 @@ export function Checkout() {
       customer_phone: phone.trim(),
       wilaya_id: Number(wilayaId),
       commune_id: Number(communeId),
-      delivery_type: deliveryType,
+      delivery_type: resolvedDeliveryType,
     });
   };
 
@@ -383,8 +483,8 @@ export function Checkout() {
                   const nextCommune = selectedWilaya?.communes?.find(
                     (commune) => commune.id === nextId,
                   );
-                  setDeliveryType((prev) =>
-                    resolveDeliveryType(nextCommune, prev),
+                  setDeliveryType(
+                    resolveDeliveryType(nextCommune, resolvedDeliveryType),
                   );
                 }}
                 className="mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -410,7 +510,7 @@ export function Checkout() {
                     type="radio"
                     name="deliveryType"
                     value="home"
-                    checked={deliveryType === "home"}
+                    checked={resolvedDeliveryType === "home"}
                     onChange={() => setDeliveryType("home")}
                     disabled={selectedCommune?.home_delivery_enabled === false}
                   />
@@ -426,7 +526,7 @@ export function Checkout() {
                     type="radio"
                     name="deliveryType"
                     value="office"
-                    checked={deliveryType === "office"}
+                    checked={resolvedDeliveryType === "office"}
                     onChange={() => setDeliveryType("office")}
                     disabled={selectedCommune?.office_delivery_enabled === false}
                   />

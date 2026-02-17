@@ -45,6 +45,21 @@ type ShippingZone = {
 
 const asDzd = (value?: number | null) => `${Number(value ?? 0).toFixed(2)} DZD`;
 
+type ApiErrorShape = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== "object" || error === null) return fallback;
+  const maybeApiError = error as ApiErrorShape;
+  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
+};
+
 function ZoneForm({
   zone,
   loading,
@@ -58,26 +73,14 @@ function ZoneForm({
 }) {
   const [name, setName] = useState(zone?.name ?? "");
   const [displayName, setDisplayName] = useState(zone?.display_name ?? "");
-  const [defaultRate, setDefaultRate] = useState(zone?.default_rate?.toString() ?? "700");
   const [active, setActive] = useState(zone?.active ?? true);
-  const [freeShipping, setFreeShipping] = useState(zone?.free_shipping ?? false);
-  const [homeEnabled, setHomeEnabled] = useState(zone?.home_delivery_enabled ?? true);
-  const [homePrice, setHomePrice] = useState(zone?.home_delivery_price?.toString() ?? "0");
-  const [officeEnabled, setOfficeEnabled] = useState(zone?.office_delivery_enabled ?? true);
-  const [officePrice, setOfficePrice] = useState(zone?.office_delivery_price?.toString() ?? "0");
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onSubmit({
       name: name.trim(),
       display_name: displayName.trim(),
-      default_rate: Number(defaultRate || 0),
       active,
-      free_shipping: freeShipping,
-      home_delivery_enabled: homeEnabled,
-      home_delivery_price: homeEnabled ? Number(homePrice || 0) : 0,
-      office_delivery_enabled: officeEnabled,
-      office_delivery_price: officeEnabled ? Number(officePrice || 0) : 0,
     });
   };
 
@@ -85,17 +88,10 @@ function ZoneForm({
     <form onSubmit={submit} className="space-y-3">
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom technique (alger)" className="w-full rounded-lg border px-3 py-2 text-sm" required />
       <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Nom affiche (Alger)" className="w-full rounded-lg border px-3 py-2 text-sm" required />
-      <input type="number" min="0" step="0.01" value={defaultRate} onChange={(e) => setDefaultRate(e.target.value)} placeholder="Tarif par defaut" className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <label className="flex items-center justify-between rounded-lg border px-3 py-2">Actif <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /></label>
-        <label className="flex items-center justify-between rounded-lg border px-3 py-2">Gratuite <input type="checkbox" checked={freeShipping} onChange={(e) => setFreeShipping(e.target.checked)} /></label>
-        <label className="flex items-center justify-between rounded-lg border px-3 py-2">Domicile <input type="checkbox" checked={homeEnabled} onChange={(e) => setHomeEnabled(e.target.checked)} /></label>
-        <label className="flex items-center justify-between rounded-lg border px-3 py-2">Bureau <input type="checkbox" checked={officeEnabled} onChange={(e) => setOfficeEnabled(e.target.checked)} /></label>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <input type="number" min="0" step="0.01" value={homePrice} onChange={(e) => setHomePrice(e.target.value)} disabled={!homeEnabled} placeholder="Prix domicile" className="w-full rounded-lg border px-3 py-2 text-sm" />
-        <input type="number" min="0" step="0.01" value={officePrice} onChange={(e) => setOfficePrice(e.target.value)} disabled={!officeEnabled} placeholder="Prix bureau" className="w-full rounded-lg border px-3 py-2 text-sm" />
-      </div>
+      <label className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">Actif <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /></label>
+      <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+        Le pricing de livraison est gere au niveau des communes.
+      </p>
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>Annuler</Button>
         <Button type="submit" className="flex-1" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{zone ? "Mettre a jour" : "Creer"}</Button>
@@ -186,8 +182,8 @@ export default function AdminWilaya() {
     try {
       const res = await api.get<{ data: ShippingZone[] }>("admin/shipping-zones");
       setZones(res.data.data ?? []);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Impossible de charger les wilayas");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Impossible de charger les wilayas"));
     } finally {
       setLoading(false);
     }
@@ -199,8 +195,8 @@ export default function AdminWilaya() {
     try {
       const res = await api.get<{ data: ShippingCommune[] }>(`admin/shipping-zones/${zoneId}/communes`);
       setCommunes(res.data.data ?? []);
-    } catch (e: any) {
-      setCommunesError(e?.response?.data?.message || e?.message || "Impossible de charger les communes");
+    } catch (error: unknown) {
+      setCommunesError(getErrorMessage(error, "Impossible de charger les communes"));
       setCommunes([]);
     } finally {
       setCommunesLoading(false);
@@ -223,9 +219,9 @@ export default function AdminWilaya() {
   const stats = useMemo(() => {
     const total = zones.length;
     const active = zones.filter((z) => z.active).length;
-    const home = zones.filter((z) => z.home_delivery_enabled).length;
+    const zonesWithCommunes = zones.filter((z) => (z.shipping_communes?.length ?? 0) > 0).length;
     const communeCount = zones.reduce((sum, z) => sum + (z.shipping_communes?.length ?? 0), 0);
-    return { total, active, home, communeCount };
+    return { total, active, zonesWithCommunes, communeCount };
   }, [zones]);
 
   const saveZone = async (payload: Record<string, unknown>) => {
@@ -237,8 +233,8 @@ export default function AdminWilaya() {
       setShowZoneModal(false);
       setEditingZone(null);
       await loadZones();
-    } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Impossible d'enregistrer la wilaya");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Impossible d'enregistrer la wilaya"));
     } finally {
       setSaving(false);
     }
@@ -254,8 +250,8 @@ export default function AdminWilaya() {
       setShowCommuneForm(false);
       setEditingCommune(null);
       await Promise.all([loadCommunes(selectedZone.id), loadZones()]);
-    } catch (e: any) {
-      setCommunesError(e?.response?.data?.message || e?.message || "Impossible d'enregistrer la commune");
+    } catch (error: unknown) {
+      setCommunesError(getErrorMessage(error, "Impossible d'enregistrer la commune"));
     } finally {
       setCommunesSaving(false);
     }
@@ -278,7 +274,7 @@ export default function AdminWilaya() {
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg bg-blue-100 px-4 py-3"><p className="text-xs text-blue-700">Wilayas</p><p className="text-xl font-semibold">{stats.total}</p></div>
           <div className="rounded-lg bg-emerald-100 px-4 py-3"><p className="text-xs text-emerald-700">Actives</p><p className="text-xl font-semibold">{stats.active}</p></div>
-          <div className="rounded-lg bg-purple-100 px-4 py-3"><p className="text-xs text-purple-700">Domicile</p><p className="text-xl font-semibold">{stats.home}</p></div>
+          <div className="rounded-lg bg-purple-100 px-4 py-3"><p className="text-xs text-purple-700">Wilayas avec communes</p><p className="text-xl font-semibold">{stats.zonesWithCommunes}</p></div>
           <div className="rounded-lg bg-orange-100 px-4 py-3"><p className="text-xs text-orange-700">Communes</p><p className="text-xl font-semibold">{stats.communeCount}</p></div>
         </div>
 
@@ -297,15 +293,13 @@ export default function AdminWilaya() {
           <div className="overflow-hidden rounded-lg border bg-white">
             <div className="overflow-x-auto">
               <table className="min-w-[980px] w-full">
-                <thead className="bg-neutral-50"><tr className="text-left text-xs uppercase text-neutral-600"><th className="px-4 py-3">Wilaya</th><th className="px-4 py-3">Domicile</th><th className="px-4 py-3">Bureau</th><th className="px-4 py-3">Tarif</th><th className="px-4 py-3">Communes</th><th className="px-4 py-3">Statut</th><th className="px-4 py-3 text-right">Actions</th></tr></thead>
+                <thead className="bg-neutral-50"><tr className="text-left text-xs uppercase text-neutral-600"><th className="px-4 py-3">Wilaya</th><th className="px-4 py-3">Communes</th><th className="px-4 py-3">Pricing</th><th className="px-4 py-3">Statut</th><th className="px-4 py-3 text-right">Actions</th></tr></thead>
                 <tbody className="divide-y">
                   {filtered.map((zone) => (
                     <tr key={zone.id}>
                       <td className="px-4 py-3"><p className="font-semibold">{zone.display_name}</p><p className="text-xs text-neutral-500">{zone.name}</p></td>
-                      <td className="px-4 py-3">{zone.home_delivery_enabled ? asDzd(zone.home_delivery_price) : "Desactivee"}</td>
-                      <td className="px-4 py-3">{zone.office_delivery_enabled ? asDzd(zone.office_delivery_price) : "Desactivee"}</td>
-                      <td className="px-4 py-3">{asDzd(zone.default_rate)}</td>
                       <td className="px-4 py-3"><Button variant="outline" size="sm" onClick={async () => { setSelectedZone(zone); setEditingCommune(null); setShowCommuneForm(false); await loadCommunes(zone.id); }}>{zone.shipping_communes?.length ?? 0} communes</Button></td>
+                      <td className="px-4 py-3 text-sm text-neutral-600">Au niveau commune</td>
                       <td className="px-4 py-3"><span className={cn("rounded-full px-2 py-0.5 text-xs", zone.active ? "bg-emerald-100 text-emerald-700" : "bg-neutral-100 text-neutral-600")}>{zone.active ? "Actif" : "Inactif"}</span></td>
                       <td className="px-4 py-3"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" onClick={() => { setEditingZone(zone); setShowZoneModal(true); }}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={async () => { await api.patch(`admin/shipping-zones/${zone.id}`, { active: !zone.active }); await loadZones(); }}><Check className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="text-red-600" onClick={() => setDeleteZone(zone)}><Trash2 className="h-4 w-4" /></Button></div></td>
                     </tr>
