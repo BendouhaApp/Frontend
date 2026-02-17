@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@/lib/router";
 import { Button } from "@/components/ui/button";
+import { DURATION, EASE } from "@/lib/motion";
 
 // Animation variants for staggered entrance
 const containerVariants: Variants = {
@@ -67,6 +71,7 @@ export function Hero({
   showDecorative = true,
 }: HeroProps) {
   const { t } = useTranslation();
+  const [contentReady, setContentReady] = useState(false);
 
   // Use translations as defaults
   const displayHeadline = headline ?? t("hero.headline");
@@ -74,6 +79,14 @@ export function Hero({
   const displaySubtitle = subtitle ?? t("hero.subtitle");
   const displayCta = ctaText ?? t("hero.cta");
   const isExternalCta = /^https?:\/\//.test(ctaHref);
+
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      setContentReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
 
   return (
     <section className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
@@ -131,15 +144,12 @@ export function Hero({
       {/* Content */}
       <div className="relative z-10 flex min-h-[calc(100vh-5rem)] items-center">
         <div className="container mx-auto px-4 md:px-6">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl">
             {/* Eyebrow/Label */}
             <motion.span
-              variants={itemVariants}
+              initial={{ opacity: 0 }}
+              animate={contentReady ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ delay: 0.2 }}
               className="my-6 inline-block text-sm font-medium uppercase tracking-widest text-gold"
             >
               {t("hero.eyebrow")}
@@ -147,24 +157,35 @@ export function Hero({
 
             {/* Main Headline */}
             <motion.h1
-              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.3, duration: DURATION.slow, ease: EASE.out }}
               className="font-display text-5xl font-light leading-[1.1] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
             >
               {displayHeadline}
               <br />
-              <span className="font-normal text-cyan">{displayHighlight}</span>
+              <span className="font-normal text-cyan">
+                {displayHighlight}
+              </span>
             </motion.h1>
 
             {/* Subtitle */}
             <motion.p
-              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.4, duration: DURATION.slow, ease: EASE.out }}
               className="mt-8 max-w-xl text-lg leading-relaxed text-navy-200 md:text-xl"
             >
               {displaySubtitle}
             </motion.p>
 
             {/* CTA Button */}
-            <motion.div variants={itemVariants} className="mt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.5, duration: DURATION.slow, ease: EASE.out }}
+              className="mt-10"
+            >
               <Button
                 size="lg"
                 className="group h-14 rounded-full bg-primary px-8 text-base text-white hover:bg-primary-600"
@@ -186,7 +207,9 @@ export function Hero({
 
             {/* Optional: Trust indicators */}
             <motion.div
-              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.6, duration: DURATION.slow, ease: EASE.out }}
               className="mt-16 flex items-center gap-8 border-t border-navy-600 pt-8"
             >
               <div>
@@ -210,7 +233,7 @@ export function Hero({
                 </p>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

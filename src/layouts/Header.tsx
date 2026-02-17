@@ -52,10 +52,7 @@ export function Header() {
   }, []);
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+    <header
       role="banner"
       className={cn(
         "sticky top-0 z-50 w-full border-b transition-all duration-300",
@@ -163,7 +160,7 @@ export function Header() {
           </div>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }
 
