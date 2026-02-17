@@ -9,7 +9,8 @@ import { Footer } from "./Footer";
 export function MainLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const reduceMotion = useReducedMotion();
-  const pageKey = `${location.pathname}${location.search}`;
+  // Keep transitions on path changes only; query updates should not remount the page.
+  const pageKey = location.pathname;
 
   return (
     <div className="flex min-h-screen flex-col">

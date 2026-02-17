@@ -44,6 +44,7 @@ const sortOptionIds = [
 
 const ITEMS_PER_PAGE = 9;
 const WISHLIST_STORAGE_KEY = "bendouha_wishlist";
+const SEARCH_DEBOUNCE_MS = 300;
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -69,13 +70,6 @@ function toNumber(value: unknown, fallback = 0): number {
   const numeric =
     typeof value === "number" && Number.isFinite(value) ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
-}
-
-function normalizeForSearch(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 }
 
 // Helper to get sort label
@@ -465,7 +459,8 @@ export function Shop() {
 
   const [page, setPage] = useState(1);
   const [selectedSort, setSelectedSort] = useState("featured");
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [onlyInStock, setOnlyInStock] = useState(
     searchParams.get("stock") === "in",
   );
@@ -563,7 +558,12 @@ export function Shop() {
   }, [selectedCategory, flatCategories]);
 
   const setCategoryParam = (id?: string | null) => {
-    const next = new URLSearchParams(searchParams);
+    const currentSearch =
+      typeof window === "undefined"
+        ? searchParams.toString()
+        : window.location.search;
+    const next = new URLSearchParams(currentSearch);
+    next.delete("q");
     if (!id || id === "all") {
       next.delete("category");
       next.delete("collection");
@@ -574,33 +574,46 @@ export function Shop() {
     setSearchParams(next);
   };
 
+  // Debounce search input before hitting backend, without syncing URL on each
+  // keystroke (which would trigger Next.js `?_rsc=...` navigation).
   useEffect(() => {
-    const next = new URLSearchParams(searchParams);
-    if (searchQuery.trim()) {
-      next.set("q", searchQuery.trim());
-    } else {
-      next.delete("q");
-    }
+    if (typeof window === "undefined") return;
 
-    if (onlyInStock) {
-      next.set("stock", "in");
-    } else {
-      next.delete("stock");
-    }
+    const next = new URLSearchParams(window.location.search);
+    if (!next.has("q")) return;
 
-    if (next.toString() !== searchParams.toString()) {
-      setSearchParams(next, { replace: true });
-    }
-  }, [searchQuery, onlyInStock, searchParams, setSearchParams]);
+    next.delete("q");
+    const nextQuery = next.toString();
+    const nextUrl = nextQuery
+      ? `${window.location.pathname}?${nextQuery}${window.location.hash}`
+      : `${window.location.pathname}${window.location.hash}`;
+
+    window.history.replaceState(window.history.state, "", nextUrl);
+  }, []);
 
   useEffect(() => {
-    if (searchParams.get("focus") !== "search") return;
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const next = new URLSearchParams(window.location.search);
+    if (next.get("focus") !== "search") return;
 
     searchInputRef.current?.focus();
-    const next = new URLSearchParams(searchParams);
     next.delete("focus");
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+    const nextQuery = next.toString();
+    const nextUrl = nextQuery
+      ? `${window.location.pathname}?${nextQuery}${window.location.hash}`
+      : `${window.location.pathname}${window.location.hash}`;
+
+    window.history.replaceState(window.history.state, "", nextUrl);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -624,7 +637,7 @@ export function Shop() {
 
   useEffect(() => {
     setPage(1);
-  }, [activeCategoryId]);
+  }, [activeCategoryId, debouncedSearchQuery]);
 
   const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
     {
@@ -633,6 +646,7 @@ export function Shop() {
         page,
         limit: ITEMS_PER_PAGE,
         ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
+        ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
       },
       options: {
         staleTime: 1000 * 60 * 5,
@@ -640,32 +654,14 @@ export function Shop() {
     },
   );
 
-  const products = data?.data ?? [];
+  const products = useMemo(() => data?.data ?? [], [data?.data]);
   const totalPages = data?.meta?.totalPages ?? 1;
   const totalItems = data?.meta?.total ?? 0;
-  const filteredProducts = useMemo(() => {
-    const query = normalizeForSearch(searchQuery.trim());
-    const sorted = [...products];
-
-    const withFilters = sorted.filter((product) => {
-      if (onlyInStock && product.inStock === false) {
-        return false;
-      }
-
-      if (!query) return true;
-
-      const searchable = [
-        product.name,
-        product.category,
-        ...(product.categories?.map((item) => item.category_name) ?? []),
-      ]
-        .filter(Boolean)
-        .map((value) => normalizeForSearch(String(value)))
-        .join(" ");
-
-      return searchable.includes(query);
-    });
-
+  const displayedProducts = useMemo(() => {
+    const withStockFilter = onlyInStock
+      ? products.filter((product) => product.inStock !== false)
+      : products;
+    const next = [...withStockFilter];
     const byDateDesc = (a: Product, b: Product) => {
       const aDate = Date.parse(
         (a as Product & { created_at?: string }).created_at || "",
@@ -681,7 +677,7 @@ export function Shop() {
       });
     };
 
-    withFilters.sort((a, b) => {
+    next.sort((a, b) => {
       if (selectedSort === "price-low") {
         return toNumber(a.price) - toNumber(b.price);
       }
@@ -701,8 +697,8 @@ export function Shop() {
       return 0;
     });
 
-    return withFilters;
-  }, [products, onlyInStock, searchQuery, selectedSort]);
+    return next;
+  }, [products, onlyInStock, selectedSort]);
   const [pageInput, setPageInput] = useState<string>("1");
 
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
@@ -1150,7 +1146,7 @@ export function Shop() {
             {/* Products Grid */}
             {!isLoading && !isError && (
               <>
-                {filteredProducts.length === 0 ? (
+                {displayedProducts.length === 0 ? (
                   <div className="py-16 text-center">
                     <p className="text-navy-600">
                       {t("products.noProductsFound")}
@@ -1164,7 +1160,7 @@ export function Shop() {
                     animate="visible"
                     className={cn("grid gap-6", gridClass)}
                   >
-                    {filteredProducts.map((product) => (
+                    {displayedProducts.map((product) => (
                       <motion.div key={product.id} variants={itemVariants}>
                         <ProductCard
                           product={product}
