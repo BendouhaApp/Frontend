@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Heart, Eye, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -544,3 +544,5 @@ function DetailedProductCard({
 }
 
 export { CompactProductCard, DetailedProductCard };
+
+

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ShoppingBag, Minus, Plus, X, ArrowRight } from "lucide-react";
@@ -33,6 +33,8 @@ function CartItemRow({
   isUpdating?: boolean;
   currency: string;
 }) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       layout
@@ -66,10 +68,14 @@ function CartItemRow({
           </Link>
           <div className="mt-1 space-y-0.5">
             {item.color && (
-              <p className="text-xs text-neutral-500">Color: {item.color}</p>
+              <p className="text-xs text-neutral-500">
+                {t("cartDrawer.color")}: {item.color}
+              </p>
             )}
             {item.size && (
-              <p className="text-xs text-neutral-500">Size: {item.size}</p>
+              <p className="text-xs text-neutral-500">
+                {t("cartDrawer.size")}: {item.size}
+              </p>
             )}
           </div>
         </div>
@@ -108,7 +114,7 @@ function CartItemRow({
         onClick={() => onRemove(item.id)}
         disabled={isUpdating}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 disabled:cursor-not-allowed"
-        aria-label="Remove item"
+        aria-label={t("cartDrawer.removeItem")}
       >
         <X className="h-4 w-4" />
       </button>
@@ -151,10 +157,10 @@ function EmptyCart() {
         <ShoppingBag className="h-10 w-10 text-neutral-400" />
       </div>
       <h3 className="mb-2 text-lg font-medium text-neutral-900">
-        Your cart is empty
+        {t("cartDrawer.emptyTitle")}
       </h3>
       <p className="mb-6 max-w-50 text-sm text-neutral-500">
-        Looks like you haven't added any items to your cart yet.
+        {t("cartDrawer.emptyDescription")}
       </p>
       <Button asChild className="rounded-full">
         <Link to="/shop">
@@ -264,7 +270,10 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
             {t("common.cart")}
             {itemCount > 0 && (
               <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-sm font-medium text-neutral-600">
-                {itemCount} {itemCount === 1 ? "item" : t("common.items")}
+                {itemCount}{" "}
+                {itemCount === 1
+                  ? t("cartDrawer.itemSingular")
+                  : t("common.items")}
               </span>
             )}
           </SheetTitle>
@@ -276,7 +285,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
         {/* Error State */}
         {isError && (
           <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-            <p className="text-neutral-600">Failed to load cart</p>
+            <p className="text-neutral-600">{t("cartDrawer.failedToLoad")}</p>
           </div>
         )}
 
@@ -327,7 +336,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                         {t("common.shipping")}
                       </span>
                       <span className="font-medium text-neutral-900">
-                        Calculated at checkout
+                        {t("cartDrawer.shippingAtCheckout")}
                       </span>
                     </div>
                     <div className="border-t border-neutral-200 pt-3">
@@ -351,7 +360,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                       asChild
                     >
                       <Link to="/checkout">
-                        Checkout
+                        {t("cartDrawer.checkout")}
                         <ArrowRight className="ms-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -362,7 +371,7 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                       asChild
                       onClick={() => setIsOpen(false)}
                     >
-                      <Link to="/shop">Continue Shopping</Link>
+                      <Link to="/shop">{t("cartDrawer.continueShopping")}</Link>
                     </Button>
                   </div>
                 </div>
@@ -374,3 +383,5 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
     </Sheet>
   );
 }
+
+

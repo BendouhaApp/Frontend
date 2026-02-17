@@ -1,4 +1,4 @@
-﻿{
+{
   "common": {
     "shopNow": "Acheter maintenant",
     "exploreCollection": "Explorer la collection",
@@ -129,6 +129,45 @@
     "addToCartError": "Erreur lors de l'ajout au panier",
     "notReady": "Panier indisponible. Veuillez réessayer."
   },
+  "cartDrawer": {
+    "color": "Couleur",
+    "size": "Taille",
+    "removeItem": "Retirer l'article",
+    "emptyTitle": "Votre panier est vide",
+    "emptyDescription": "Ajoutez des produits a votre panier pour continuer.",
+    "itemSingular": "article",
+    "failedToLoad": "Impossible de charger le panier",
+    "shippingAtCheckout": "Calcule au paiement",
+    "checkout": "Passer au paiement",
+    "continueShopping": "Continuer vos achats"
+  },
+  "productDetail": {
+    "size": "Taille",
+    "sizeGuide": "Guide des tailles",
+    "color": "Couleur",
+    "quantity": "Quantite",
+    "availableInStock": "{{count}} en stock",
+    "fastShipping": "Livraison rapide",
+    "warranty": "Garantie",
+    "returns": "Retours faciles",
+    "errorLoading": "Erreur de chargement",
+    "notFound": "Produit introuvable",
+    "notFoundDescription": "Le produit demande n'existe pas ou n'est plus disponible.",
+    "backToShop": "Retour a la boutique",
+    "cartNotReady": "Panier indisponible. Veuillez reessayer.",
+    "reviews": "{{count}} avis",
+    "adding": "Ajout...",
+    "dimensions": "Dimensions",
+    "materials": "Materiaux",
+    "careInstructions": "Conseils d'entretien"
+  },
+  "shopPage": {
+    "gridView": "Vue grille",
+    "largeGridView": "Vue grande grille",
+    "listView": "Vue liste",
+    "goTo": "Aller a",
+    "goToPage": "Aller a la page"
+  },
   "checkout": {
     "loading": "Chargement du paiement...",
     "cartEmptyTitle": "Votre panier est vide",
@@ -149,6 +188,8 @@
     "phonePlaceholder": "+213...",
     "wilaya": "Wilaya",
     "selectWilaya": "Sélectionnez une wilaya",
+    "commune": "Commune",
+    "selectCommune": "Sélectionnez une commune",
     "deliveryType": "Type de livraison",
     "homeDelivery": "Livraison à domicile",
     "officeDelivery": "Livraison au bureau",
@@ -161,9 +202,11 @@
     "requiredNameError": "Le prénom et le nom sont obligatoires.",
     "requiredPhoneError": "Le numéro de téléphone est obligatoire.",
     "requiredWilayaError": "Veuillez sélectionner une wilaya.",
+    "requiredCommuneError": "Veuillez sélectionner une commune.",
     "deliveryUnavailableError": "Le type de livraison sélectionné n'est pas disponible.",
     "orderPlacedSuccess": "Commande effectuée avec succès !",
-    "orderPlacedError": "Échec de la commande"
+    "orderPlacedError": "Échec de la commande",
+    "selectCommuneForShipping": "Sélectionnez une commune"
   },
   "footer": {
     "brandDescription": "Une expérience e-commerce premium, créée avec une attention aux détails.",
@@ -219,7 +262,9 @@
     "exclusiveBadge": "Exclusif",
     "title": "Simulateur d’éclairage",
     "subtitle": "Testez vos produits d’éclairage dans des scènes 3D et adaptez la lumière à chaque type de pièce.",
+    "lightingLab": "Laboratoire lumiere",
     "roomSection": "Pièce",
+    "room": "Piece",
     "roomTypeLabel": "Type de pièce",
     "roomFallback": "Modèles hors ligne chargés.",
     "dimension": {
@@ -236,6 +281,11 @@
     "noProducts": "Aucun produit compatible",
     "productFilterNote": "Filtré sur les produits avec CCT, lumen, CRI, puissance et angle.",
     "productFallback": "Ajoutez les spécifications d’éclairage dans le back-office pour activer la simulation.",
+    "spec": {
+      "lumen": "Lumen",
+      "power": "Puissance",
+      "angle": "Angle"
+    },
     "resultsSection": "Résultats",
     "resultsTitle": "Résultats estimés",
     "resultLux": "Éclairement moyen",
@@ -257,4 +307,3 @@
     "simulationLoading": "Calcul en cours..."
   }
 }
-

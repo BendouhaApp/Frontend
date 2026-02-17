@@ -1,6 +1,6 @@
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/router'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
@@ -170,8 +170,8 @@ export function FeaturedProducts({
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
     path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
-    successMessage: 'Produit ajouté au panier',
-    errorMessage: "Erreur lors de l'ajout au panier",
+    successMessage: t('cart.addedToCart'),
+    errorMessage: t('cart.addToCartError'),
   })
 
   const handleAddToCart = (product: Product) => {
@@ -212,8 +212,8 @@ export function NewArrivals() {
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
     path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
-    successMessage: 'Produit ajouté au panier',
-    errorMessage: "Erreur lors de l'ajout au panier",
+    successMessage: t('cart.addedToCart'),
+    errorMessage: t('cart.addToCartError'),
   })
 
   const handleAddToCart = (product: Product) => {
@@ -258,8 +258,8 @@ export function SaleProducts() {
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
     path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
-    successMessage: 'Produit ajouté au panier',
-    errorMessage: "Erreur lors de l'ajout au panier",
+    successMessage: t('cart.addedToCart'),
+    errorMessage: t('cart.addToCartError'),
   })
 
   const handleAddToCart = (product: Product) => {
@@ -330,8 +330,8 @@ export function ProductCarousel({
   const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
     path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
     method: 'post',
-    successMessage: 'Produit ajouté au panier',
-    errorMessage: "Erreur lors de l'ajout au panier",
+    successMessage: t('cart.addedToCart'),
+    errorMessage: t('cart.addToCartError'),
   })
 
   const handleAddToCart = (product: Product) => {
@@ -402,3 +402,5 @@ export function ProductCarousel({
     </section>
   )
 }
+
+

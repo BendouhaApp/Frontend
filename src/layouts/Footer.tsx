@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, Phone, Mail, Instagram, Facebook } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
@@ -207,3 +207,5 @@ export function Footer() {
     </footer>
   );
 }
+
+

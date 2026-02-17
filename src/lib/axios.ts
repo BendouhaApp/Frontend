@@ -1,17 +1,21 @@
 import axios, {
-  AxiosError,
+  type AxiosError,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
   withCredentials: false,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (typeof window === "undefined") {
+      return config;
+    }
+
     const token = localStorage.getItem("access_token");
 
     if (token) {
@@ -38,21 +42,30 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("refresh_token")
+          : null;
 
       if (!refreshToken) {
-        localStorage.clear();
-        window.location.href = "/admin/login";
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/admin/login";
+        }
         return Promise.reject(error);
       }
 
       try {
+        const apiBase =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/admin/auth/refresh`,
+          `${apiBase}/admin/auth/refresh`,
           { refresh_token: refreshToken }
         );
 
-        localStorage.setItem("access_token", res.data.access_token);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("access_token", res.data.access_token);
+        }
 
         originalRequest.headers.set(
           "Authorization",
@@ -61,8 +74,10 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch {
-        localStorage.clear();
-        window.location.href = "/admin/login";
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/admin/login";
+        }
         return Promise.reject(error);
       }
     }
@@ -72,3 +87,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

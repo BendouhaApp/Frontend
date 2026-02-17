@@ -275,6 +275,20 @@ export interface Wilaya {
   home_delivery_price?: number
   office_delivery_enabled?: boolean
   office_delivery_price?: number
+  communes?: ShippingCommune[]
+}
+
+export interface ShippingCommune {
+  id: number
+  shipping_zone_id: number
+  name: string
+  display_name: string
+  active: boolean
+  free_shipping: boolean
+  home_delivery_enabled?: boolean
+  home_delivery_price?: number
+  office_delivery_enabled?: boolean
+  office_delivery_price?: number
 }
 
 // =========================
@@ -294,8 +308,10 @@ export interface Order {
   customer_last_name?: string | null
   customer_phone?: string | null
   customer_wilaya?: string | null
+  customer_commune?: string | null
   delivery_type?: string | null
   shipping_zone_id?: number | null
+  shipping_commune_id?: number | null
   shipping_price?: number | string | null
   total_price?: number | string | null
   created_at: string
@@ -307,6 +323,7 @@ export interface CreateOrderPayload {
   customer_last_name: string
   customer_phone: string
   wilaya_id: number
+  commune_id: number
   delivery_type?: 'home' | 'office'
   customer_id?: string
   coupon_id?: string

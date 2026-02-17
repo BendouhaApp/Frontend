@@ -1,7 +1,7 @@
 import ky from 'ky'
 
 // API base URL - update this to your actual API endpoint
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
 
 export const apiClient = ky.create({
   prefixUrl: API_BASE_URL,
@@ -13,6 +13,7 @@ export const apiClient = ky.create({
     beforeRequest: [
       (request) => {
         // Add auth token if available
+        if (typeof window === 'undefined') return
         const token = localStorage.getItem('auth_token')
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`)
@@ -23,7 +24,9 @@ export const apiClient = ky.create({
       async (_request, _options, response) => {
         // Handle 401 unauthorized
         if (response.status === 401) {
-          localStorage.removeItem('auth_token')
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token')
+          }
           // Optionally redirect to login
         }
         return response
@@ -31,3 +34,4 @@ export const apiClient = ky.create({
     ],
   },
 })
+

@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "@/lib/router";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -17,6 +17,8 @@ interface AdminSidebarProps {
 }
 
 const readUsernameFromToken = (): string => {
+  if (typeof window === "undefined") return "Admin";
+
   const token = localStorage.getItem("access_token");
   if (!token) return "Admin";
 
@@ -42,8 +44,10 @@ export default function AdminSidebar({
   const [username] = useState<string>(readUsernameFromToken);
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
     navigate("/admin/login", { replace: true });
   };
 
@@ -129,3 +133,5 @@ export default function AdminSidebar({
     </aside>
   );
 }
+
+

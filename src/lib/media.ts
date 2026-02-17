@@ -1,8 +1,8 @@
 const DEFAULT_API_URL = "http://localhost:3000/api";
-const FALLBACK_IMAGE = "/vite.svg";
+const FALLBACK_IMAGE = "/shop-logo.svg";
 
-const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
-const publicUrl = import.meta.env.VITE_PUBLIC_URL || apiUrl;
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
+const publicUrl = process.env.NEXT_PUBLIC_PUBLIC_URL || apiUrl;
 
 const safeOrigin = (value?: string): string | null => {
   if (!value) return null;
@@ -45,7 +45,7 @@ export const resolveMediaUrl = (
       const parsed = new URL(raw);
 
       if (
-        import.meta.env.DEV &&
+        process.env.NODE_ENV === "development" &&
         backendOrigins.has(parsed.origin) &&
         parsed.pathname.startsWith("/uploads/")
       ) {
@@ -85,3 +85,4 @@ export const handleImageError = (
   element.dataset.fallbackApplied = "true";
   element.src = fallback;
 };
+

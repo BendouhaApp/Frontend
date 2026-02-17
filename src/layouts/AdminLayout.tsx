@@ -1,5 +1,7 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+"use client";
+
+import { useLocation, useNavigate } from "@/lib/router";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import { cn } from "@/lib/utils";
@@ -36,21 +38,27 @@ const isTokenValid = (token: string | null): boolean => {
   }
 };
 
-export default function AdminLayout() {
+export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
     navigate("/admin/login", { replace: true });
   }, [navigate]);
 
-  const isAuthenticated = isTokenValid(localStorage.getItem("access_token"));
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsAuthenticated(isTokenValid(localStorage.getItem("access_token")));
+  }, [location.pathname]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated === false) {
       logout();
     }
   }, [isAuthenticated, logout]);
@@ -89,7 +97,7 @@ export default function AdminLayout() {
         </header>
 
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-          <Outlet />
+          {children}
         </main>
       </div>
 
@@ -135,3 +143,5 @@ export default function AdminLayout() {
     </div>
   );
 }
+
+

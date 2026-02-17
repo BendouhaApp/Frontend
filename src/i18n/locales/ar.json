@@ -129,6 +129,45 @@
     "addToCartError": "حدث خطأ أثناء إضافة المنتج إلى السلة",
     "notReady": "السلة غير جاهزة، يرجى المحاولة مرة أخرى."
   },
+  "cartDrawer": {
+    "color": "اللون",
+    "size": "الحجم",
+    "removeItem": "حذف المنتج",
+    "emptyTitle": "سلتك فارغة",
+    "emptyDescription": "أضف منتجات إلى السلة للمتابعة.",
+    "itemSingular": "منتج",
+    "failedToLoad": "تعذر تحميل السلة",
+    "shippingAtCheckout": "يحسب عند الدفع",
+    "checkout": "المتابعة إلى الدفع",
+    "continueShopping": "متابعة التسوق"
+  },
+  "productDetail": {
+    "size": "الحجم",
+    "sizeGuide": "دليل المقاسات",
+    "color": "اللون",
+    "quantity": "الكمية",
+    "availableInStock": "متوفر {{count}}",
+    "fastShipping": "شحن سريع",
+    "warranty": "ضمان",
+    "returns": "إرجاع سهل",
+    "errorLoading": "خطأ في التحميل",
+    "notFound": "المنتج غير موجود",
+    "notFoundDescription": "المنتج المطلوب غير متوفر أو لم يعد موجودًا.",
+    "backToShop": "العودة إلى المتجر",
+    "cartNotReady": "السلة غير جاهزة، يرجى المحاولة مرة أخرى.",
+    "reviews": "{{count}} تقييم",
+    "adding": "جارٍ الإضافة...",
+    "dimensions": "الأبعاد",
+    "materials": "المواد",
+    "careInstructions": "تعليمات العناية"
+  },
+  "shopPage": {
+    "gridView": "عرض شبكي",
+    "largeGridView": "عرض شبكي كبير",
+    "listView": "عرض قائمة",
+    "goTo": "اذهب إلى",
+    "goToPage": "اذهب إلى الصفحة"
+  },
   "checkout": {
     "loading": "جارٍ تحميل صفحة الدفع...",
     "cartEmptyTitle": "سلتك فارغة",
@@ -149,6 +188,8 @@
     "phonePlaceholder": "+213...",
     "wilaya": "الولاية",
     "selectWilaya": "اختر الولاية",
+    "commune": "البلدية",
+    "selectCommune": "اختر البلدية",
     "deliveryType": "نوع التوصيل",
     "homeDelivery": "توصيل إلى المنزل",
     "officeDelivery": "توصيل إلى المكتب",
@@ -161,9 +202,11 @@
     "requiredNameError": "الاسم واللقب مطلوبان.",
     "requiredPhoneError": "رقم الهاتف مطلوب.",
     "requiredWilayaError": "يرجى اختيار الولاية.",
+    "requiredCommuneError": "يرجى اختيار البلدية.",
     "deliveryUnavailableError": "نوع التوصيل المختار غير متاح.",
     "orderPlacedSuccess": "تم إنشاء الطلب بنجاح!",
-    "orderPlacedError": "تعذر إنشاء الطلب"
+    "orderPlacedError": "تعذر إنشاء الطلب",
+    "selectCommuneForShipping": "اختر البلدية"
   },
   "footer": {
     "brandDescription": "تجربة تسوق إلكتروني فاخرة، صُنعت باهتمام بالتفاصيل.",
@@ -240,7 +283,14 @@
       "high_lux": "مستوى الإضاءة المقدر مرتفع للاستخدام السكني."
     },
     "simulationFallback": "تم استخدام حساب محلي. تحقق من اتصال المحاكي.",
-    "simulationLoading": "جارٍ الحساب..."
+    "simulationLoading": "جارٍ الحساب...",
+    "lightingLab": "مختبر الإضاءة",
+    "room": "غرفة",
+    "spec": {
+      "lumen": "لومن",
+      "power": "القدرة",
+      "angle": "الزاوية"
+    }
   },
   "accountPage": {
     "eyebrow": "الحساب",

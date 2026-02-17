@@ -1,11 +1,11 @@
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from '@/lib/router'
 import { useGet } from '@/hooks/useGet'
 import type { ApiResponse, Category } from '@/types/api'
 import { handleImageError, resolveMediaUrl } from '@/lib/media'
 
-const MotionLink = motion(Link)
+const MotionLink = motion.create(Link)
 const DEFAULT_CATEGORY_IMAGE = '/images/categories/default-category.svg'
 
 // Animation variants
@@ -304,3 +304,5 @@ export function CategoryGridFeatured() {
     </section>
   )
 }
+
+

@@ -1,7 +1,7 @@
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 
 // Animation variants for staggered entrance
@@ -335,3 +335,5 @@ export function HeroCentered({
     </section>
   );
 }
+
+
