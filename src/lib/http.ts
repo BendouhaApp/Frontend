@@ -1,7 +1,8 @@
 import ky from 'ky'
 
-// API base URL - update this to your actual API endpoint
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000/api");
 
 export const apiClient = ky.create({
   prefixUrl: API_BASE_URL,

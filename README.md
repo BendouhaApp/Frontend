@@ -12,8 +12,14 @@ This project is now built with **Next.js App Router** for improved SEO and bette
 Create `.env` from `.env.example`:
 
 ```bash
+# Local development
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 NEXT_PUBLIC_PUBLIC_URL=http://localhost:3000
+
+# Production (example)
+# NEXT_PUBLIC_API_URL=https://api.your-domain.com/api
+# NEXT_PUBLIC_PUBLIC_URL=https://your-domain.com
+
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 

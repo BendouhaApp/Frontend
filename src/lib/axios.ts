@@ -4,8 +4,12 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000/api");
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  baseURL: API_BASE_URL,
   withCredentials: false,
 });
 
@@ -56,10 +60,8 @@ api.interceptors.response.use(
       }
 
       try {
-        const apiBase =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
         const res = await axios.post(
-          `${apiBase}/admin/auth/refresh`,
+          `${API_BASE_URL}/admin/auth/refresh`,
           { refresh_token: refreshToken }
         );
 

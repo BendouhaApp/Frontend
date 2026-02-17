@@ -1,4 +1,5 @@
-const DEFAULT_API_URL = "http://localhost:3000/api";
+const DEFAULT_API_URL =
+  process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000/api";
 const FALLBACK_IMAGE = "/shop-logo.svg";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
