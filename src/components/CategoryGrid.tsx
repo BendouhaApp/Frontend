@@ -37,18 +37,22 @@ interface CategoryGridProps {
   subtitle?: string
   /** Show item count on cards */
   showItemCount?: boolean
+  /** Preloaded categories (optional) */
+  initialData?: ApiResponse<Category[]>
 }
 
 export function CategoryGrid({
   title,
   subtitle,
   showItemCount = false,
+  initialData,
 }: CategoryGridProps) {
   const { t } = useTranslation()
   const { data } = useGet<ApiResponse<Category[]>>({
     path: 'categories',
     options: {
       staleTime: 1000 * 60 * 10,
+      initialData,
     },
   })
 
@@ -190,11 +194,16 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
 }
 
 // Alternative: Minimal Category Grid (no images, just text)
-export function CategoryGridMinimal() {
+export function CategoryGridMinimal({
+  initialData,
+}: {
+  initialData?: ApiResponse<Category[]>
+}) {
   const { data } = useGet<ApiResponse<Category[]>>({
     path: 'categories',
     options: {
       staleTime: 1000 * 60 * 10,
+      initialData,
     },
   })
   const minimalCategories = (data?.data ?? []).slice(0, 8)

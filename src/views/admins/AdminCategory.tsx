@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { compressImageFile } from "@/lib/image-compressor";
+import { useGet } from "@/hooks/useGet";
 import api from "@/lib/axios";
 
 export type DbCategory = {
@@ -54,6 +55,13 @@ const rowVariants: Variants = {
     x: 0,
     transition: { duration: 0.3, ease: "easeOut" },
   },
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const response = (error as { response?: { data?: { message?: unknown } } })
+    ?.response;
+  const message = response?.data?.message;
+  return typeof message === "string" && message.trim() ? message : fallback;
 };
 
 function CategoryForm({
@@ -404,8 +412,6 @@ function CategoryForm({
 }
 
 export function AdminCategory() {
-  const [items, setItems] = useState<DbCategory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -413,26 +419,28 @@ export function AdminCategory() {
   const [showForm, setShowForm] = useState(false);
   const [view, setView] = useState<CategoryView>("main");
   const [confirmDelete, setConfirmDelete] = useState<DbCategory | null>(null);
+  const {
+    data: categoriesResponse,
+    isLoading: loading,
+    isError: categoriesFailed,
+    error: categoriesError,
+    refetch,
+  } = useGet<{ data?: DbCategory[] }>({
+    path: "categories/admin",
+    options: {
+      staleTime: 1000 * 30,
+    },
+  });
+  const items = useMemo(() => categoriesResponse?.data ?? [], [categoriesResponse?.data]);
+
+  useEffect(() => {
+    if (!categoriesFailed) return;
+    setError(categoriesError?.message || "Something went wrong");
+  }, [categoriesFailed, categoriesError]);
 
   const hasChildren = (id: string) => items.some((c) => c.parent_id === id);
   const getSubCount = (id: string) =>
     items.filter((c) => c.parent_id === id).length;
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/categories/admin");
-      setItems(res.data?.data ?? []);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const getParentName = (parentId?: string | null) => {
     if (!parentId) return null;
@@ -474,11 +482,11 @@ export function AdminCategory() {
       } else {
         await api.post("/categories", payload);
       }
-      await load();
+      await refetch();
       setShowForm(false);
       setEditing(null);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "Something went wrong");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Something went wrong"));
     } finally {
       setSaving(false);
     }
@@ -487,18 +495,18 @@ export function AdminCategory() {
   const deleteCategory = async (id: string) => {
     try {
       await api.delete(`/categories/${id}`);
-      await load();
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "Delete failed");
+      await refetch();
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Delete failed"));
     }
   };
 
   const activate = async (id: string) => {
     try {
       await api.patch(`categories/${id}/activate`);
-      await load();
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "Activation failed");
+      await refetch();
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Activation failed"));
     }
   };
 

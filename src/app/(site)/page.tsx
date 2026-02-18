@@ -11,6 +11,7 @@ import {
 } from "@/lib/site";
 
 export const dynamic = "force-static";
+export const revalidate = 300;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Eclairage et equipement electrique en Algerie",

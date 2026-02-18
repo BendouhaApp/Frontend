@@ -152,16 +152,24 @@ export function ProductGrid({
 // Featured Products Section - Uses API
 export function FeaturedProducts({
   count = 4,
+  initialData,
 }: {
   count?: number
+  initialData?: ProductsResponse
 }) {
   const { t } = useTranslation()
   const { cartId } = useCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
+    query: {
+      limit: count,
+      sort: 'newest',
+      view: 'card',
+    },
     options: {
       staleTime: 1000 * 60 * 5,
+      initialData,
     },
   })
   
@@ -201,6 +209,11 @@ export function NewArrivals() {
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
+    query: {
+      limit: 6,
+      sort: 'newest',
+      view: 'card',
+    },
     options: {
       staleTime: 1000 * 60 * 5,
     },
@@ -244,6 +257,11 @@ export function SaleProducts() {
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
+    query: {
+      limit: 24,
+      sort: 'price-desc',
+      view: 'card',
+    },
     options: {
       staleTime: 1000 * 60 * 5,
     },

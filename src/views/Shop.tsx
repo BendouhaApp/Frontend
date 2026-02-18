@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "@/lib/router";
 import {
   Grid,
@@ -18,7 +19,7 @@ import {
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { SkeletonProductGrid } from "@/components/ui/skeleton";
-import { useGet } from "@/hooks/useGet";
+import { buildGetQueryKey, fetchGet, useGet } from "@/hooks/useGet";
 import { usePost } from "@/hooks/usePost";
 import { useCart } from "@/hooks/useCart";
 import type {
@@ -453,6 +454,7 @@ function QuickViewModal({
 
 export function Shop() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -641,24 +643,49 @@ export function Shop() {
     setPage(1);
   }, [activeCategoryId, debouncedSearchQuery]);
 
-  const { data, isLoading, isError, error, refetch } = useGet<ProductsResponse>(
-    {
+  const productsQuery = useMemo(
+    () => ({
+      page,
+      limit: ITEMS_PER_PAGE,
+      view: "card",
+      ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
+      ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
+    }),
+    [page, activeCategoryId, debouncedSearchQuery],
+  );
+
+  const { data, isLoading, isError, error, refetch } =
+    useGet<ProductsResponse>({
       path: "products/public",
-      query: {
-        page,
-        limit: ITEMS_PER_PAGE,
-        ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
-        ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
-      },
+      query: productsQuery,
       options: {
         staleTime: 1000 * 60 * 5,
+        placeholderData: keepPreviousData,
       },
-    },
-  );
+    });
 
   const products = useMemo(() => data?.data ?? [], [data?.data]);
   const totalPages = data?.meta?.totalPages ?? 1;
   const totalItems = data?.meta?.total ?? 0;
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (page >= totalPages) return;
+
+    const nextQuery = { ...productsQuery, page: page + 1 };
+
+    void queryClient.prefetchQuery({
+      queryKey: buildGetQueryKey("products/public", nextQuery),
+      queryFn: ({ signal }) =>
+        fetchGet<ProductsResponse>({
+          path: "products/public",
+          query: nextQuery,
+          signal,
+        }),
+      staleTime: 1000 * 60 * 5,
+    });
+  }, [isLoading, page, productsQuery, queryClient, totalPages]);
+
   const displayedProducts = useMemo(() => {
     const withStockFilter = onlyInStock
       ? products.filter((product) => product.inStock !== false)

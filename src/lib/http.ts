@@ -15,7 +15,9 @@ export const apiClient = ky.create({
       (request) => {
         // Add auth token if available
         if (typeof window === 'undefined') return
-        const token = localStorage.getItem('auth_token')
+        const token =
+          localStorage.getItem('access_token') ??
+          localStorage.getItem('auth_token')
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`)
         }
@@ -26,6 +28,7 @@ export const apiClient = ky.create({
         // Handle 401 unauthorized
         if (response.status === 401) {
           if (typeof window !== 'undefined') {
+            localStorage.removeItem('access_token')
             localStorage.removeItem('auth_token')
           }
           // Optionally redirect to login

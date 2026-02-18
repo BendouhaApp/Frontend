@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Heart, Eye, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { buildGetQueryKey, fetchGet } from "@/hooks/useGet";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
-import type { Product } from "@/types/api";
+import type { Product, ProductResponse } from "@/types/api";
 
 interface ProductCardProps {
   product: Product;
@@ -37,6 +39,26 @@ function getCategoryLabel(product: Product, fallback: string): string {
   return product.categories?.[0]?.category_name || product.category || fallback;
 }
 
+const usePrefetchProductDetail = (productId: string) => {
+  const queryClient = useQueryClient();
+  const hasPrefetchedRef = useRef(false);
+
+  return () => {
+    if (hasPrefetchedRef.current) return;
+    hasPrefetchedRef.current = true;
+
+    void queryClient.prefetchQuery({
+      queryKey: buildGetQueryKey(`products/public/${productId}`),
+      queryFn: ({ signal }) =>
+        fetchGet<ProductResponse>({
+          path: `products/public/${productId}`,
+          signal,
+        }),
+      staleTime: 1000 * 60 * 5,
+    });
+  };
+};
+
 export function ProductCard({
   product,
   variant = "default",
@@ -50,6 +72,7 @@ export function ProductCard({
   const [isHovered, setIsHovered] = useState(false);
   const [internalWishlisted, setInternalWishlisted] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const prefetchProductDetail = usePrefetchProductDetail(product.id);
 
   const wishlisted = isWishlisted ?? internalWishlisted;
   const price = toNumber(product.price);
@@ -136,9 +159,15 @@ export function ProductCard({
       aria-label={`${product.name} - ${formatPrice(price)} ${currency}`}
     >
       <motion.div
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          prefetchProductDetail();
+        }}
         onMouseLeave={() => setIsHovered(false)}
-        onFocus={() => setIsHovered(true)}
+        onFocus={() => {
+          setIsHovered(true);
+          prefetchProductDetail();
+        }}
         onBlur={() => setIsHovered(false)}
         whileHover={{ y: -4 }}
         transition={{ duration: 0.2 }}
@@ -302,6 +331,7 @@ function CompactProductCard({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const prefetchProductDetail = usePrefetchProductDetail(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -327,6 +357,8 @@ function CompactProductCard({
         "group flex gap-4 rounded-xl bg-white p-3 transition-shadow hover:shadow-md",
         className,
       )}
+      onMouseEnter={prefetchProductDetail}
+      onFocus={prefetchProductDetail}
     >
       <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-navy-50">
         <img
@@ -389,6 +421,7 @@ function DetailedProductCard({
 }) {
   const { t } = useTranslation();
   const [internalWishlisted, setInternalWishlisted] = useState(false);
+  const prefetchProductDetail = usePrefetchProductDetail(product.id);
 
   const wishlisted = isWishlisted ?? internalWishlisted;
   const price = toNumber(product.price);
@@ -442,7 +475,12 @@ function DetailedProductCard({
   const currency = t("common.currency");
 
   return (
-    <Link to={`/product/${product.id}`} className="group block focus-visible:outline-none">
+    <Link
+      to={`/product/${product.id}`}
+      className="group block focus-visible:outline-none"
+      onMouseEnter={prefetchProductDetail}
+      onFocus={prefetchProductDetail}
+    >
       <motion.div
         className={cn(
           "block overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-lg",

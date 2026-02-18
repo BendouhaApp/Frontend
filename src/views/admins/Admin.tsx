@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "@/lib/router";
 import {
   Package,
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import api from "@/lib/axios";
+import { useGet } from "@/hooks/useGet";
 
 type Stats = {
   totalOrders: number;
@@ -89,52 +89,54 @@ const tableRowVariants: Variants = {
 };
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [hasToken] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : Boolean(localStorage.getItem("access_token")),
+  );
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const accessToken = localStorage.getItem("access_token");
+    if (!hasToken) {
+      navigate("/admin/login", { replace: true });
+    }
+  }, [hasToken, navigate]);
 
-        if (!accessToken) {
-          navigate("/admin/login", { replace: true });
-          return;
-        }
+  const statsQuery = useGet<Stats>({
+    path: "admin/dashboard",
+    options: {
+      enabled: hasToken,
+      staleTime: 1000 * 60,
+    },
+  });
 
-        const statsRes = await api.get("/admin/dashboard");
-        const ordersRes = await api.get("/admin/dashboard/recent-orders");
+  const ordersQuery = useGet<Order[]>({
+    path: "admin/dashboard/recent-orders",
+    options: {
+      enabled: hasToken,
+      staleTime: 1000 * 30,
+    },
+  });
 
-        const statsData: Stats = statsRes.data;
-        const ordersData = ordersRes.data;
+  const stats = statsQuery.data ?? null;
+  const orders = useMemo(() => {
+    const source = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
 
-        const normalizedOrders: Order[] = Array.isArray(ordersData)
-          ? ordersData.map((order: any) => ({
-              ...order,
-              order_items:
-                order.order_items?.map((item: any) => ({
-                  ...item,
-                  price: Number(item.price),
-                })) || [],
-            }))
-          : [];
-
-        setStats(statsData);
-        setOrders(normalizedOrders);
-      } catch (err) {
-        console.error("Dashboard error:", err);
-        setError("Failed to load dashboard");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboard();
-  }, [navigate]);
+    return source.map((order) => ({
+      ...order,
+      order_items:
+        order.order_items?.map((item) => ({
+          ...item,
+          price: Number(item.price),
+        })) ?? [],
+    }));
+  }, [ordersQuery.data]);
+  const loading = !hasToken || statsQuery.isLoading || ordersQuery.isLoading;
+  const error =
+    statsQuery.isError || ordersQuery.isError
+      ? "Failed to load dashboard"
+      : "";
 
   const recentOrders = orders.slice(0, 10);
 
