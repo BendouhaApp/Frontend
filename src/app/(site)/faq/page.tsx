@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { FaqPage } from "@/views/InfoPages";
 import { createPageMetadata } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "FAQ - Questions frequentes",
   description:

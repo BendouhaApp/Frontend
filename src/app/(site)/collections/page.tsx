@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Collections } from "@/views/Collections";
 import { createPageMetadata } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Collections d'eclairage et equipement electrique",
   description:

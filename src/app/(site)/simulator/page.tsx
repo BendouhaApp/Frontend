@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Simulator } from "@/views/Simulator";
 import { createPageMetadata } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Simulateur d'eclairage",
   description:

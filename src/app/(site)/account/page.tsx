@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Account } from "@/views/Account";
 import { createPageMetadata } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   ...createPageMetadata({
     title: "Compte client",

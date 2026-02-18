@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Contact } from "@/views/Contact";
 import { createPageMetadata, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Contact",
   description: `Contactez Bendouha Electric au ${SUPPORT_PHONE_DISPLAY} ou par email a ${SUPPORT_EMAIL} pour vos demandes sur l'eclairage et l'equipement electrique.`,

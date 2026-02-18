@@ -1,6 +1,6 @@
 "use client";
 
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
@@ -29,7 +29,7 @@ export function Contact() {
       label: "Adresse",
       value: STORE_ADDRESS,
     },
-    { icon: Phone, label: "TÃ©lÃ©phone", value: SUPPORT_PHONE_DISPLAY },
+    { icon: Phone, label: "T\u00E9l\u00E9phone", value: SUPPORT_PHONE_DISPLAY },
     { icon: Mail, label: "Email", value: SUPPORT_EMAIL },
     { icon: Clock, label: "Horaires", value: "Sam-Jeudi : 9h - 18h" },
   ];
@@ -209,5 +209,3 @@ export function Contact() {
     </div>
   );
 }
-
-

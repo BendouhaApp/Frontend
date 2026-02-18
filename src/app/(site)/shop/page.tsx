@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Shop } from "@/views/Shop";
 import { createPageMetadata } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Boutique - Luminaires LED et equipement electrique",
   description:

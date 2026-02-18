@@ -10,6 +10,8 @@ import {
   SUPPORT_PHONE_DISPLAY,
 } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = createPageMetadata({
   title: "Eclairage et equipement electrique en Algerie",
   description: SITE_DESCRIPTION,

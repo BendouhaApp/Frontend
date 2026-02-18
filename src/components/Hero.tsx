@@ -174,9 +174,15 @@ export function Hero({
             {/* Main Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
-              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: 0.3, duration: DURATION.slow, ease: EASE.out }}
-              className="font-display text-[clamp(2.6rem,10vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
+              animate={
+                contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+              }
+              transition={{
+                delay: 0.3,
+                duration: DURATION.slow,
+                ease: EASE.out,
+              }}
+              className="font-display text-[clamp(3.4rem,14vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
             >
               {displayHeadline}
               {hasHighlight && (
@@ -192,8 +198,14 @@ export function Hero({
             {/* Subtitle */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
-              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: 0.4, duration: DURATION.slow, ease: EASE.out }}
+              animate={
+                contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+              }
+              transition={{
+                delay: 0.4,
+                duration: DURATION.slow,
+                ease: EASE.out,
+              }}
               className="mt-8 max-w-2xl text-base leading-relaxed text-navy-200 md:text-lg"
             >
               {displaySubtitle}
@@ -202,8 +214,14 @@ export function Hero({
             {/* CTA Button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: 0.5, duration: DURATION.slow, ease: EASE.out }}
+              animate={
+                contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+              }
+              transition={{
+                delay: 0.5,
+                duration: DURATION.slow,
+                ease: EASE.out,
+              }}
               className="mt-10"
             >
               <Button
@@ -228,8 +246,14 @@ export function Hero({
             {/* Optional: Trust indicators */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: 0.6, duration: DURATION.slow, ease: EASE.out }}
+              animate={
+                contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+              }
+              transition={{
+                delay: 0.6,
+                duration: DURATION.slow,
+                ease: EASE.out,
+              }}
               className="mt-16 flex items-center gap-8 border-t border-navy-600 pt-8"
             >
               <div>
@@ -335,7 +359,7 @@ export function HeroCentered({
           {/* Main Headline */}
           <motion.h1
             variants={itemVariants}
-            className="font-display text-[clamp(2.6rem,10vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
+            className="font-display text-[clamp(3.2rem,13vw,7rem)] font-light leading-[1.05] tracking-tight text-white md:whitespace-nowrap"
           >
             {displayHeadline}
             {hasHighlight && (
@@ -388,5 +412,3 @@ export function HeroCentered({
     </section>
   );
 }
-
-
