@@ -469,7 +469,7 @@ className="text-white hover:text-neutral-200"
 
 ```json
 {
-  "framer-motion": "^12.29.0",
+  "gsap": "^3.14.2",
   "lucide-react": "^0.562.0",
   "@radix-ui/react-dialog": "^1.x",
   "react-router-dom": "^6.x"

@@ -1,4 +1,5 @@
-import { motion, type Variants } from 'framer-motion'
+import type { SyntheticEvent } from 'react'
+import { motion, type Variants } from '@/lib/gsap-motion'
 import { useTranslation } from 'react-i18next'
 import { Link } from '@/lib/router'
 import { useGet } from '@/hooks/useGet'
@@ -140,7 +141,9 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
           className="h-full w-full object-cover"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          onError={(event) => handleImageError(event, DEFAULT_CATEGORY_IMAGE)}
+          onError={(event: SyntheticEvent<HTMLImageElement>) =>
+            handleImageError(event, DEFAULT_CATEGORY_IMAGE)
+          }
         />
 
         {/* Overlay - darkens on hover */}

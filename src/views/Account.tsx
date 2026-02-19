@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from '@/lib/gsap-motion';
 import { Link } from "@/lib/router";
 import { ShieldCheck, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";

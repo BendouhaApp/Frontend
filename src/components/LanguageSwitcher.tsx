@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from '@/lib/gsap-motion'
 import { useState } from 'react'
 import { Globe, Check } from 'lucide-react'
 import { languages, changeLanguage, type LanguageCode } from '@/i18n'

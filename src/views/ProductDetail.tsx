@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { type SyntheticEvent, useState, useEffect } from "react";
 import { useParams, Link } from "@/lib/router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
 import {
   ShoppingBag,
@@ -113,7 +113,9 @@ function ImageGallery({
               src={image}
               alt={`${productName} view ${index + 1}`}
               className="h-full w-full object-cover"
-              onError={(event) => handleImageError(event)}
+              onError={(event: SyntheticEvent<HTMLImageElement>) =>
+                handleImageError(event)
+              }
             />
           </motion.button>
         ))}
@@ -126,7 +128,9 @@ function ImageGallery({
             src={images[selectedIndex]}
             alt={productName}
             className="aspect-square w-full object-cover lg:aspect-[4/5]"
-            onError={(event) => handleImageError(event)}
+            onError={(event: SyntheticEvent<HTMLImageElement>) =>
+              handleImageError(event)
+            }
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

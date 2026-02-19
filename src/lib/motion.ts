@@ -1,4 +1,4 @@
-import { type Variants } from 'framer-motion'
+import { type Variants } from '@/lib/gsap-motion'
 
 // ============================================
 // MOTION CONSTANTS - Consistent timing across the site

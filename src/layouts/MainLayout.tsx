@@ -1,16 +1,56 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { useLocation } from "@/lib/router";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { gsap } from "gsap";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 
 export function MainLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const reduceMotion = useReducedMotion();
   // Keep transitions on path changes only; query updates should not remount the page.
   const pageKey = location.pathname;
+  const pageRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!pageRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const ctx = gsap.context(() => {
+      const pageElement = pageRef.current;
+      if (!pageElement) return;
+
+      const directChildren = Array.from(pageElement.children).slice(0, 6);
+
+      gsap.fromTo(
+        pageElement,
+        { autoAlpha: 0, y: 14 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.45,
+          ease: "power2.out",
+        },
+      );
+
+      if (directChildren.length > 1) {
+        gsap.fromTo(
+          directChildren,
+          { autoAlpha: 0, y: 12 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.45,
+            ease: "power2.out",
+            stagger: 0.06,
+            delay: 0.06,
+          },
+        );
+      }
+    }, pageRef);
+
+    return () => ctx.revert();
+  }, [pageKey]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -22,20 +62,9 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <Header />
 
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <AnimatePresence initial={false} mode="sync">
-          <motion.div
-            key={pageKey}
-            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-            transition={{
-              duration: reduceMotion ? 0 : 0.2,
-              ease: "easeOut",
-            }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        <div key={pageKey} ref={pageRef}>
+          {children}
+        </div>
       </main>
 
       <Footer />

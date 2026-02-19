@@ -1,4 +1,4 @@
-import { motion, type Variants } from 'framer-motion'
+import { motion, type Variants } from '@/lib/gsap-motion'
 import { useTranslation } from 'react-i18next'
 import { Link } from '@/lib/router'
 import { ArrowRight } from 'lucide-react'

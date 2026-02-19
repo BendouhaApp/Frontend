@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@/lib/router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
 import { ShoppingBag, Minus, Plus, X, ArrowRight } from "lucide-react";
 import {

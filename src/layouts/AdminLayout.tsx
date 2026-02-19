@@ -1,8 +1,9 @@
 "use client";
 
 import { useLocation, useNavigate } from "@/lib/router";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { gsap } from "gsap";
 import AdminSidebar from "../components/AdminSidebar";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const logout = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -62,6 +64,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       logout();
     }
   }, [isAuthenticated, logout]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !contentRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const ctx = gsap.context(() => {
+      const contentElement = contentRef.current;
+      if (!contentElement) return;
+
+      gsap.fromTo(
+        contentElement,
+        { autoAlpha: 0, y: 12 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.35,
+          ease: "power2.out",
+        },
+      );
+    }, contentRef);
+
+    return () => ctx.revert();
+  }, [isAuthenticated, location.pathname]);
 
   if (!isAuthenticated) return null;
 
@@ -97,7 +122,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-          {children}
+          <div key={location.pathname} ref={contentRef}>
+            {children}
+          </div>
         </main>
       </div>
 

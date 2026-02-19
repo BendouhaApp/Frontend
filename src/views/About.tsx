@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "@/lib/gsap-motion";
 import { useTranslation } from "react-i18next";
 import {
   staggerContainer,
@@ -87,23 +87,24 @@ export function About() {
             className="flex flex-col justify-center"
           >
             <h2 className="font-display text-3xl font-light tracking-tight text-neutral-900 md:text-4xl">
-              Créer des espaces électriques magnifiques depuis 2015
+              Créer des espaces électriques magnifiques depuis 2012
             </h2>
             <div className="mt-6 space-y-4 text-neutral-600">
               <p className="text-lg leading-relaxed">
                 Bendouha a commencé avec une vision simple : apporter un
                 savoir-faire exceptionnel et un design intemporel dans chaque
                 foyer. Ce qui a démarré comme une petite collection
-                soigneusement sélectionnée s&apos;est transformé en une destination
-                pour ceux qui apprécient les meilleures choses de la vie.
+                soigneusement sélectionnée s&apos;est transformé en une
+                destination pour ceux qui apprécient les meilleures choses de la
+                vie.
               </p>
               <p className="leading-relaxed">
                 Nous croyons que votre maison devrait être le reflet de votre
                 style personnel, un sanctuaire qui inspire et réconforte.
-                C&apos;est pourquoi nous sélectionnons soigneusement chaque pièce de
-                notre collection, en travaillant directement avec des artisans
-                qualifiés qui partagent notre passion pour la qualité et
-                l&apos;authenticité.
+                C&apos;est pourquoi nous sélectionnons soigneusement chaque
+                pièce de notre collection, en travaillant directement avec des
+                artisans qualifiés qui partagent notre passion pour la qualité
+                et l&apos;authenticité.
               </p>
             </div>
           </motion.div>

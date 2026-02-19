@@ -1,7 +1,8 @@
 "use client";
 
+import type { SyntheticEvent } from 'react'
 import { Link } from '@/lib/router'
-import { motion } from 'framer-motion'
+import { motion } from '@/lib/gsap-motion'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight } from 'lucide-react'
 import { staggerContainer, staggerItem, fadeInUp, DURATION, EASE, hoverLift } from '@/lib/motion'
@@ -89,7 +90,7 @@ export function Collections() {
                       className="h-full w-full object-cover"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.5 }}
-                      onError={(event) =>
+                      onError={(event: SyntheticEvent<HTMLImageElement>) =>
                         handleImageError(event, DEFAULT_CATEGORY_IMAGE)
                       }
                     />

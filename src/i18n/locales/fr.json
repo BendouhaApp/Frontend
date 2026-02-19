@@ -49,9 +49,16 @@
     "stats": {
       "customers": "Clients satisfaits",
       "pieces": "Pièces uniques",
-      "quality": "Qualité garantie"
+      "quality": "Qualité garantie",
+      "coverage": "Wilayas couvertes",
+      "support": "Support 7j/7",
+      "delivery": "Livraison express",
+      "returns": "Retours faciles",
+      "references": "References produits",
+      "rating": "Note moyenne",
+      "warranty": "Garantie fabricant"
     },
-    "scroll": "Défiler"
+    "scroll": "D\u00e9filer"
   },
   "categories": {
     "title": "Acheter par catégorie",

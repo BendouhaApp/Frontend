@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { type SyntheticEvent, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/lib/router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { ShoppingBag, Heart, Eye, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -189,7 +189,9 @@ export function ProductCard({
               imageLoaded ? "opacity-100" : "opacity-0",
             )}
             onLoad={() => setImageLoaded(true)}
-            onError={(event) => handleImageError(event)}
+            onError={(event: SyntheticEvent<HTMLImageElement>) =>
+              handleImageError(event)
+            }
             animate={{ scale: isHovered ? 1.05 : 1 }}
             transition={{ duration: 0.5 }}
           />
@@ -365,7 +367,9 @@ function CompactProductCard({
           src={resolveMediaUrl(product.image || product.thumbnail)}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(event) => handleImageError(event)}
+          onError={(event: SyntheticEvent<HTMLImageElement>) =>
+            handleImageError(event)
+          }
         />
         {discount > 0 && (
           <span className="absolute start-1 top-1 rounded-full bg-gold px-2 py-0.5 text-[10px] font-medium text-navy">
@@ -494,7 +498,9 @@ function DetailedProductCard({
             src={resolveMediaUrl(product.image || product.thumbnail)}
             alt={product.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(event) => handleImageError(event)}
+            onError={(event: SyntheticEvent<HTMLImageElement>) =>
+              handleImageError(event)
+            }
           />
 
           {displayBadge && (

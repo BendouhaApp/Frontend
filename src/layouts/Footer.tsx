@@ -1,5 +1,5 @@
 import { Link } from "@/lib/router";
-import { motion } from "framer-motion";
+import { motion } from '@/lib/gsap-motion';
 import { ArrowRight, MapPin, Phone, Mail, Instagram, Facebook } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { useTranslation } from "react-i18next";

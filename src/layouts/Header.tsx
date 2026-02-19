@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "@/lib/router";
 import { Search, User, Menu } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
 import {
   Sheet,
