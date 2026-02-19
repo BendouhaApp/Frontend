@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "@/lib/router";
+import { Link } from "@/lib/router";
 import {
   Grid,
   LayoutGrid,
@@ -455,19 +455,18 @@ function QuickViewModal({
 export function Shop() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const shouldScrollOnPageChangeRef = useRef(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [categoryParam, setCategoryParamState] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);
   const [selectedSort, setSelectedSort] = useState("featured");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [onlyInStock, setOnlyInStock] = useState(
-    searchParams.get("stock") === "in",
-  );
+  const [onlyInStock, setOnlyInStock] = useState(false);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [wishlistReady, setWishlistReady] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
@@ -519,9 +518,6 @@ export function Shop() {
     return map;
   }, [flatCategories]);
 
-  const categoryParam =
-    searchParams.get("category") ?? searchParams.get("collection");
-
   const derivedSelection = useMemo(() => {
     if (!categoryParam) {
       return { category: "all", subcategory: "all" };
@@ -561,22 +557,54 @@ export function Shop() {
     );
   }, [selectedCategory, flatCategories]);
 
+  const setPageWithoutScroll = (nextPage: React.SetStateAction<number>) => {
+    shouldScrollOnPageChangeRef.current = false;
+    setPage(nextPage);
+  };
+
+  const setPageWithScroll = (nextPage: React.SetStateAction<number>) => {
+    shouldScrollOnPageChangeRef.current = true;
+    setPage(nextPage);
+  };
+
   const setCategoryParam = (id?: string | null) => {
-    const currentSearch =
-      typeof window === "undefined"
-        ? searchParams.toString()
-        : window.location.search;
-    const next = new URLSearchParams(currentSearch);
+    if (typeof window === "undefined") return;
+
+    const next = new URLSearchParams(window.location.search);
     next.delete("q");
+    let nextCategoryParam: string | null = null;
+
     if (!id || id === "all") {
       next.delete("category");
       next.delete("collection");
     } else {
       next.set("category", id);
       next.delete("collection");
+      nextCategoryParam = id;
     }
-    setSearchParams(next);
+
+    setCategoryParamState(nextCategoryParam);
+    const nextQuery = next.toString();
+    const nextUrl = nextQuery
+      ? `${window.location.pathname}?${nextQuery}${window.location.hash}`
+      : `${window.location.pathname}${window.location.hash}`;
+
+    window.history.replaceState(window.history.state, "", nextUrl);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncFromUrl = () => {
+      const next = new URLSearchParams(window.location.search);
+      setCategoryParamState(next.get("category") ?? next.get("collection"));
+      setOnlyInStock(next.get("stock") === "in");
+    };
+
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
 
   // Debounce search input before hitting backend, without syncing URL on each
   // keystroke (which would trigger Next.js `?_rsc=...` navigation).
@@ -639,9 +667,20 @@ export function Shop() {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
   }, [wishlistIds, wishlistReady]);
 
+  const effectiveSearchQuery = useMemo(() => {
+    return debouncedSearchQuery.trim();
+  }, [debouncedSearchQuery]);
+
   useEffect(() => {
-    setPage(1);
-  }, [activeCategoryId, debouncedSearchQuery]);
+    setPageWithoutScroll(1);
+  }, [activeCategoryId, effectiveSearchQuery, selectedSort, onlyInStock]);
+
+  const backendSort = useMemo(() => {
+    if (selectedSort === "price-low") return "price-asc";
+    if (selectedSort === "price-high") return "price-desc";
+    if (selectedSort === "newest") return "newest";
+    return undefined;
+  }, [selectedSort]);
 
   const productsQuery = useMemo(
     () => ({
@@ -649,9 +688,11 @@ export function Shop() {
       limit: ITEMS_PER_PAGE,
       view: "card",
       ...(activeCategoryId !== "all" ? { categoryId: activeCategoryId } : {}),
-      ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
+      ...(effectiveSearchQuery ? { search: effectiveSearchQuery } : {}),
+      ...(backendSort ? { sort: backendSort } : {}),
+      ...(onlyInStock ? { inStock: true } : {}),
     }),
-    [page, activeCategoryId, debouncedSearchQuery],
+    [page, activeCategoryId, effectiveSearchQuery, backendSort, onlyInStock],
   );
 
   const { data, isLoading, isError, error, refetch } =
@@ -686,48 +727,7 @@ export function Shop() {
     });
   }, [isLoading, page, productsQuery, queryClient, totalPages]);
 
-  const displayedProducts = useMemo(() => {
-    const withStockFilter = onlyInStock
-      ? products.filter((product) => product.inStock !== false)
-      : products;
-    const next = [...withStockFilter];
-    const byDateDesc = (a: Product, b: Product) => {
-      const aDate = Date.parse(
-        (a as Product & { created_at?: string }).created_at || "",
-      );
-      const bDate = Date.parse(
-        (b as Product & { created_at?: string }).created_at || "",
-      );
-      if (Number.isFinite(aDate) && Number.isFinite(bDate)) {
-        return bDate - aDate;
-      }
-      return String(b.id).localeCompare(String(a.id), undefined, {
-        numeric: true,
-      });
-    };
-
-    next.sort((a, b) => {
-      if (selectedSort === "price-low") {
-        return toNumber(a.price) - toNumber(b.price);
-      }
-
-      if (selectedSort === "price-high") {
-        return toNumber(b.price) - toNumber(a.price);
-      }
-
-      if (selectedSort === "rating") {
-        return toNumber(b.rating) - toNumber(a.rating);
-      }
-
-      if (selectedSort === "newest") {
-        return byDateDesc(a, b);
-      }
-
-      return 0;
-    });
-
-    return next;
-  }, [products, onlyInStock, selectedSort]);
+  const displayedProducts = products;
   const [pageInput, setPageInput] = useState<string>("1");
 
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
@@ -739,7 +739,7 @@ export function Shop() {
   useEffect(() => {
     if (isLoading) return;
 
-    setPage((prev) => {
+    setPageWithoutScroll((prev) => {
       if (prev > totalPages) return totalPages;
       if (prev < 1) return 1;
       return prev;
@@ -747,6 +747,9 @@ export function Shop() {
   }, [totalPages, isLoading]);
 
   useEffect(() => {
+    if (!shouldScrollOnPageChangeRef.current) return;
+    shouldScrollOnPageChangeRef.current = false;
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -816,7 +819,7 @@ export function Shop() {
 
   const activeFiltersCount =
     (activeCategoryId !== "all" ? 1 : 0) +
-    (searchQuery.trim() ? 1 : 0) +
+    (effectiveSearchQuery ? 1 : 0) +
     (onlyInStock ? 1 : 0);
 
   return (
@@ -840,21 +843,16 @@ export function Shop() {
         selectedSubcategory={selectedSubcategory}
         setSelectedCategory={(id) => {
           setCategoryParam(id);
-          setPage(1);
+          setPageWithoutScroll(1);
         }}
         setSelectedSubcategory={(id) => {
           setCategoryParam(id);
-          setPage(1);
+          setPageWithoutScroll(1);
         }}
       />
 
       {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="border-b border-navy-200 bg-navy-50"
-      >
+      <div className="border-b border-navy-200 bg-navy-50">
         <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
           <h1 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
             {t("nav.shop")}
@@ -863,7 +861,7 @@ export function Shop() {
             {t("products.featuredSubtitle")}
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Toolbar */}
       <div className="sticky top-20 z-20 border-b border-navy-200 bg-white/95 backdrop-blur-sm sm:top-24">
@@ -1002,11 +1000,11 @@ export function Shop() {
             selectedSubcategory={selectedSubcategory}
             setSelectedCategory={(id) => {
               setCategoryParam(id);
-              setPage(1);
+              setPageWithoutScroll(1);
             }}
             setSelectedSubcategory={(id) => {
               setCategoryParam(id);
-              setPage(1);
+              setPageWithoutScroll(1);
             }}
             className="hidden w-64 flex-shrink-0 lg:block"
           />
@@ -1023,7 +1021,7 @@ export function Shop() {
                   <button
                     onClick={() => {
                       setCategoryParam(null);
-                      setPage(1);
+                      setPageWithoutScroll(1);
                     }}
                     className={cn(
                       "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -1040,7 +1038,7 @@ export function Shop() {
                       key={category.id}
                       onClick={() => {
                         setCategoryParam(category.id);
-                        setPage(1);
+                        setPageWithoutScroll(1);
                       }}
                       className={cn(
                         "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -1067,7 +1065,7 @@ export function Shop() {
                         key={subcategory.id}
                         onClick={() => {
                           setCategoryParam(subcategory.id);
-                          setPage(1);
+                          setPageWithoutScroll(1);
                         }}
                         className={cn(
                           "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition",
@@ -1126,7 +1124,7 @@ export function Shop() {
                     <button
                       onClick={() => {
                         setCategoryParam(null);
-                        setPage(1);
+                        setPageWithoutScroll(1);
                       }}
                       className="ms-1 rounded-full p-0.5 hover:bg-primary-100"
                     >
@@ -1134,9 +1132,9 @@ export function Shop() {
                     </button>
                   </span>
                 )}
-                {searchQuery.trim() && (
+                {effectiveSearchQuery && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-navy-100 px-3 py-1 text-sm text-navy-700">
-                    {searchQuery.trim()}
+                    {effectiveSearchQuery}
                     <button
                       onClick={() => setSearchQuery("")}
                       className="ms-1 rounded-full p-0.5 hover:bg-navy-200"
@@ -1219,7 +1217,9 @@ export function Shop() {
                     variant="outline"
                     size="sm"
                     disabled={page === 1}
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    onClick={() =>
+                      setPageWithScroll((prev) => Math.max(1, prev - 1))
+                    }
                   >
                     {t("common.previous")}
                   </Button>
@@ -1228,7 +1228,7 @@ export function Shop() {
                     size="sm"
                     disabled={page === totalPages}
                     onClick={() =>
-                      setPage((prev) => Math.min(totalPages, prev + 1))
+                      setPageWithScroll((prev) => Math.min(totalPages, prev + 1))
                     }
                   >
                     {t("common.next")}
@@ -1252,7 +1252,7 @@ export function Shop() {
                         const n = Number(pageInput);
                         if (!Number.isFinite(n)) return;
                         const clamped = Math.min(totalPages, Math.max(1, n));
-                        setPage(clamped);
+                        setPageWithScroll(clamped);
                       }}
                       onBlur={() => {
                         if (!pageInput) {
