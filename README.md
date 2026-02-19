@@ -16,8 +16,9 @@ Create `.env` from `.env.example`:
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 NEXT_PUBLIC_PUBLIC_URL=http://localhost:3000
 
-# Production (example)
-# NEXT_PUBLIC_API_URL=https://api.your-domain.com/api
+# Production (recommended)
+# NEXT_PUBLIC_API_URL=/api
+# BACKEND_API_URL=https://api.your-domain.com/api
 # NEXT_PUBLIC_PUBLIC_URL=https://your-domain.com
 
 NEXT_PUBLIC_SITE_URL=https://your-domain.com

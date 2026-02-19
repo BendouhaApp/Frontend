@@ -1,18 +1,27 @@
 import type { NextConfig } from "next";
 
-const rawApiUrl =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.BACKEND_API_URL ||
-  (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000/api");
-const normalizedApiUrl = rawApiUrl.replace(/\/+$/, "");
-const isAbsoluteApiUrl = /^https?:\/\//i.test(normalizedApiUrl);
-let backendOrigin = "http://localhost:3000";
+const rawPublicApiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
+const normalizedPublicApiUrl = rawPublicApiUrl.replace(/\/+$/, "");
+const isAbsolutePublicApiUrl = /^https?:\/\//i.test(normalizedPublicApiUrl);
 
-if (isAbsoluteApiUrl) {
+const rawBackendApiUrl =
+  process.env.BACKEND_API_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3000/api" : "");
+const normalizedBackendApiUrl = rawBackendApiUrl.replace(/\/+$/, "");
+const isAbsoluteBackendApiUrl = /^https?:\/\//i.test(normalizedBackendApiUrl);
+
+const rewriteApiTarget = isAbsolutePublicApiUrl
+  ? normalizedPublicApiUrl
+  : isAbsoluteBackendApiUrl
+    ? normalizedBackendApiUrl
+    : null;
+
+let backendOrigin: string | null = null;
+if (rewriteApiTarget) {
   try {
-    backendOrigin = new URL(normalizedApiUrl).origin;
+    backendOrigin = new URL(rewriteApiTarget).origin;
   } catch {
-    // Keep fallback origin
+    backendOrigin = null;
   }
 }
 
@@ -32,12 +41,14 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const rules = [];
 
-    if (isAbsoluteApiUrl) {
+    if (rewriteApiTarget) {
       rules.push({
         source: "/api/:path*",
-        destination: `${normalizedApiUrl}/:path*`,
+        destination: `${rewriteApiTarget}/:path*`,
       });
+    }
 
+    if (backendOrigin) {
       rules.push({
         source: "/uploads/:path*",
         destination: `${backendOrigin}/uploads/:path*`,
