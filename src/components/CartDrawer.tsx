@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/lib/router";
 import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
@@ -12,27 +12,33 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGet } from "@/hooks/useGet";
+import { useQueryClient } from "@tanstack/react-query";
+import { buildGetQueryKey, fetchGet, useGet } from "@/hooks/useGet";
 import { usePostAction } from "@/hooks/usePostAction";
-import type { ApiResponse, Cart } from "@/types/api";
+import type { ApiResponse, Cart, ProductResponse } from "@/types/api";
 import { calcSubtotal, mapCartItems } from "@/lib/cart";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-// Cart Item Component
-function CartItemRow({
-  item,
-  onUpdateQuantity,
-  onRemove,
-  isUpdating,
-  currency,
-}: {
+type CartItemRowProps = {
   item: ReturnType<typeof mapCartItems>[number];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemove: (id: string) => void;
   isUpdating?: boolean;
+  disableIncrease?: boolean;
   currency: string;
-}) {
+};
+
+// Cart Item Component
+const CartItemRow = memo(function CartItemRow({
+  item,
+  onUpdateQuantity,
+  onRemove,
+  isUpdating,
+  disableIncrease,
+  currency,
+}: CartItemRowProps) {
   const { t } = useTranslation();
 
   return (
@@ -95,7 +101,7 @@ function CartItemRow({
             </div>
             <button
               onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              disabled={isUpdating}
+              disabled={isUpdating || disableIncrease}
               className="flex h-8 w-8 items-center justify-center rounded-e-md border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-3 w-3" />
@@ -120,7 +126,23 @@ function CartItemRow({
       </button>
     </motion.div>
   );
-}
+}, (prev, next) => {
+  return (
+    prev.item.id === next.item.id &&
+    prev.item.productId === next.item.productId &&
+    prev.item.name === next.item.name &&
+    prev.item.image === next.item.image &&
+    prev.item.price === next.item.price &&
+    prev.item.quantity === next.item.quantity &&
+    prev.item.color === next.item.color &&
+    prev.item.size === next.item.size &&
+    prev.isUpdating === next.isUpdating &&
+    prev.disableIncrease === next.disableIncrease &&
+    prev.currency === next.currency &&
+    prev.onUpdateQuantity === next.onUpdateQuantity &&
+    prev.onRemove === next.onRemove
+  );
+});
 
 // Loading Skeleton
 function CartSkeleton() {
@@ -180,9 +202,24 @@ interface CartDrawerProps {
 
 export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const currency = t("common.currency");
   const [isOpen, setIsOpen] = useState(false);
-  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [quantityOverrides, setQuantityOverrides] = useState<
+    Record<string, number>
+  >({});
+  const [removedItemIds, setRemovedItemIds] = useState<Record<string, true>>(
+    {},
+  );
+  const [updatingQuantityItemIds, setUpdatingQuantityItemIds] = useState<
+    Record<string, true>
+  >({});
+  const [removingItemIds, setRemovingItemIds] = useState<Record<string, true>>(
+    {},
+  );
+  const [availableQuantityByProductId, setAvailableQuantityByProductId] =
+    useState<Record<string, number>>({});
+  const availableQuantityByProductIdRef = useRef<Record<string, number>>({});
 
   // Fetch cart from API
   const { data: cartResponse, isLoading, isError } = useGet<ApiResponse<Cart>>({
@@ -197,30 +234,229 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
   const removeFromCart = usePostAction<{ message?: string }>();
   const updateCartItem = usePostAction<{ message?: string }>();
 
-  const handleUpdateQuantity = (itemId: string, quantity: number) => {
-    if (quantity < 1) return;
-    setUpdatingItemId(itemId);
-    updateCartItem.mutate(
-      {
-        method: "put",
-        path: `cart/items/${itemId}`,
-        body: { quantity },
-      },
-      {
-        onSettled: () => setUpdatingItemId(null),
-      },
-    );
-  };
+  const baseItems = useMemo(
+    () => mapCartItems(cart?.card_items ?? []),
+    [cart?.card_items],
+  );
 
-  const handleRemoveItem = (itemId: string) => {
-    removeFromCart.mutate({
-      method: "delete",
-      path: `cart/items/${itemId}`,
-    });
-  };
+  const items = useMemo(
+    () =>
+      baseItems
+        .filter((item) => !removedItemIds[item.id])
+        .map((item) => {
+          const nextQuantity = quantityOverrides[item.id];
+          if (nextQuantity === undefined || nextQuantity === item.quantity) {
+            return item;
+          }
+          return { ...item, quantity: nextQuantity };
+        }),
+    [baseItems, quantityOverrides, removedItemIds],
+  );
+  const quantityByProductId = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const item of items) {
+      totals[item.productId] = (totals[item.productId] ?? 0) + item.quantity;
+    }
+    return totals;
+  }, [items]);
+  const itemsRef = useRef(items);
 
-  // Calculate totals from cart data
-  const items = mapCartItems(cart?.card_items ?? []);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    availableQuantityByProductIdRef.current = availableQuantityByProductId;
+  }, [availableQuantityByProductId]);
+
+  const rememberAvailableQuantity = useCallback(
+    (productId: string, quantity: number) => {
+      availableQuantityByProductIdRef.current = {
+        ...availableQuantityByProductIdRef.current,
+        [productId]: quantity,
+      };
+      setAvailableQuantityByProductId((prev) =>
+        prev[productId] === quantity ? prev : { ...prev, [productId]: quantity },
+      );
+    },
+    [],
+  );
+
+  const getAvailableQuantity = useCallback(
+    async (productId: string): Promise<number | undefined> => {
+      const known = availableQuantityByProductIdRef.current[productId];
+      if (typeof known === "number") return known;
+
+      const cachedDetail = queryClient.getQueryData<ProductResponse>(
+        buildGetQueryKey(`products/public/${productId}`),
+      );
+      const cachedQuantity = cachedDetail?.data?.quantity;
+      if (typeof cachedQuantity === "number") {
+        rememberAvailableQuantity(productId, cachedQuantity);
+        return cachedQuantity;
+      }
+
+      try {
+        const response = await fetchGet<ProductResponse>({
+          path: `products/public/${productId}`,
+        });
+        const quantity = response.data?.quantity;
+        if (typeof quantity !== "number") return undefined;
+
+        rememberAvailableQuantity(productId, quantity);
+        return quantity;
+      } catch {
+        return undefined;
+      }
+    },
+    [queryClient, rememberAvailableQuantity],
+  );
+
+  const handleUpdateQuantity = useCallback(
+    async (itemId: string, quantity: number) => {
+      if (quantity < 1) return;
+
+      const targetItem = itemsRef.current.find((item) => item.id === itemId);
+      if (!targetItem) return;
+
+      if (quantity > targetItem.quantity) {
+        const availableQuantity = await getAvailableQuantity(targetItem.productId);
+        const currentTotalForProduct = itemsRef.current
+          .filter((entry) => entry.productId === targetItem.productId)
+          .reduce((sum, entry) => sum + entry.quantity, 0);
+        const nextTotalForProduct =
+          currentTotalForProduct - targetItem.quantity + quantity;
+        if (
+          typeof availableQuantity === "number" &&
+          nextTotalForProduct > availableQuantity
+        ) {
+          toast.error(t("common.outOfStock"));
+          return;
+        }
+      }
+
+      const previousQuantity = targetItem.quantity;
+
+      setQuantityOverrides((prev) => ({
+        ...prev,
+        [itemId]: quantity,
+      }));
+      setUpdatingQuantityItemIds((prev) =>
+        prev[itemId] ? prev : { ...prev, [itemId]: true },
+      );
+
+      updateCartItem.mutate(
+        {
+          method: "put",
+          path: `cart/items/${itemId}`,
+          body: { quantity },
+          invalidateQueries: false,
+        },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData<ApiResponse<Cart>>(
+              buildGetQueryKey("cart"),
+              (current) => {
+                if (!current?.data) return current;
+                return {
+                  ...current,
+                  data: {
+                    ...current.data,
+                    card_items: current.data.card_items.map((entry) =>
+                      entry.id === itemId ? { ...entry, quantity } : entry,
+                    ),
+                  },
+                };
+              },
+            );
+          },
+          onError: () => {
+            setQuantityOverrides((prev) => {
+              if (previousQuantity === undefined) {
+                if (!(itemId in prev)) return prev;
+                const next = { ...prev };
+                delete next[itemId];
+                return next;
+              }
+              return { ...prev, [itemId]: previousQuantity };
+            });
+          },
+          onSettled: () => {
+            setUpdatingQuantityItemIds((prev) => {
+              if (!(itemId in prev)) return prev;
+              const next = { ...prev };
+              delete next[itemId];
+              return next;
+            });
+          },
+        },
+      );
+    },
+    [getAvailableQuantity, queryClient, t, updateCartItem],
+  );
+
+  const handleRemoveItem = useCallback(
+    (itemId: string) => {
+      setRemovingItemIds((prev) =>
+        prev[itemId] ? prev : { ...prev, [itemId]: true },
+      );
+      setRemovedItemIds((prev) =>
+        prev[itemId] ? prev : { ...prev, [itemId]: true },
+      );
+
+      removeFromCart.mutate(
+        {
+          method: "delete",
+          path: `cart/items/${itemId}`,
+          invalidateQueries: false,
+        },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData<ApiResponse<Cart>>(
+              buildGetQueryKey("cart"),
+              (current) => {
+                if (!current?.data) return current;
+                return {
+                  ...current,
+                  data: {
+                    ...current.data,
+                    card_items: current.data.card_items.filter(
+                      (entry) => entry.id !== itemId,
+                    ),
+                  },
+                };
+              },
+            );
+          },
+          onError: () => {
+            setRemovedItemIds((prev) => {
+              if (!(itemId in prev)) return prev;
+              const next = { ...prev };
+              delete next[itemId];
+              return next;
+            });
+          },
+          onSettled: () => {
+            setRemovingItemIds((prev) => {
+              if (!(itemId in prev)) return prev;
+              const next = { ...prev };
+              delete next[itemId];
+              return next;
+            });
+            setQuantityOverrides((prev) => {
+              if (!(itemId in prev)) return prev;
+              const next = { ...prev };
+              delete next[itemId];
+              return next;
+            });
+          },
+        },
+      );
+    },
+    [queryClient, removeFromCart],
+  );
+
+  // Calculate totals from visible cart state
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = calcSubtotal(items);
   const total = subtotal;
@@ -309,9 +545,15 @@ export function CartDrawer({ trigger, className }: CartDrawerProps) {
                           onUpdateQuantity={handleUpdateQuantity}
                           onRemove={handleRemoveItem}
                           currency={currency}
+                          disableIncrease={
+                            typeof availableQuantityByProductId[item.productId] ===
+                              "number" &&
+                            (quantityByProductId[item.productId] ?? item.quantity) >=
+                              (availableQuantityByProductId[item.productId] ?? 0)
+                          }
                           isUpdating={
-                            updatingItemId === item.id ||
-                            removeFromCart.isPending
+                            !!updatingQuantityItemIds[item.id] ||
+                            !!removingItemIds[item.id]
                           }
                         />
                       </div>

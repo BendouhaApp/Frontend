@@ -1,21 +1,26 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, type Variants } from '@/lib/gsap-motion'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@/lib/router'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { SkeletonProductGrid } from '@/components/ui/skeleton'
-import { useGet } from '@/hooks/useGet'
-import { usePost } from '@/hooks/usePost'
-import { useCart } from '@/hooks/useCart'
+import { buildGetQueryKey, fetchGet, useGet } from '@/hooks/useGet'
+import { useCartId, useCartProductQuantities } from '@/hooks/useCart'
 import type {
-  Product,
-  ProductsResponse,
-  AddToCartPayload,
-  CartItem,
   ApiResponse,
+  Cart,
+  CartItem,
+  Product,
+  ProductResponse,
+  ProductsResponse,
 } from '@/types/api'
 import { cn } from '@/lib/utils'
+import { apiClient } from '@/lib/http'
+import { toast } from 'sonner'
+import { mergeCartItemIntoCartResponse } from '@/lib/cart'
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -38,6 +43,156 @@ const itemVariants: Variants = {
   },
 }
 
+function useStockAwareAddToCart() {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const { cartId } = useCartId()
+  const cartProductQuantities = useCartProductQuantities()
+  const [availableQuantityByProductId, setAvailableQuantityByProductId] =
+    useState<Record<string, number>>({})
+  const cartProductQuantitiesRef = useRef<Record<string, number>>({})
+  const availableQuantityByProductIdRef = useRef<Record<string, number>>({})
+  const pendingAddByProductIdRef = useRef<Record<string, number>>({})
+
+  useEffect(() => {
+    cartProductQuantitiesRef.current = cartProductQuantities
+  }, [cartProductQuantities])
+
+  useEffect(() => {
+    availableQuantityByProductIdRef.current = availableQuantityByProductId
+  }, [availableQuantityByProductId])
+
+  const rememberAvailableQuantity = useCallback(
+    (productId: string, quantity: number) => {
+      availableQuantityByProductIdRef.current = {
+        ...availableQuantityByProductIdRef.current,
+        [productId]: quantity,
+      }
+      setAvailableQuantityByProductId((prev) =>
+        prev[productId] === quantity ? prev : { ...prev, [productId]: quantity },
+      )
+    },
+    [],
+  )
+
+  const getAvailableQuantity = useCallback(
+    async (productId: string, fallback?: number): Promise<number | undefined> => {
+      const known = availableQuantityByProductIdRef.current[productId]
+      if (typeof known === 'number') return known
+
+      if (typeof fallback === 'number') {
+        rememberAvailableQuantity(productId, fallback)
+        return fallback
+      }
+
+      const cachedDetail = queryClient.getQueryData<ProductResponse>(
+        buildGetQueryKey(`products/public/${productId}`),
+      )
+      const cachedQuantity = cachedDetail?.data?.quantity
+      if (typeof cachedQuantity === 'number') {
+        rememberAvailableQuantity(productId, cachedQuantity)
+        return cachedQuantity
+      }
+
+      try {
+        const response = await fetchGet<ProductResponse>({
+          path: `products/public/${productId}`,
+        })
+        const quantity = response.data?.quantity
+        if (typeof quantity !== 'number') return undefined
+
+        rememberAvailableQuantity(productId, quantity)
+        return quantity
+      } catch {
+        return undefined
+      }
+    },
+    [queryClient, rememberAvailableQuantity],
+  )
+
+  const isAddToCartDisabled = useCallback(
+    (product: Product) => {
+      const availableQuantity =
+        availableQuantityByProductId[product.id] ??
+        (typeof product.quantity === 'number' ? product.quantity : undefined)
+
+      if (typeof availableQuantity !== 'number') {
+        return product.inStock === false
+      }
+
+      const inCartQuantity = cartProductQuantities[product.id] ?? 0
+      return product.inStock === false || inCartQuantity >= availableQuantity
+    },
+    [availableQuantityByProductId, cartProductQuantities],
+  )
+
+  const handleAddToCart = useCallback(
+    async (product: Product) => {
+      if (!cartId) {
+        toast.error(t('cart.notReady'))
+        return
+      }
+
+      const availableQuantity = await getAvailableQuantity(
+        product.id,
+        typeof product.quantity === 'number' ? product.quantity : undefined,
+      )
+      const inCartQuantity = cartProductQuantitiesRef.current[product.id] ?? 0
+      const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0
+      const nextQuantity = inCartQuantity + pendingQuantity
+
+      if (
+        typeof availableQuantity === 'number' &&
+        nextQuantity >= availableQuantity
+      ) {
+        toast.error(t('common.outOfStock'))
+        return
+      }
+
+      pendingAddByProductIdRef.current = {
+        ...pendingAddByProductIdRef.current,
+        [product.id]: pendingQuantity + 1,
+      }
+
+      try {
+        const response = await apiClient
+          .post(`cart/items?cart_id=${cartId}`, {
+            json: {
+              product_id: product.id,
+              quantity: 1,
+            },
+          })
+          .json<ApiResponse<CartItem>>()
+
+        queryClient.setQueryData<ApiResponse<Cart>>(
+          buildGetQueryKey('cart'),
+          (current) =>
+            mergeCartItemIntoCartResponse(current, response.data, cartId),
+        )
+
+        await queryClient.invalidateQueries({ queryKey: ['cart'] })
+      } catch {
+        toast.error(t('cart.addToCartError'))
+      } finally {
+        const currentPending = pendingAddByProductIdRef.current[product.id] ?? 0
+        if (currentPending <= 1) {
+          const nextPending = { ...pendingAddByProductIdRef.current }
+          delete nextPending[product.id]
+          pendingAddByProductIdRef.current = nextPending
+        } else {
+          pendingAddByProductIdRef.current = {
+            ...pendingAddByProductIdRef.current,
+            [product.id]: currentPending - 1,
+          }
+        }
+      }
+    },
+    [cartId, getAvailableQuantity, queryClient, t],
+  )
+
+  return { handleAddToCart, isAddToCartDisabled }
+}
+
 interface ProductGridProps {
   /** Custom title for the section */
   title?: string
@@ -57,6 +212,8 @@ interface ProductGridProps {
   className?: string
   /** Callback when add to cart is clicked */
   onAddToCart?: (product: Product) => void
+  /** Disable add to cart for a specific product */
+  isAddToCartDisabled?: (product: Product) => boolean
   /** Loading state */
   isLoading?: boolean
 }
@@ -71,6 +228,7 @@ export function ProductGrid({
   cardVariant = 'default',
   className,
   onAddToCart,
+  isAddToCartDisabled,
   isLoading = false,
 }: ProductGridProps) {
   const { t } = useTranslation()
@@ -139,6 +297,7 @@ export function ProductGrid({
                   product={product}
                   variant={cardVariant}
                   onAddToCart={onAddToCart}
+                  disableAddToCart={isAddToCartDisabled?.(product)}
                 />
               </motion.div>
             ))}
@@ -158,7 +317,7 @@ export function FeaturedProducts({
   initialData?: ProductsResponse
 }) {
   const { t } = useTranslation()
-  const { cartId } = useCart()
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
@@ -175,21 +334,6 @@ export function FeaturedProducts({
   
   const products = (data?.data || []).slice(0, count)
   
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
-    method: 'post',
-    successMessage: t('cart.addedToCart'),
-    errorMessage: t('cart.addToCartError'),
-  })
-
-  const handleAddToCart = (product: Product) => {
-    if (!cartId) return
-    addToCart.mutate({
-      product_id: product.id,
-      quantity: 1,
-    })
-  }
-
   return (
     <ProductGrid
       title={t('products.featured')}
@@ -197,6 +341,7 @@ export function FeaturedProducts({
       products={products}
       columns={count === 3 ? 3 : 4}
       onAddToCart={handleAddToCart}
+      isAddToCartDisabled={isAddToCartDisabled}
       isLoading={isLoading}
     />
   )
@@ -205,7 +350,7 @@ export function FeaturedProducts({
 // New Arrivals Section - Uses API
 export function NewArrivals() {
   const { t } = useTranslation()
-  const { cartId } = useCart()
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
@@ -222,21 +367,6 @@ export function NewArrivals() {
   // Get latest products (by created_at)
   const products = (data?.data || []).slice(0, 6)
   
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
-    method: 'post',
-    successMessage: t('cart.addedToCart'),
-    errorMessage: t('cart.addToCartError'),
-  })
-
-  const handleAddToCart = (product: Product) => {
-    if (!cartId) return
-    addToCart.mutate({
-      product_id: product.id,
-      quantity: 1,
-    })
-  }
-
   return (
     <ProductGrid
       title={t('products.newArrivals')}
@@ -245,6 +375,7 @@ export function NewArrivals() {
       showViewAll
       viewAllLink="/shop?filter=new"
       onAddToCart={handleAddToCart}
+      isAddToCartDisabled={isAddToCartDisabled}
       isLoading={isLoading}
     />
   )
@@ -253,7 +384,7 @@ export function NewArrivals() {
 // Sale Products Section - Uses API
 export function SaleProducts() {
   const { t } = useTranslation()
-  const { cartId } = useCart()
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
   
   const { data, isLoading } = useGet<ProductsResponse>({
     path: 'products/public',
@@ -273,21 +404,6 @@ export function SaleProducts() {
   )
   const products = (discounted.length ? discounted : data?.data || []).slice(0, 3)
   
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
-    method: 'post',
-    successMessage: t('cart.addedToCart'),
-    errorMessage: t('cart.addToCartError'),
-  })
-
-  const handleAddToCart = (product: Product) => {
-    if (!cartId) return
-    addToCart.mutate({
-      product_id: product.id,
-      quantity: 1,
-    })
-  }
-
   return (
     <section className="section-padding bg-gold-50">
       <div className="container mx-auto">
@@ -322,6 +438,7 @@ export function SaleProducts() {
                   product={product}
                   variant="detailed"
                   onAddToCart={handleAddToCart}
+                  disableAddToCart={isAddToCartDisabled(product)}
                 />
               </motion.div>
             ))}
@@ -343,22 +460,7 @@ export function ProductCarousel({
   isLoading?: boolean
 }) {
   const { t } = useTranslation()
-  const { cartId } = useCart()
-  
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : 'cart/items?cart_id=',
-    method: 'post',
-    successMessage: t('cart.addedToCart'),
-    errorMessage: t('cart.addToCartError'),
-  })
-
-  const handleAddToCart = (product: Product) => {
-    if (!cartId) return
-    addToCart.mutate({
-      product_id: product.id,
-      quantity: 1,
-    })
-  }
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
 
   return (
     <section className="section-padding-sm bg-white">
@@ -410,6 +512,7 @@ export function ProductCarousel({
                   <ProductCard
                     product={product}
                     onAddToCart={handleAddToCart}
+                    disableAddToCart={isAddToCartDisabled(product)}
                   />
                 </motion.div>
               ))}

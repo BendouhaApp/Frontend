@@ -1,6 +1,6 @@
 "use client";
 
-import { type SyntheticEvent, useState, useEffect } from "react";
+import { type SyntheticEvent, useState } from "react";
 import { useParams, Link } from "@/lib/router";
 import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
@@ -19,13 +19,22 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGet } from "@/hooks/useGet";
+import { useQueryClient } from "@tanstack/react-query";
+import { buildGetQueryKey, useGet } from "@/hooks/useGet";
 import { usePost } from "@/hooks/usePost";
-import { useCart } from "@/hooks/useCart";
-import type { ProductResponse, AddToCartPayload, CartItem, ApiResponse } from "@/types/api";
+import { useCartId, useCartProductQuantities } from "@/hooks/useCart";
+import type {
+  Cart,
+  Product,
+  ProductResponse,
+  AddToCartPayload,
+  CartItem,
+  ApiResponse,
+} from "@/types/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { mergeCartItemIntoCartResponse } from "@/lib/cart";
 
 function toNumber(value: unknown, fallback = 0): number {
   const numeric =
@@ -280,7 +289,11 @@ function QuantitySelector({
           size="icon"
           className="h-10 w-10 rounded-s-none"
           onClick={() => onQuantityChange(quantity + 1)}
-          disabled={maxQuantity ? quantity >= maxQuantity : false}
+          disabled={
+            typeof maxQuantity === "number"
+              ? quantity >= Math.max(1, maxQuantity)
+              : false
+          }
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -298,6 +311,104 @@ function QuantitySelector({
         </p>
       )}
     </div>
+  );
+}
+
+function PurchaseControls({
+  product,
+  isWishlisted,
+  onToggleWishlist,
+}: {
+  product: Product;
+  isWishlisted: boolean;
+  onToggleWishlist: () => void;
+}) {
+  const { t } = useTranslation();
+  const { cartId } = useCartId();
+  const queryClient = useQueryClient();
+  const cartProductQuantities = useCartProductQuantities();
+  const [quantity, setQuantity] = useState(1);
+  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
+    path: cartId ? `cart/items?cart_id=${cartId}` : "cart/items?cart_id=",
+    method: "post",
+    successMessage: t("cart.addedToCart"),
+    errorMessage: t("cart.addToCartError"),
+    options: {
+      onSuccess: (response) => {
+        queryClient.setQueryData<ApiResponse<Cart>>(
+          buildGetQueryKey("cart"),
+          (current) =>
+            mergeCartItemIntoCartResponse(current, response.data, cartId),
+        );
+      },
+    },
+  });
+  const inCartQuantity = cartProductQuantities[product.id] ?? 0;
+  const availableQuantity = typeof product.quantity === "number"
+    ? Math.max(0, product.quantity - inCartQuantity)
+    : undefined;
+  const effectiveQuantity =
+    typeof availableQuantity === "number"
+      ? Math.max(1, Math.min(quantity, availableQuantity || 1))
+      : quantity;
+
+  const handleAddToCart = () => {
+    if (!cartId) {
+      toast.error(t("productDetail.cartNotReady"));
+      return;
+    }
+
+    if (typeof availableQuantity === "number" && availableQuantity <= 0) {
+      toast.error(t("common.outOfStock"));
+      return;
+    }
+
+    addToCart.mutate({
+      product_id: product.id,
+      quantity: effectiveQuantity,
+    });
+  };
+
+  return (
+    <>
+      <QuantitySelector
+        quantity={effectiveQuantity}
+        onQuantityChange={setQuantity}
+        maxQuantity={availableQuantity}
+      />
+
+      <div className="flex gap-3 pt-2">
+        <Button
+          size="lg"
+          className="flex-1 rounded-full"
+          onClick={handleAddToCart}
+          disabled={
+            product.inStock === false ||
+            addToCart.isPending ||
+            (typeof availableQuantity === "number" && availableQuantity <= 0)
+          }
+        >
+          <ShoppingBag className="me-2 h-5 w-5" />
+          {addToCart.isPending
+            ? t("productDetail.adding")
+            : product.inStock === false
+              ? t("common.outOfStock")
+              : t("common.addToCart")}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className={cn(
+            "rounded-full",
+            isWishlisted &&
+              "border-red-200 bg-red-50 text-red-500 hover:bg-red-100",
+          )}
+          onClick={onToggleWishlist}
+        >
+          <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+        </Button>
+      </div>
+    </>
   );
 }
 
@@ -341,29 +452,14 @@ export function ProductDetail() {
   });
   const product = data?.data;
 
-  const { cartId } = useCart();
-
-  // Cart mutation with dynamic cart_id
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : "cart/items?cart_id=",
-    method: "post",
-    successMessage: t("cart.addedToCart"),
-    errorMessage: t("cart.addToCartError"),
-  });
-
   // UI State
-  const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [sizeSelections, setSizeSelections] = useState<Record<string, string>>(
+    {},
+  );
+  const [colorSelections, setColorSelections] = useState<
+    Record<string, string>
+  >({});
   const [isWishlisted, setIsWishlisted] = useState(false);
-
-  // Set initial selections when product loads
-  useEffect(() => {
-    if (product) {
-      if (product.sizes?.length) setSelectedSize(product.sizes[0]);
-      if (product.colors?.length) setSelectedColor(product.colors[0].name);
-    }
-  }, [product]);
 
   // Loading state
   if (isLoading) {
@@ -414,18 +510,9 @@ export function ProductDetail() {
     originalPrice != null && originalPrice > price
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : 0;
-
-  const handleAddToCart = () => {
-    if (!product) return;
-    if (!cartId) {
-      toast.error(t("productDetail.cartNotReady"));
-      return;
-    }
-    addToCart.mutate({
-      product_id: product.id,
-      quantity,
-    });
-  };
+  const selectedSize = sizeSelections[product.id] ?? product.sizes?.[0] ?? "";
+  const selectedColor =
+    colorSelections[product.id] ?? product.colors?.[0]?.name ?? "";
 
   const handleWishlist = () => {
     setIsWishlisted(!isWishlisted);
@@ -549,7 +636,12 @@ export function ProductDetail() {
                 <ColorSelector
                   colors={product.colors}
                   selected={selectedColor}
-                  onSelect={setSelectedColor}
+                  onSelect={(color) =>
+                    setColorSelections((prev) => ({
+                      ...prev,
+                      [product.id]: color,
+                    }))
+                  }
                 />
               )}
 
@@ -558,47 +650,21 @@ export function ProductDetail() {
                 <SizeSelector
                   sizes={product.sizes}
                   selected={selectedSize}
-                  onSelect={setSelectedSize}
+                  onSelect={(size) =>
+                    setSizeSelections((prev) => ({
+                      ...prev,
+                      [product.id]: size,
+                    }))
+                  }
                 />
               )}
 
-              {/* Quantity */}
-              <QuantitySelector
-                quantity={quantity}
-                onQuantityChange={setQuantity}
-                maxQuantity={product.quantity}
+              <PurchaseControls
+                key={product.id}
+                product={product}
+                isWishlisted={isWishlisted}
+                onToggleWishlist={handleWishlist}
               />
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <Button
-                  size="lg"
-                  className="flex-1 rounded-full"
-                  onClick={handleAddToCart}
-                  disabled={product.inStock === false || addToCart.isPending}
-                >
-                  <ShoppingBag className="me-2 h-5 w-5" />
-                  {addToCart.isPending
-                    ? t("productDetail.adding")
-                    : product.inStock === false
-                      ? t("common.outOfStock")
-                      : t("common.addToCart")}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className={cn(
-                    "rounded-full",
-                    isWishlisted &&
-                      "border-red-200 bg-red-50 text-red-500 hover:bg-red-100",
-                  )}
-                  onClick={handleWishlist}
-                >
-                  <Heart
-                    className={cn("h-5 w-5", isWishlisted && "fill-current")}
-                  />
-                </Button>
-              </div>
 
               {/* Features */}
               <ProductFeatures />

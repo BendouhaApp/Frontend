@@ -48,6 +48,8 @@ type MotionExtraProps = {
   whileInView?: MotionTarget | string;
   whileHover?: MotionTarget;
   whileTap?: MotionTarget;
+  layout?: boolean | "position" | "size";
+  layoutId?: string;
   transition?: MotionTransition;
   variants?: Variants;
   viewport?: ViewportOptions;
@@ -145,6 +147,8 @@ const createMotionComponent = (component: ElementType) => {
         whileInView,
         whileHover,
         whileTap,
+        layout,
+        layoutId,
         transition,
         variants,
         viewport,
@@ -154,6 +158,8 @@ const createMotionComponent = (component: ElementType) => {
       forwardedRef,
     ) => {
       void exit;
+      void layout;
+      void layoutId;
       const elementRef = useRef<any>(null);
       const hoverTweenRef = useRef<gsap.core.Tween | null>(null);
       const tapTweenRef = useRef<gsap.core.Tween | null>(null);

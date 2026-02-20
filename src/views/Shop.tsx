@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from '@/lib/gsap-motion';
 import { useTranslation } from "react-i18next";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -20,19 +22,21 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { SkeletonProductGrid } from "@/components/ui/skeleton";
 import { buildGetQueryKey, fetchGet, useGet } from "@/hooks/useGet";
-import { usePost } from "@/hooks/usePost";
-import { useCart } from "@/hooks/useCart";
+import { useCartId, useCartProductQuantities } from "@/hooks/useCart";
 import type {
-  Product,
-  ProductsResponse,
-  AddToCartPayload,
+  Cart,
   CartItem,
+  Product,
+  ProductResponse,
+  ProductsResponse,
   ApiResponse,
   Category,
 } from "@/types/api";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { apiClient } from "@/lib/http";
 import { toast } from "sonner";
+import { mergeCartItemIntoCartResponse } from "@/lib/cart";
 
 type ViewMode = "grid" | "large" | "list";
 type CardVariant = "default" | "compact" | "detailed";
@@ -314,12 +318,14 @@ function QuickViewModal({
   onAddToCart,
   onToggleWishlist,
   isWishlisted,
+  disableAddToCart,
 }: {
   product: Product | null;
   onClose: () => void;
   onAddToCart: (product: Product) => void;
   onToggleWishlist: (product: Product) => void;
   isWishlisted: boolean;
+  disableAddToCart: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -336,6 +342,17 @@ function QuickViewModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [product, onClose]);
 
+  useEffect(() => {
+    if (!product) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [product]);
+
   if (!product) return null;
 
   const price = toNumber(product.price);
@@ -348,23 +365,30 @@ function QuickViewModal({
     product.category ||
     t("products.allCategories");
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
         className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm"
       />
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 24, scale: 0.97 }}
-        transition={{ duration: 0.2 }}
+      <div
         className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.2 }}
+          onClick={(event: ReactMouseEvent<HTMLDivElement>) =>
+            event.stopPropagation()
+          }
+          className="max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        >
           <button
             type="button"
             onClick={onClose}
@@ -413,7 +437,7 @@ function QuickViewModal({
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button
                   onClick={() => onAddToCart(product)}
-                  disabled={product.inStock === false}
+                  disabled={product.inStock === false || disableAddToCart}
                   className="rounded-full bg-primary hover:bg-primary-600"
                 >
                   {product.inStock === false
@@ -446,9 +470,10 @@ function QuickViewModal({
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </div>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -469,11 +494,17 @@ export function Shop() {
   const [onlyInStock, setOnlyInStock] = useState(false);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [wishlistReady, setWishlistReady] = useState(false);
+  const [availableQuantityByProductId, setAvailableQuantityByProductId] =
+    useState<Record<string, number>>({});
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
   );
+  const availableQuantityByProductIdRef = useRef<Record<string, number>>({});
+  const pendingAddByProductIdRef = useRef<Record<string, number>>({});
 
-  const { cartId } = useCart();
+  const { cartId } = useCartId();
+  const cartQuantityByProductId = useCartProductQuantities();
+  const cartQuantityByProductIdRef = useRef<Record<string, number>>({});
 
   const { data: categoriesResponse } = useGet<ApiResponse<Category[]>>({
     path: "categories",
@@ -667,6 +698,14 @@ export function Shop() {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
   }, [wishlistIds, wishlistReady]);
 
+  useEffect(() => {
+    availableQuantityByProductIdRef.current = availableQuantityByProductId;
+  }, [availableQuantityByProductId]);
+
+  useEffect(() => {
+    cartQuantityByProductIdRef.current = cartQuantityByProductId;
+  }, [cartQuantityByProductId]);
+
   const effectiveSearchQuery = useMemo(() => {
     return debouncedSearchQuery.trim();
   }, [debouncedSearchQuery]);
@@ -756,30 +795,106 @@ export function Shop() {
     });
   }, [page]);
 
-  // Cart mutation - you need a cart_id to add items
-  const addToCart = usePost<AddToCartPayload, ApiResponse<CartItem>>({
-    path: cartId ? `cart/items?cart_id=${cartId}` : "cart/items?cart_id=",
-    method: "post",
-    successMessage: t("cart.addedToCart"),
-    errorMessage: t("cart.addToCartError"),
-  });
+  const getAvailableQuantity = useCallback(
+    async (productId: string): Promise<number | undefined> => {
+      const knownQuantity = availableQuantityByProductIdRef.current[productId];
+      if (typeof knownQuantity === "number") return knownQuantity;
 
-  const handleAddToCart = (product: Product) => {
+      const cachedDetail = queryClient.getQueryData<ProductResponse>(
+        buildGetQueryKey(`products/public/${productId}`),
+      );
+      const cachedQuantity = cachedDetail?.data?.quantity;
+      if (typeof cachedQuantity === "number") {
+        setAvailableQuantityByProductId((prev) =>
+          prev[productId] === cachedQuantity
+            ? prev
+            : { ...prev, [productId]: cachedQuantity },
+        );
+        return cachedQuantity;
+      }
+
+      try {
+        const response = await fetchGet<ProductResponse>({
+          path: `products/public/${productId}`,
+        });
+        const quantity = response.data?.quantity;
+        if (typeof quantity !== "number") return undefined;
+
+        setAvailableQuantityByProductId((prev) =>
+          prev[productId] === quantity ? prev : { ...prev, [productId]: quantity },
+        );
+        return quantity;
+      } catch {
+        return undefined;
+      }
+    },
+    [queryClient],
+  );
+
+  const handleAddToCart = useCallback(async (product: Product) => {
     if (!cartId) {
       toast.error(t("cart.notReady"));
       return;
     }
-    addToCart.mutate({
-      product_id: product.id,
-      quantity: 1,
-    });
-  };
 
-  const handleQuickView = (product: Product) => {
+    const availableQuantity = await getAvailableQuantity(product.id);
+    const currentQuantity = cartQuantityByProductIdRef.current[product.id] ?? 0;
+    const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0;
+    const nextQuantity = currentQuantity + pendingQuantity;
+
+    if (
+      typeof availableQuantity === "number" &&
+      nextQuantity >= availableQuantity
+    ) {
+      toast.error(t("common.outOfStock"));
+      return;
+    }
+
+    pendingAddByProductIdRef.current = {
+      ...pendingAddByProductIdRef.current,
+      [product.id]: pendingQuantity + 1,
+    };
+
+    try {
+      const response = await apiClient
+        .post(`cart/items?cart_id=${cartId}`, {
+          json: {
+            product_id: product.id,
+            quantity: 1,
+          },
+        })
+        .json<ApiResponse<CartItem>>();
+
+      queryClient.setQueryData<ApiResponse<Cart>>(
+        buildGetQueryKey("cart"),
+        (current) =>
+          mergeCartItemIntoCartResponse(current, response.data, cartId),
+      );
+
+      toast.success(t("cart.addedToCart"));
+      await queryClient.invalidateQueries({ queryKey: ["cart"] });
+    } catch {
+      toast.error(t("cart.addToCartError"));
+    } finally {
+      const currentPending = pendingAddByProductIdRef.current[product.id] ?? 0;
+      if (currentPending <= 1) {
+        const nextPending = { ...pendingAddByProductIdRef.current };
+        delete nextPending[product.id];
+        pendingAddByProductIdRef.current = nextPending;
+      } else {
+        pendingAddByProductIdRef.current = {
+          ...pendingAddByProductIdRef.current,
+          [product.id]: currentPending - 1,
+        };
+      }
+    }
+  }, [cartId, getAvailableQuantity, queryClient, t]);
+
+  const handleQuickView = useCallback((product: Product) => {
     setQuickViewProduct(product);
-  };
+  }, []);
 
-  const handleWishlist = (product: Product) => {
+  const handleWishlist = useCallback((product: Product) => {
     const isAlreadyWishlisted = wishlistSet.has(product.id);
     setWishlistIds((prev) =>
       isAlreadyWishlisted
@@ -792,7 +907,19 @@ export function Shop() {
         ? t("products.removedFromWishlist")
         : t("products.addedToWishlist"),
     );
-  };
+  }, [t, wishlistSet]);
+
+  const isAddToCartDisabled = useCallback(
+    (product: Product) => {
+      const availableQuantity = availableQuantityByProductId[product.id];
+      if (typeof availableQuantity !== "number") {
+        return product.inStock === false;
+      }
+      const currentQuantity = cartQuantityByProductId[product.id] ?? 0;
+      return product.inStock === false || currentQuantity >= availableQuantity;
+    },
+    [availableQuantityByProductId, cartQuantityByProductId],
+  );
 
   // Map view mode to card variant and grid columns
   const getViewConfig = (): { variant: CardVariant; gridClass: string } => {
@@ -829,6 +956,7 @@ export function Shop() {
         onClose={() => setQuickViewProduct(null)}
         onAddToCart={handleAddToCart}
         onToggleWishlist={handleWishlist}
+        disableAddToCart={quickViewProduct ? isAddToCartDisabled(quickViewProduct) : false}
         isWishlisted={
           quickViewProduct ? wishlistSet.has(quickViewProduct.id) : false
         }
@@ -1196,6 +1324,7 @@ export function Shop() {
                           onQuickView={handleQuickView}
                           onWishlist={handleWishlist}
                           isWishlisted={wishlistSet.has(product.id)}
+                          disableAddToCart={isAddToCartDisabled(product)}
                         />
                       </motion.div>
                     ))}
