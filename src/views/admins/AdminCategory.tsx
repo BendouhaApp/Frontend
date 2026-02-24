@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence, type Variants } from '@/lib/gsap-motion';
+import { motion, AnimatePresence, type Variants } from "@/lib/gsap-motion";
 import {
   Plus,
   Pencil,
@@ -21,6 +21,7 @@ import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { compressImageFile } from "@/lib/image-compressor";
 import { useGet } from "@/hooks/useGet";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 export type DbCategory = {
   id: string;
@@ -140,7 +141,9 @@ function CategoryForm({
         setImage(result);
       };
       reader.readAsDataURL(file);
-      setCompressionMessage("Could not compress image. Original file was kept.");
+      setCompressionMessage(
+        "Could not compress image. Original file was kept.",
+      );
     } finally {
       setIsCompressing(false);
       e.target.value = "";
@@ -317,7 +320,9 @@ function CategoryForm({
             )}
           </label>
           {compressionMessage && (
-            <p className="mt-2 text-xs text-neutral-600">{compressionMessage}</p>
+            <p className="mt-2 text-xs text-neutral-600">
+              {compressionMessage}
+            </p>
           )}
 
           {(imagePreview || image) && (
@@ -413,7 +418,6 @@ function CategoryForm({
 
 export function AdminCategory() {
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<DbCategory | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -431,11 +435,15 @@ export function AdminCategory() {
       staleTime: 1000 * 30,
     },
   });
-  const items = useMemo(() => categoriesResponse?.data ?? [], [categoriesResponse?.data]);
+  const items = useMemo(
+    () => categoriesResponse?.data ?? [],
+    [categoriesResponse?.data],
+  );
 
   useEffect(() => {
     if (!categoriesFailed) return;
-    setError(categoriesError?.message || "Something went wrong");
+
+    toast.error(categoriesError?.message || "Failed to load categories");
   }, [categoriesFailed, categoriesError]);
 
   const hasChildren = (id: string) => items.some((c) => c.parent_id === id);
@@ -476,40 +484,48 @@ export function AdminCategory() {
 
   const submit = async (payload: Partial<DbCategory>) => {
     setSaving(true);
+
     try {
-      if (editing) {
-        await api.patch(`/categories/${editing.id}`, payload);
-      } else {
-        await api.post("/categories", payload);
-      }
+      await toast.promise(
+        editing
+          ? api.patch(`/categories/${editing.id}`, payload)
+          : api.post("/categories", payload),
+        {
+          loading: editing ? "Updating category..." : "Creating category...",
+          success: editing
+            ? "Category updated successfully"
+            : "Category created successfully",
+          error: (error) => getApiErrorMessage(error, "Operation failed"),
+        },
+      );
+
       await refetch();
       setShowForm(false);
       setEditing(null);
-    } catch (error: unknown) {
-      setError(getApiErrorMessage(error, "Something went wrong"));
     } finally {
       setSaving(false);
     }
   };
 
   const deleteCategory = async (id: string) => {
-    try {
-      await api.delete(`/categories/${id}`);
-      await refetch();
-    } catch (error: unknown) {
-      setError(getApiErrorMessage(error, "Delete failed"));
-    }
+    await toast.promise(api.delete(`/categories/${id}`), {
+      loading: "Deleting category...",
+      success: "Category deleted successfully",
+      error: (error) => getApiErrorMessage(error, "Delete failed"),
+    });
+
+    await refetch();
   };
 
   const activate = async (id: string) => {
-    try {
-      await api.patch(`categories/${id}/activate`);
-      await refetch();
-    } catch (error: unknown) {
-      setError(getApiErrorMessage(error, "Activation failed"));
-    }
-  };
+    await toast.promise(api.patch(`categories/${id}/activate`), {
+      loading: "Activating category...",
+      success: "Category activated successfully",
+      error: (error) => getApiErrorMessage(error, "Activation failed"),
+    });
 
+    await refetch();
+  };
   const mainCategories = items.filter((c) => !c.parent_id);
   const subCategories = items.filter((c) => !!c.parent_id);
 
@@ -530,7 +546,6 @@ export function AdminCategory() {
 
             <Button
               onClick={() => {
-                setError("");
                 setEditing(null);
                 setShowForm(true);
               }}
@@ -666,30 +681,6 @@ export function AdminCategory() {
             </button>
           </div>
         </div>
-
-        {/* Error Message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4"
-            >
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">Error</p>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
-              </div>
-              <button
-                onClick={() => setError("")}
-                className="text-red-400 transition hover:text-red-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Content */}
         {loading ? (
@@ -1049,4 +1040,3 @@ export function AdminCategory() {
     </div>
   );
 }
-

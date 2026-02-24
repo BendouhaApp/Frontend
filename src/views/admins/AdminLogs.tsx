@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from '@/lib/gsap-motion';
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "@/lib/gsap-motion";
 import {
   Loader2,
   Search,
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 export type AdminLog = {
   id: string;
@@ -87,7 +88,6 @@ export default function AdminLogs() {
   const [logs, setLogs] = useState<AdminLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -103,6 +103,8 @@ export default function AdminLogs() {
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const actionRef = useRef<HTMLDivElement | null>(null);
+  const entityRef = useRef<HTMLDivElement | null>(null);
 
   const [stats, setStats] = useState({
     last24h: 0,
@@ -124,15 +126,6 @@ export default function AdminLogs() {
   }, [page]);
 
   useEffect(() => {
-    const handleClick = () => {
-      setShowActionFilter(false);
-      setShowEntityFilter(false);
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, []);
-
-  useEffect(() => {
     if (page !== 1) {
       setPage(1);
       setPageInput("1");
@@ -143,9 +136,30 @@ export default function AdminLogs() {
     load(false);
   }, [page, debouncedQuery, selectedActions, selectedEntities, selectedDate]);
 
+  useEffect(() => {
+    const handler = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (
+        actionRef.current?.contains(target) ||
+        entityRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setShowActionFilter(false);
+      setShowEntityFilter(false);
+    };
+
+    document.addEventListener("pointerdown", handler);
+
+    return () => {
+      document.removeEventListener("pointerdown", handler);
+    };
+  }, []);
+
   async function load(isRefresh = false) {
     isRefresh ? setRefreshing(true) : setLoading(true);
-    setError("");
 
     try {
       const params = new URLSearchParams({
@@ -174,7 +188,7 @@ export default function AdminLogs() {
       setTotal(res.data.meta.total);
       setStats(res.data.stats || { last24h: 0, actionCounts: {} });
     } catch (e: any) {
-      setError(e?.response?.data?.message || "Failed to load logs");
+      toast.error(e?.response?.data?.message || "Failed to load logs");
       setLogs([]);
       setStats({ last24h: 0, actionCounts: {} });
     } finally {
@@ -307,7 +321,7 @@ export default function AdminLogs() {
             {/* Filter Buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Action Filter */}
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <div ref={actionRef} className="relative">
                 <Button
                   variant="outline"
                   size="sm"
@@ -379,7 +393,7 @@ export default function AdminLogs() {
               </div>
 
               {/* Entity Filter */}
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <div ref={entityRef} className="relative">
                 <Button
                   variant="outline"
                   size="sm"
@@ -569,17 +583,6 @@ export default function AdminLogs() {
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {error}
-          </motion.div>
-        )}
-
         {/* Logs Table */}
         {loading ? (
           <div className="rounded-2xl border border-neutral-200 bg-white p-12 text-center shadow-sm">
@@ -677,7 +680,7 @@ export default function AdminLogs() {
                         </td>
                         <td className="px-6 py-4">
                           <p className="max-w-xs truncate text-sm text-neutral-600">
-                            {log.description || "â€”"}
+                            {log.description || "—"}
                           </p>
                         </td>
                         <td className="px-6 py-4">
@@ -733,7 +736,9 @@ export default function AdminLogs() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-neutral-500">Aller à la page</span>
+                <span className="text-xs text-neutral-500">
+                  Aller à la page
+                </span>
                 <input
                   inputMode="numeric"
                   pattern="[0-9]*"
@@ -779,4 +784,3 @@ export default function AdminLogs() {
     </div>
   );
 }
-

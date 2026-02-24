@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence, type Variants } from '@/lib/gsap-motion';
+import { motion, AnimatePresence, type Variants } from "@/lib/gsap-motion";
 import { useGet } from "@/hooks/useGet";
 
 type Stats = {
@@ -107,7 +107,9 @@ export default function AdminDashboard() {
     path: "admin/dashboard",
     options: {
       enabled: hasToken,
-      staleTime: 1000 * 60,
+      staleTime: 0,
+      refetchOnMount: "always",
+      refetchOnWindowFocus: true,
     },
   });
 
@@ -119,7 +121,46 @@ export default function AdminDashboard() {
     },
   });
 
-  const stats = statsQuery.data ?? null;
+  //helper to convert all stats values to numbers and handle any unexpected formats
+  const stats = useMemo(() => {
+    const raw = statsQuery.data as any;
+    if (!raw) return null;
+
+    const toNumber = (value: unknown) => {
+      const n = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    return {
+      totalOrders: toNumber(raw.totalOrders),
+      todayOrders: toNumber(raw.todayOrders),
+      pendingOrders: toNumber(raw.pendingOrders),
+      confirmedOrders: toNumber(raw.confirmedOrders),
+      totalProducts: toNumber(raw.totalProducts),
+      totalRevenue: toNumber(raw.totalRevenue),
+      totalCategories: toNumber(raw.totalCategories),
+      outOfStockProducts: toNumber(raw.outOfStockProducts),
+      publishedProducts: toNumber(raw.publishedProducts),
+      draftProducts: toNumber(raw.draftProducts),
+      lowStockProducts: toNumber(raw.lowStockProducts),
+      mainCategories: toNumber(raw.mainCategories),
+      subCategories: toNumber(raw.subCategories),
+      totalWilayas: toNumber(raw.totalWilayas),
+      activeWilayas: toNumber(raw.activeWilayas),
+      inactiveWilayas: toNumber(raw.inactiveWilayas),
+    } as Stats;
+  }, [statsQuery.data]);
+
+  useEffect(() => {
+    const handler = () => {
+      statsQuery.refetch?.();
+      ordersQuery.refetch?.();
+    };
+
+    window.addEventListener("admin:data-changed", handler);
+    return () => window.removeEventListener("admin:data-changed", handler);
+  }, [statsQuery, ordersQuery]);
+
   const orders = useMemo(() => {
     const source = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
 
@@ -134,9 +175,7 @@ export default function AdminDashboard() {
   }, [ordersQuery.data]);
   const loading = !hasToken || statsQuery.isLoading || ordersQuery.isLoading;
   const error =
-    statsQuery.isError || ordersQuery.isError
-      ? "Failed to load dashboard"
-      : "";
+    statsQuery.isError || ordersQuery.isError ? "Failed to load dashboard" : "";
 
   const recentOrders = orders.slice(0, 10);
 
@@ -262,7 +301,7 @@ export default function AdminDashboard() {
                   label="Products"
                   value={stats.totalProducts}
                   icon={<Package className="h-5 w-5" />}
-                  subtext={`${stats.publishedProducts || 0} published â€¢ ${stats.draftProducts || 0} drafts`}
+                  subtext={`${stats.publishedProducts || 0} published - ${stats.draftProducts || 0} drafts`}
                 />
               </motion.div>
 
@@ -271,7 +310,7 @@ export default function AdminDashboard() {
                   label="Categories"
                   value={stats.totalCategories}
                   icon={<Tag className="h-5 w-5" />}
-                  subtext={`${stats.mainCategories || 0} main â€¢ ${stats.subCategories || 0} sub`}
+                  subtext={`${stats.mainCategories || 0} main - ${stats.subCategories || 0} sub`}
                 />
               </motion.div>
 
@@ -280,7 +319,7 @@ export default function AdminDashboard() {
                   label="Wilayas"
                   value={stats.totalWilayas}
                   icon={<MapPin className="h-5 w-5" />}
-                  subtext={`${stats.activeWilayas} active â€¢ ${stats.inactiveWilayas} inactive`}
+                  subtext={`${stats.activeWilayas} active - ${stats.inactiveWilayas} inactive`}
                 />
               </motion.div>
 
@@ -556,5 +595,3 @@ function StatCard({
     </motion.div>
   );
 }
-
-

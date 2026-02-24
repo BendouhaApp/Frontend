@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence, type Variants } from '@/lib/gsap-motion';
+import { motion, AnimatePresence, type Variants } from "@/lib/gsap-motion";
 import {
   Search,
   ShoppingCart,
@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 type OrderItem = {
   id: string;
@@ -125,7 +126,9 @@ type ApiErrorShape = {
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error !== "object" || error === null) return fallback;
   const maybeApiError = error as ApiErrorShape;
-  return maybeApiError.response?.data?.message || maybeApiError.message || fallback;
+  return (
+    maybeApiError.response?.data?.message || maybeApiError.message || fallback
+  );
 };
 
 const tableRowVariants: Variants = {
@@ -159,10 +162,9 @@ export function AdminOrders() {
   const [total, setTotal] = useState(0);
 
   const [loading, setLoading] = useState(true);
-  const [/*loadingStatuses*/, setLoadingStatuses] = useState(true);
+  const [, /*loadingStatuses*/ setLoadingStatuses] = useState(true);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState("");
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const [selectedOrder, setSelectedOrder] = useState<DbOrder | null>(null);
 
@@ -212,7 +214,6 @@ export function AdminOrders() {
 
   const loadOrders = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const params = new URLSearchParams();
@@ -231,7 +232,7 @@ export function AdminOrders() {
       setTotalPages(res.data.meta.totalPages ?? 1);
       setTotal(res.data.meta.total ?? 0);
     } catch (error: unknown) {
-      setError(getErrorMessage(error, "Failed to load orders"));
+      toast.error(getErrorMessage(error, "Failed to load orders"));
     } finally {
       setLoading(false);
     }
@@ -245,7 +246,7 @@ export function AdminOrders() {
       );
       setSelectedOrder(res.data.data);
     } catch (error: unknown) {
-      setError(getErrorMessage(error, "Failed to load details"));
+      toast.error(getErrorMessage(error, "Failed to load details"));
       setSelectedOrderId(null);
     } finally {
       setLoadingDetails(false);
@@ -253,23 +254,29 @@ export function AdminOrders() {
   };
 
   const updateOrderStatus = async (orderId: string, statusId: string) => {
-    setUpdating(true);
-    setError("");
+    setUpdatingOrderId(orderId);
 
     try {
-      await api.patch(`orders/${orderId}`, {
-        order_status_id: statusId,
-      });
-
-      await loadOrders();
-
-      if (selectedOrderId === orderId) {
-        await loadOrderDetails(orderId);
+      await toast.promise(
+        api.patch(`orders/${orderId}`, {
+          order_status_id: statusId,
+        }),
+        {
+          loading: "Updating order status...",
+          success: "Order status updated",
+          error: (error) => getErrorMessage(error, "Failed to update status"),
+        },
+      );
+      try {
+        await loadOrders();
+        if (selectedOrderId === orderId) {
+          await loadOrderDetails(orderId);
+        }
+      } catch (refreshError) {
+        toast.error("Status updated but failed to refresh orders");
       }
-    } catch (error: unknown) {
-      setError(getErrorMessage(error, "Failed to update status"));
     } finally {
-      setUpdating(false);
+      setUpdatingOrderId(null);
     }
   };
 
@@ -362,37 +369,6 @@ export function AdminOrders() {
         />
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4"
-          >
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-            <div className="flex-1">
-              <p className="font-medium text-sm text-red-900">
-                Failed to load orders
-              </p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                loadOrders();
-                loadStatuses();
-                setError("");
-              }}
-              className="shrink-0"
-            >
-              <RefreshCcw className="h-4 w-4" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {loading ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -484,9 +460,9 @@ export function AdminOrders() {
                       {order.customers
                         ? `${order.customers.first_name} ${order.customers.last_name}`
                         : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
-                          "â€”"}
+                          "—"}
                       <div className="text-xs text-neutral-500">
-                        {order.customers?.email || order.customer_phone || "â€”"}
+                        {order.customers?.email || order.customer_phone || "—"}
                       </div>
                     </td>
 
@@ -504,7 +480,7 @@ export function AdminOrders() {
                           {order.order_statuses.status_name}
                         </motion.span>
                       ) : (
-                        <span className="text-neutral-400">â€”</span>
+                        <span className="text-neutral-400">—</span>
                       )}
                     </td>
 
@@ -518,7 +494,9 @@ export function AdminOrders() {
                     >
                       <div className="flex gap-2">
                         <motion.button
-                          disabled={!confirmedStatusId || updating}
+                          disabled={
+                            !confirmedStatusId || updatingOrderId === order.id
+                          }
                           onClick={() =>
                             confirmedStatusId &&
                             updateOrderStatus(order.id, confirmedStatusId)
@@ -532,7 +510,9 @@ export function AdminOrders() {
                         </motion.button>
 
                         <motion.button
-                          disabled={!canceledStatusId || updating}
+                          disabled={
+                            !canceledStatusId || updatingOrderId === order.id
+                          }
                           onClick={() =>
                             canceledStatusId &&
                             updateOrderStatus(order.id, canceledStatusId)
@@ -651,7 +631,8 @@ export function AdminOrders() {
                             className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
                             style={{
                               backgroundColor: `${normalizedSelectedOrder.order_statuses.color}20`,
-                              color: normalizedSelectedOrder.order_statuses.color,
+                              color:
+                                normalizedSelectedOrder.order_statuses.color,
                             }}
                           >
                             {normalizedSelectedOrder.order_statuses.status_name}
@@ -671,7 +652,7 @@ export function AdminOrders() {
                               {normalizedSelectedOrder.customers
                                 ? `${normalizedSelectedOrder.customers.first_name} ${normalizedSelectedOrder.customers.last_name}`
                                 : `${normalizedSelectedOrder.customer_first_name ?? ""} ${normalizedSelectedOrder.customer_last_name ?? ""}`.trim() ||
-                                  "â€”"}
+                                  "—"}
                             </span>
                           </div>
                           {(normalizedSelectedOrder.customers?.email ||
@@ -771,7 +752,8 @@ export function AdminOrders() {
                             <span className="font-medium">
                               {calcTotal(
                                 normalizedSelectedOrder.order_items,
-                              ).toFixed(2)} {CURRENCY}
+                              ).toFixed(2)}{" "}
+                              {CURRENCY}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -779,7 +761,8 @@ export function AdminOrders() {
                             <span className="font-medium">
                               {Number(
                                 normalizedSelectedOrder.shipping_price || 0,
-                              ).toFixed(2)} {CURRENCY}
+                              ).toFixed(2)}{" "}
+                              {CURRENCY}
                             </span>
                           </div>
                           <div className="flex justify-between border-t pt-2 text-base font-semibold">
@@ -790,7 +773,8 @@ export function AdminOrders() {
                                   calcTotal(
                                     normalizedSelectedOrder.order_items,
                                   ),
-                              ).toFixed(2)} {CURRENCY}
+                              ).toFixed(2)}{" "}
+                              {CURRENCY}
                             </span>
                           </div>
                         </div>
@@ -823,4 +807,3 @@ export function AdminOrders() {
     </div>
   );
 }
-

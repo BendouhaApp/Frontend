@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from '@/lib/gsap-motion';
+import { motion, AnimatePresence } from "@/lib/gsap-motion";
 import {
   Plus,
   Pencil,
@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { compressImageBatch, compressImageFile } from "@/lib/image-compressor";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 const money = (v: string | number | null | undefined) => {
   const n = typeof v === "string" ? Number(v) : Number(v ?? 0);
@@ -794,28 +795,57 @@ function ProductForm({
     e.preventDefault();
 
     if (isCompressing) {
-      alert("Veuillez attendre la fin de la compression des images.");
+      toast.error("Please wait for the images to finish compressing.");
+      return;
+    }
+
+    if (!productName.trim()) {
+      toast.error("The product name is mandatory.");
+      return;
+    }
+
+    if (!slug.trim() && !productName.trim()) {
+      toast.error("Le slug ne peut pas être vide.");
+      return;
+    }
+
+    if (salePrice < 0) {
+      toast.error("The sale price must be positive.");
+      return;
+    }
+
+    if (quantity < 0) {
+      toast.error("The quantity must be positive.");
       return;
     }
 
     if (cct < 1000 || cct > 10000) {
-      alert("Le CCT doit Ãªtre compris entre 1000 et 10000 Kelvin.");
+      toast.error("The CCT must be between 1000 and 10000 Kelvin.");
       return;
     }
+
     if (lumen < 1) {
-      alert("Le lumen doit Ãªtre supÃ©rieur ou Ã©gal Ã  1.");
+      toast.error("The lumen must be greater than or equal to 1.");
       return;
     }
+
     if (cri < 0 || cri > 100) {
-      alert("Le CRI doit Ãªtre compris entre 0 et 100.");
+      toast.error("The CRI must be between 0 and 100.");
       return;
     }
+
     if (power < 0) {
-      alert("La puissance doit Ãªtre positive.");
+      toast.error("The power must be positive.");
       return;
     }
+
     if (angle < 1 || angle > 180) {
-      alert("L'angle doit Ãªtre compris entre 1Â° et 180Â°.");
+      toast.error("L'angle doit être compris entre 1° et 180°.");
+      return;
+    }
+
+    if (selectedCategoryIds.length === 0) {
+      toast.error("Veuillez sélectionner au moins une catégorie.");
       return;
     }
 
@@ -1296,7 +1326,8 @@ function ProductForm({
 
                   const saved = selectedFiles.reduce(
                     (sum, original, idx) =>
-                      sum + Math.max(0, original.size - compressedFiles[idx].size),
+                      sum +
+                      Math.max(0, original.size - compressedFiles[idx].size),
                     0,
                   );
 
@@ -1551,7 +1582,7 @@ function ProductRow({
             ) : null}
           </div>
           <div className="text-xs text-neutral-500">
-            CoÃ»t : {money(product.buying_price ?? 0)} {CURRENCY}
+            Coast : {money(product.buying_price ?? 0)} {CURRENCY}
           </div>
         </div>
       </td>
@@ -1588,7 +1619,7 @@ function ProductRow({
             className="h-8 w-8"
             onClick={() => onEdit(product)}
             disabled={isDeleting}
-              aria-label="Modifier le produit"
+            aria-label="Modifier le produit"
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -1598,7 +1629,7 @@ function ProductRow({
             className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
             onClick={() => onRequestDelete(product)}
             disabled={isDeleting}
-              aria-label="Supprimer le produit"
+            aria-label="Supprimer le produit"
           >
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1728,9 +1759,10 @@ export default function AdminProductsPage() {
       setItems(res.data.data);
       setTotalPages(res.data.meta.totalPages);
     } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to load products",
-      );
+      const msg =
+        e?.response?.data?.message || e?.message || "Failed to load products";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -1800,9 +1832,10 @@ export default function AdminProductsPage() {
       setEditing(normalized);
       setShowForm(true);
     } catch (e: any) {
-      setError(
-        e?.response?.data?.message || e?.message || "Failed to load product",
-      );
+      const msg =
+        e?.response?.data?.message || e?.message || "Failed to load product";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -1821,18 +1854,21 @@ export default function AdminProductsPage() {
       removedImages?: string[];
     },
   ) => {
+    const loadingToast = toast.loading("Creating product...");
+
     setSaving(true);
-    setError("");
 
     try {
       const fd = new FormData();
 
       Object.entries(payload).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
+
         if (key === "category_ids" && Array.isArray(value)) {
           value.forEach((id) => fd.append("category_ids[]", id));
           return;
         }
+
         fd.append(key, String(value));
       });
 
@@ -1848,14 +1884,22 @@ export default function AdminProductsPage() {
         fd.append("removed_images", url);
       });
 
-      await api.post("products", fd, {
+      const res = await api.post("products", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      toast.dismiss(loadingToast);
+
+      toast.success(res?.data?.message || "Product created successfully");
 
       await load();
       closeForm();
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Create failed");
+      toast.dismiss(loadingToast);
+
+      toast.error(
+        e?.response?.data?.message || e?.message || "Failed to create product",
+      );
     } finally {
       setSaving(false);
     }
@@ -1871,18 +1915,21 @@ export default function AdminProductsPage() {
   ) => {
     if (!editing) return;
 
+    const loadingToast = toast.loading("Updating product...");
+
     setSaving(true);
-    setError("");
 
     try {
       const fd = new FormData();
 
       Object.entries(payload).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
+
         if (key === "category_ids" && Array.isArray(value)) {
           value.forEach((id) => fd.append("category_ids[]", id));
           return;
         }
+
         fd.append(key, String(value));
       });
 
@@ -1898,46 +1945,60 @@ export default function AdminProductsPage() {
         fd.append("removed_images", url);
       });
 
-      await api.patch(`products/${editing.id}`, fd, {
+      const res = await api.patch(`products/${editing.id}`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      toast.dismiss(loadingToast);
+      toast.success(res?.data?.message || "Product updated successfully ✨");
 
       await load();
       closeForm();
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Update failed");
+      toast.dismiss(loadingToast);
+      toast.error(
+        e?.response?.data?.message || e?.message || "Failed to update product",
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const deleteProduct = async (id: string) => {
+    const loadingToast = toast.loading("Deleting product...");
+
     setDeletingId(id);
-    setError("");
+
     try {
-      await api.delete(`products/${id}`);
+      const res = await api.delete(`products/${id}`);
+
+      toast.dismiss(loadingToast);
+      toast.success(res?.data?.message || "Product deleted successfully");
+
       await load();
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message || e?.message || "Failed to delete product";
-      setError(msg);
-      console.error("Delete failed:", e);
-      if (e?.response?.status === 400) {
-        setTimeout(() => setError(""), 8000);
-      } else {
-        setTimeout(() => setError(""), 5000);
-      }
+      toast.dismiss(loadingToast);
+      toast.error(
+        e?.response?.data?.message || e?.message || "Failed to delete product",
+      );
     } finally {
       setDeletingId(null);
     }
   };
 
   const bulkUpdateStatus = async (published: boolean) => {
+    if (selectedIds.length === 0) return;
+
+    const loadingToast = toast.loading("Updating products...");
+
     try {
-      await api.patch("products/bulk", {
+      const res = await api.patch("products/bulk", {
         ids: selectedIds,
         published,
       });
+
+      toast.dismiss(loadingToast);
+      toast.success(res?.data?.message || "Products updated successfully");
 
       setItems((prev) =>
         prev.map((p) => (selectedIds.includes(p.id) ? { ...p, published } : p)),
@@ -1945,18 +2006,26 @@ export default function AdminProductsPage() {
 
       setSelectedIds([]);
     } catch (e: any) {
-      setError(
+      toast.dismiss(loadingToast);
+      toast.error(
         e?.response?.data?.message || e?.message || "Bulk update failed",
       );
     }
   };
 
   const bulkUpdateOutOfStockVisibility = async (hide: boolean) => {
+    if (selectedIds.length === 0) return;
+
+    const loadingToast = toast.loading("Updating products...");
+
     try {
-      await api.patch("products/bulk", {
+      const res = await api.patch("products/bulk", {
         ids: selectedIds,
         disable_out_of_stock: hide,
       });
+
+      toast.dismiss(loadingToast);
+      toast.success(res?.data?.message || "Products updated successfully");
 
       setItems((prev) =>
         prev.map((p) =>
@@ -1966,33 +2035,39 @@ export default function AdminProductsPage() {
 
       setSelectedIds([]);
     } catch (e: any) {
-      setError(
+      toast.dismiss(loadingToast);
+      toast.error(
         e?.response?.data?.message || e?.message || "Bulk update failed",
       );
     }
   };
 
   const bulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const loadingToast = toast.loading("Deleting selected products...");
+
     setSaving(true);
-    setError("");
+
     try {
-      await api.delete("products/bulk", {
+      const res = await api.delete("products/bulk", {
         data: { ids: selectedIds },
       });
+
+      toast.dismiss(loadingToast);
+      toast.success(res?.data?.message || "Products deleted successfully");
+
       setSelectedIds([]);
       setConfirmBulkDelete(false);
+
       await load();
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message || e?.message || "Failed to delete products";
-      setError(msg);
-      console.error("Bulk delete failed:", e);
+      toast.dismiss(loadingToast);
+      toast.error(
+        e?.response?.data?.message || e?.message || "Failed to delete products",
+      );
+
       setConfirmBulkDelete(false);
-      if (e?.response?.status === 400) {
-        setTimeout(() => setError(""), 10000);
-      } else {
-        setTimeout(() => setError(""), 5000);
-      }
     } finally {
       setSaving(false);
     }
@@ -2062,7 +2137,7 @@ export default function AdminProductsPage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name, slug, SKU, typeÃ¢â‚¬Â¦"
+                  placeholder="Search by name, slug, SKU, type..."
                   className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -2660,5 +2735,3 @@ export default function AdminProductsPage() {
     </div>
   );
 }
-
-
