@@ -156,9 +156,6 @@ export default function AdminDashboard() {
       statsQuery.refetch?.();
       ordersQuery.refetch?.();
     };
-
-    window.addEventListener("admin:data-changed", handler);
-    return () => window.removeEventListener("admin:data-changed", handler);
   }, [statsQuery, ordersQuery]);
 
   const orders = useMemo(() => {
