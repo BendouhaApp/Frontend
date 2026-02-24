@@ -924,7 +924,7 @@ export function AdminCategory() {
               exit={{ opacity: 0 }}
             />
             <div className="fixed inset-0 z-50 overflow-y-auto">
-              <div className="flex min-h-full items-center justify-center p-4">
+              <div className="flex min-h-full items-start justify-center p-4 pt-16">
                 <motion.div
                   className="w-full max-w-lg"
                   initial={{ scale: 0.95, opacity: 0, y: 20 }}

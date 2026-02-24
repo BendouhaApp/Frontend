@@ -530,17 +530,31 @@ function StatCard({
   return (
     <motion.div
       className="group relative rounded-2xl bg-white p-6 shadow-sm"
+      initial={{
+        y: 0,
+        scale: 1,
+        rotateX: 0,
+        rotateY: 0,
+        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
+      }}
+      animate={{
+        y: 0,
+        scale: 1,
+        rotateX: 0,
+        rotateY: 0,
+        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
+      }}
       whileHover={{
         y: -4,
-        scale: 1.02,
+        scale: 1.04,
         rotateX: 1,
         rotateY: -1,
         boxShadow: "0px 30px 60px -15px rgba(0,0,0,0.18)",
       }}
       transition={{
         type: "spring",
-        stiffness: 170,
-        damping: 14,
+        stiffness: 200,
+        damping: 18,
       }}
       style={{ transformStyle: "preserve-3d" }}
     >
@@ -552,11 +566,13 @@ function StatCard({
 
           <motion.div
             className="text-neutral-400 transition-colors group-hover:text-primary"
+            initial={{ scale: 1, rotate: 0 }}
+            animate={{ scale: 1, rotate: 0 }}
             whileHover={{ scale: 1.3, rotate: 8 }}
             transition={{
               type: "spring",
               stiffness: 300,
-              damping: 12,
+              damping: 18,
             }}
           >
             {icon}
