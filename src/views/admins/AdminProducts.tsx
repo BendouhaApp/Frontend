@@ -2531,7 +2531,7 @@ export default function AdminProductsPage() {
           <div className="pointer-events-none fixed bottom-6 left-1/2 z-[60] -translate-x-1/2">
             <div className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm shadow-lg">
               <Loader2 className="h-4 w-4 animate-spin" />
-              WorkingÃ¢â‚¬Â¦
+              Working…
             </div>
           </div>
         )}
@@ -2556,7 +2556,7 @@ export default function AdminProductsPage() {
                 disabled={page === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                PrÃ©cÃ©dent
+                Précédent
               </Button>
 
               <Button
@@ -2570,7 +2570,7 @@ export default function AdminProductsPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-neutral-500">Aller Ã  la page</span>
+              <span className="text-xs text-neutral-500">Aller à la page</span>
               <Input
                 inputMode="numeric"
                 pattern="[0-9]*"
