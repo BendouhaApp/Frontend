@@ -626,7 +626,7 @@ export default function AdminWilaya() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="flex min-h-full items-center justify-center">
+            <div className="flex min-h-full items-start justify-center pt-20">
               <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="font-semibold">

@@ -152,11 +152,9 @@ export default function AdminDashboard() {
   }, [statsQuery.data]);
 
   useEffect(() => {
-    const handler = () => {
-      statsQuery.refetch?.();
-      ordersQuery.refetch?.();
-    };
-  }, [statsQuery, ordersQuery]);
+    statsQuery.refetch?.();
+    ordersQuery.refetch?.();
+  }, []);
 
   const orders = useMemo(() => {
     const source = Array.isArray(ordersQuery.data) ? ordersQuery.data : [];
