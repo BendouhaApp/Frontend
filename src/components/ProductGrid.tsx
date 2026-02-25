@@ -8,6 +8,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { SkeletonProductGrid } from '@/components/ui/skeleton'
 import { buildGetQueryKey, fetchGet, useGet } from '@/hooks/useGet'
+import { getProductAvailableQuantity, isProductOutOfStock } from '@/lib/product-stock'
 import { useCartId, useCartProductQuantities } from '@/hooks/useCart'
 import type {
   ApiResponse,
@@ -114,14 +115,14 @@ function useStockAwareAddToCart() {
     (product: Product) => {
       const availableQuantity =
         availableQuantityByProductId[product.id] ??
-        (typeof product.quantity === 'number' ? product.quantity : undefined)
+        getProductAvailableQuantity(product)
 
       if (typeof availableQuantity !== 'number') {
-        return product.inStock === false
+        return isProductOutOfStock(product)
       }
 
       const inCartQuantity = cartProductQuantities[product.id] ?? 0
-      return product.inStock === false || inCartQuantity >= availableQuantity
+      return isProductOutOfStock(product) || inCartQuantity >= availableQuantity
     },
     [availableQuantityByProductId, cartProductQuantities],
   )
@@ -135,7 +136,7 @@ function useStockAwareAddToCart() {
 
       const availableQuantity = await getAvailableQuantity(
         product.id,
-        typeof product.quantity === 'number' ? product.quantity : undefined,
+        getProductAvailableQuantity(product),
       )
       const inCartQuantity = cartProductQuantitiesRef.current[product.id] ?? 0
       const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0
@@ -329,6 +330,7 @@ export function FeaturedProducts({
     options: {
       staleTime: 1000 * 60 * 5,
       initialData,
+      refetchOnMount: true,
     },
   })
   
@@ -361,6 +363,7 @@ export function NewArrivals() {
     },
     options: {
       staleTime: 1000 * 60 * 5,
+      refetchOnMount: true,
     },
   })
   
@@ -395,6 +398,7 @@ export function SaleProducts() {
     },
     options: {
       staleTime: 1000 * 60 * 5,
+      refetchOnMount: true,
     },
   })
   

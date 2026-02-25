@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { buildGetQueryKey, fetchGet } from "@/hooks/useGet";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { isProductOutOfStock } from "@/lib/product-stock";
 import type { Product, ProductResponse } from "@/types/api";
 
 interface ProductCardProps {
@@ -87,7 +88,8 @@ function ProductCardComponent({
 
   const categoryLabel = getCategoryLabel(product, t("products.allCategories"));
   const currency = t("common.currency");
-  const isAddToCartDisabled = product.inStock === false || disableAddToCart;
+  const outOfStock = isProductOutOfStock(product);
+  const isAddToCartDisabled = outOfStock || disableAddToCart;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -224,7 +226,7 @@ function ProductCardComponent({
           </span>
         )}
 
-        {product.inStock === false && (
+        {outOfStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-navy/40 backdrop-blur-[2px]">
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-navy sm:px-4 sm:py-2 sm:text-sm">
               {t("common.outOfStock")}
@@ -256,7 +258,7 @@ function ProductCardComponent({
           />
         </motion.button>
 
-        {onQuickView && product.inStock !== false && (
+        {onQuickView && !outOfStock && (
           <button
             type="button"
             onClick={handleQuickView}
@@ -268,7 +270,7 @@ function ProductCardComponent({
         )}
 
         <AnimatePresence>
-          {isHovered && product.inStock !== false && (
+          {isHovered && !outOfStock && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -376,7 +378,8 @@ function CompactProductCard({
 
   const categoryLabel = getCategoryLabel(product, t("products.allCategories"));
   const currency = t("common.currency");
-  const isAddToCartDisabled = product.inStock === false || !!disableAddToCart;
+  const outOfStock = isProductOutOfStock(product);
+  const isAddToCartDisabled = outOfStock || !!disableAddToCart;
 
   return (
     <Link
@@ -420,7 +423,7 @@ function CompactProductCard({
               </span>
             )}
           </div>
-          {product.inStock !== false && (
+          {!outOfStock && (
             <Button
               onClick={handleAddToCart}
               disabled={isAddToCartDisabled}
@@ -506,7 +509,8 @@ function DetailedProductCard({
 
   const categoryLabel = getCategoryLabel(product, t("products.allCategories"));
   const currency = t("common.currency");
-  const isAddToCartDisabled = product.inStock === false || !!disableAddToCart;
+  const outOfStock = isProductOutOfStock(product);
+  const isAddToCartDisabled = outOfStock || !!disableAddToCart;
 
   return (
     <Link
@@ -606,7 +610,7 @@ function DetailedProductCard({
               className="rounded-full bg-primary hover:bg-primary-600"
             >
               <ShoppingBag className="me-2 h-4 w-4" />
-              {product.inStock === false
+              {outOfStock
                 ? t("common.outOfStock")
                 : t("common.addToCart")}
             </Button>

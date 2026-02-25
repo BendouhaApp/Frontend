@@ -34,6 +34,7 @@ import type {
 } from "@/types/api";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { getProductAvailableQuantity, isProductOutOfStock } from "@/lib/product-stock";
 import { apiClient } from "@/lib/http";
 import { toast } from "sonner";
 import { mergeCartItemIntoCartResponse } from "@/lib/cart";
@@ -364,6 +365,7 @@ function QuickViewModal({
     product.categories?.[0]?.category_name ||
     product.category ||
     t("products.allCategories");
+  const outOfStock = isProductOutOfStock(product);
 
   if (typeof document === "undefined") return null;
 
@@ -437,10 +439,10 @@ function QuickViewModal({
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button
                   onClick={() => onAddToCart(product)}
-                  disabled={product.inStock === false || disableAddToCart}
+                  disabled={outOfStock || disableAddToCart}
                   className="rounded-full bg-primary hover:bg-primary-600"
                 >
-                  {product.inStock === false
+                  {outOfStock
                     ? t("common.outOfStock")
                     : t("common.addToCart")}
                 </Button>
@@ -741,6 +743,7 @@ export function Shop() {
       options: {
         staleTime: 1000 * 60 * 5,
         placeholderData: keepPreviousData,
+        refetchOnMount: true,
       },
     });
 
@@ -796,9 +799,21 @@ export function Shop() {
   }, [page]);
 
   const getAvailableQuantity = useCallback(
-    async (productId: string): Promise<number | undefined> => {
+    async (
+      productId: string,
+      fallbackQuantity?: number,
+    ): Promise<number | undefined> => {
       const knownQuantity = availableQuantityByProductIdRef.current[productId];
       if (typeof knownQuantity === "number") return knownQuantity;
+
+      if (typeof fallbackQuantity === "number") {
+        setAvailableQuantityByProductId((prev) =>
+          prev[productId] === fallbackQuantity
+            ? prev
+            : { ...prev, [productId]: fallbackQuantity },
+        );
+        return fallbackQuantity;
+      }
 
       const cachedDetail = queryClient.getQueryData<ProductResponse>(
         buildGetQueryKey(`products/public/${productId}`),
@@ -837,7 +852,10 @@ export function Shop() {
       return;
     }
 
-    const availableQuantity = await getAvailableQuantity(product.id);
+    const availableQuantity = await getAvailableQuantity(
+      product.id,
+      getProductAvailableQuantity(product),
+    );
     const currentQuantity = cartQuantityByProductIdRef.current[product.id] ?? 0;
     const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0;
     const nextQuantity = currentQuantity + pendingQuantity;
@@ -911,12 +929,17 @@ export function Shop() {
 
   const isAddToCartDisabled = useCallback(
     (product: Product) => {
-      const availableQuantity = availableQuantityByProductId[product.id];
+      const knownQuantity = getProductAvailableQuantity(product);
+      const availableQuantity =
+        availableQuantityByProductId[product.id] ?? knownQuantity;
+
+      const outOfStock = isProductOutOfStock(product);
       if (typeof availableQuantity !== "number") {
-        return product.inStock === false;
+        return outOfStock;
       }
+
       const currentQuantity = cartQuantityByProductId[product.id] ?? 0;
-      return product.inStock === false || currentQuantity >= availableQuantity;
+      return outOfStock || currentQuantity >= availableQuantity;
     },
     [availableQuantityByProductId, cartQuantityByProductId],
   );

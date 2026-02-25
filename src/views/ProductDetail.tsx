@@ -34,6 +34,7 @@ import type {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { isProductOutOfStock } from "@/lib/product-stock";
 import { mergeCartItemIntoCartResponse } from "@/lib/cart";
 
 function toNumber(value: unknown, fallback = 0): number {
@@ -344,6 +345,7 @@ function PurchaseControls({
     },
   });
   const inCartQuantity = cartProductQuantities[product.id] ?? 0;
+  const outOfStock = isProductOutOfStock(product);
   const availableQuantity = typeof product.quantity === "number"
     ? Math.max(0, product.quantity - inCartQuantity)
     : undefined;
@@ -383,7 +385,7 @@ function PurchaseControls({
           className="flex-1 rounded-full"
           onClick={handleAddToCart}
           disabled={
-            product.inStock === false ||
+            outOfStock ||
             addToCart.isPending ||
             (typeof availableQuantity === "number" && availableQuantity <= 0)
           }
@@ -391,7 +393,7 @@ function PurchaseControls({
           <ShoppingBag className="me-2 h-5 w-5" />
           {addToCart.isPending
             ? t("productDetail.adding")
-            : product.inStock === false
+            : outOfStock
               ? t("common.outOfStock")
               : t("common.addToCart")}
         </Button>
@@ -448,6 +450,7 @@ export function ProductDetail() {
     options: {
       enabled: !!id,
       staleTime: 1000 * 60 * 5,
+      refetchOnMount: true,
     },
   });
   const product = data?.data;

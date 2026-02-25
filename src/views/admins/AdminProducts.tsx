@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { handleImageError, resolveMediaUrl } from "@/lib/media";
 import { compressImageBatch, compressImageFile } from "@/lib/image-compressor";
@@ -1644,6 +1645,12 @@ function ProductRow({
 }
 
 export default function AdminProductsPage() {
+  const queryClient = useQueryClient();
+
+  const clearPublicProductsCache = () => {
+    queryClient.removeQueries({ queryKey: ["products", "public"] });
+  };
+
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DbProduct | null>(null);
@@ -1893,6 +1900,7 @@ export default function AdminProductsPage() {
       toast.success(res?.data?.message || "Product created successfully");
 
       await load();
+      clearPublicProductsCache();
       closeForm();
     } catch (e: any) {
       toast.dismiss(loadingToast);
@@ -1953,6 +1961,7 @@ export default function AdminProductsPage() {
       toast.success(res?.data?.message || "Product updated successfully ✨");
 
       await load();
+      clearPublicProductsCache();
       closeForm();
     } catch (e: any) {
       toast.dismiss(loadingToast);
@@ -1976,6 +1985,7 @@ export default function AdminProductsPage() {
       toast.success(res?.data?.message || "Product deleted successfully");
 
       await load();
+      clearPublicProductsCache();
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
@@ -2005,6 +2015,7 @@ export default function AdminProductsPage() {
       );
 
       setSelectedIds([]);
+      clearPublicProductsCache();
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
@@ -2034,6 +2045,7 @@ export default function AdminProductsPage() {
       );
 
       setSelectedIds([]);
+      clearPublicProductsCache();
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
@@ -2061,6 +2073,7 @@ export default function AdminProductsPage() {
       setConfirmBulkDelete(false);
 
       await load();
+      clearPublicProductsCache();
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
