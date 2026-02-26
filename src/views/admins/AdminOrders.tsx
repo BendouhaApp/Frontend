@@ -198,20 +198,9 @@ function OrderDetailModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
             onClick={onClose}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: "256px",
-              width: "calc(100vw - 256px)",
-              height: "100dvh",
-              zIndex: 9998,
-              backgroundColor: "rgba(0,0,0,0.58)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
-              margin: 0,
-            }}
+            className="fixed inset-0 z-[9998] backdrop-blur-[6px]"
+            style={{ backgroundColor: "rgba(0,0,0,0.58)" }}
           />
-
           <motion.div
             key="modal-wrapper"
             initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -219,19 +208,7 @@ function OrderDetailModal({
             exit={{ opacity: 0, scale: 0.96, y: 18 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             onClick={onClose}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: "256px",
-              width: "calc(100vw - 256px)",
-              height: "100dvh",
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "1rem",
-              boxSizing: "border-box",
-            }}
+            className="fixed inset-4 z-[9999] flex items-start justify-center md:ml-64 md:items-center"
           >
             <div
               onClick={(e) => e.stopPropagation()}
