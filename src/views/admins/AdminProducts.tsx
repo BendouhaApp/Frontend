@@ -957,7 +957,7 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<DollarSign className="h-4 w-4" />} required>
-              Prix de Vente
+              Prix Actuel
             </FieldLabel>
             <Input
               type="number"
@@ -971,7 +971,7 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-              Prix de Solde
+              Prix Avant Promotion
             </FieldLabel>
             <Input
               type="number"
