@@ -1656,7 +1656,9 @@ export default function AdminProductsPage() {
   const queryClient = useQueryClient();
 
   const clearPublicProductsCache = () => {
-    queryClient.removeQueries({ queryKey: ["products", "public"] });
+    //queryClient.removeQueries({ queryKey: ["products", "public"] });
+    queryClient.invalidateQueries({ queryKey: ["products/public"] });
+    queryClient.removeQueries({ queryKey: ["products/public"] });
   };
 
   const [query, setQuery] = useState("");
