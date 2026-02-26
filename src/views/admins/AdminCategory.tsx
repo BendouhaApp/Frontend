@@ -11,9 +11,9 @@ import {
   RotateCcw,
   Image as ImageIcon,
   Check,
-  AlertCircle,
   FolderTree,
   ChevronRight,
+  RefreshCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -174,11 +174,10 @@ function CategoryForm({
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      {/* Category Name */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-neutral-700">
           <Folder className="h-4 w-4" />
-          Category name
+          Nom de catégorie
           <span className="text-red-500">*</span>
         </label>
         <input
@@ -186,11 +185,10 @@ function CategoryForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-          placeholder="Enter category name"
+          placeholder="Entrez le nom de la catégorie"
         />
       </div>
 
-      {/* Description */}
       <div>
         <label className="mb-2 block text-sm font-medium text-neutral-700">
           Description
@@ -200,15 +198,14 @@ function CategoryForm({
           onChange={(e) => setDesc(e.target.value)}
           className="w-full resize-none rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
           rows={3}
-          placeholder="Add a description for this category"
+          placeholder="Ajouter une description pour cette catégorie"
         />
       </div>
 
-      {/* Parent Category Selection */}
       <div>
         <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-neutral-700">
           <FolderTree className="h-4 w-4" />
-          Parent category
+          Catégorie parente
         </label>
 
         <div className="relative">
@@ -220,7 +217,7 @@ function CategoryForm({
               setQuery(e.target.value);
               setShowResults(true);
             }}
-            placeholder="Search parent category..."
+            placeholder="Rechercher la catégorie parent..."
             className="w-full rounded-xl border border-neutral-200 py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
 
@@ -280,14 +277,13 @@ function CategoryForm({
         )}
       </div>
 
-      {/* Image Upload - Only for Main Categories */}
       {!parentId && (
         <div>
           <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-neutral-700">
             <ImageIcon className="h-4 w-4" />
-            Category Image
+            Image de catégorie
             <span className="text-xs font-normal text-neutral-500">
-              (optional)
+              (optionnel, recommandé pour les catégories principales)
             </span>
           </label>
 
@@ -310,12 +306,16 @@ function CategoryForm({
             {image ? (
               <>
                 <Check className="h-5 w-5 text-primary" />
-                <span className="font-medium text-primary">Image selected</span>
+                <span className="font-medium text-primary">
+                  Image sélectionnée
+                </span>
               </>
             ) : (
               <>
                 <ImageIcon className="h-5 w-5 text-neutral-400" />
-                <span className="text-neutral-600">Click to upload image</span>
+                <span className="text-neutral-600">
+                  Cliquez pour télécharger l’image
+                </span>
               </>
             )}
           </label>
@@ -349,7 +349,6 @@ function CategoryForm({
         </div>
       )}
 
-      {/* Status Toggle */}
       <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 p-4">
         <div className="flex items-center gap-3">
           <div
@@ -366,10 +365,10 @@ function CategoryForm({
           </div>
           <div>
             <p className="text-sm font-medium text-neutral-900">
-              Category Status
+              Statut de catégorie
             </p>
             <p className="text-xs text-neutral-500">
-              {active ? "Visible to customers" : "Hidden from store"}
+              {active ? "Visibles pour les clients" : "Caché du magasin"}
             </p>
           </div>
         </div>
@@ -391,7 +390,6 @@ function CategoryForm({
         </button>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-3 border-t border-neutral-200 pt-6">
         <Button
           type="button"
@@ -399,7 +397,7 @@ function CategoryForm({
           onClick={onCancel}
           className="flex-1"
         >
-          Cancel
+          Annuler
         </Button>
         <Button
           type="submit"
@@ -409,10 +407,106 @@ function CategoryForm({
           {(loading || isCompressing) && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
-          {category ? "Update category" : "Create category"}
+          {category ? "Mettre à jour la catégorie" : "Créer une catégorie"}
         </Button>
       </div>
     </form>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  alert,
+  isWarning,
+  subtext,
+}: {
+  variants?: Variants;
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  alert?: string;
+  isWarning?: boolean;
+  subtext?: string;
+}) {
+  return (
+    <motion.div
+      className="group relative rounded-2xl bg-white p-6 shadow-sm"
+      initial={{
+        y: 0,
+        scale: 1,
+        rotateX: 0,
+        rotateY: 0,
+        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
+      }}
+      animate={{
+        y: 0,
+        scale: 1,
+        rotateX: 0,
+        rotateY: 0,
+        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
+      }}
+      whileHover={{
+        y: -4,
+        scale: 1.04,
+        rotateX: 1,
+        rotateY: -1,
+        boxShadow: "0px 30px 60px -15px rgba(0,0,0,0.18)",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 200,
+        damping: 18,
+      }}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-neutral-500">{label}</span>
+
+          <motion.div
+            className="text-neutral-400 transition-colors group-hover:text-primary"
+            initial={{ scale: 1, rotate: 0 }}
+            animate={{ scale: 1, rotate: 0 }}
+            whileHover={{ scale: 1.3, rotate: 8 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 18,
+            }}
+          >
+            {icon}
+          </motion.div>
+        </div>
+
+        <motion.div
+          className="mt-3 text-3xl font-semibold text-neutral-900"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {value}
+        </motion.div>
+
+        {subtext && (
+          <div className="mt-1 text-xs text-neutral-500">{subtext}</div>
+        )}
+
+        {alert && (
+          <div
+            className={cn(
+              "mt-2 text-sm font-medium",
+              isWarning ? "text-orange-600" : "text-emerald-600",
+            )}
+          >
+            {alert}
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
@@ -423,6 +517,7 @@ export function AdminCategory() {
   const [showForm, setShowForm] = useState(false);
   const [view, setView] = useState<CategoryView>("main");
   const [confirmDelete, setConfirmDelete] = useState<DbCategory | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const {
     data: categoriesResponse,
     isLoading: loading,
@@ -491,11 +586,13 @@ export function AdminCategory() {
           ? api.patch(`/categories/${editing.id}`, payload)
           : api.post("/categories", payload),
         {
-          loading: editing ? "Updating category..." : "Creating category...",
+          loading: editing
+            ? "Mise à jour de la catégorie..."
+            : "Création de Catégorie...",
           success: editing
-            ? "Category updated successfully"
-            : "Category created successfully",
-          error: (error) => getApiErrorMessage(error, "Operation failed"),
+            ? "Catégorie mise à jour avec succès"
+            : "Catégorie créée avec succès",
+          error: (error) => getApiErrorMessage(error, "Opération échouait"),
         },
       );
 
@@ -509,148 +606,112 @@ export function AdminCategory() {
 
   const deleteCategory = async (id: string) => {
     await toast.promise(api.delete(`/categories/${id}`), {
-      loading: "Deleting category...",
-      success: "Category deleted successfully",
-      error: (error) => getApiErrorMessage(error, "Delete failed"),
+      loading: "Supprimer la catégorie...",
+      success: "Catégorie supprimée avec succès",
+      error: (error) => getApiErrorMessage(error, "Échec de la suppression"),
     });
 
     await refetch();
   };
 
-  const activate = async (id: string) => {
-    await toast.promise(api.patch(`categories/${id}/activate`), {
-      loading: "Activating category...",
-      success: "Category activated successfully",
-      error: (error) => getApiErrorMessage(error, "Activation failed"),
-    });
+  const toggleActive = async (c: DbCategory) => {
+    setTogglingId(c.id);
 
-    await refetch();
+    try {
+      await toast.promise(
+        api.patch(`/categories/${c.id}`, { active: !c.active }),
+        {
+          loading: c.active ? "Désactivation..." : "Activation...",
+          success: c.active ? "Catégorie désactivée" : "Catégorie activée",
+          error: (error) => getApiErrorMessage(error, "Échec de mise à jour"),
+        },
+      );
+
+      await refetch();
+    } finally {
+      setTogglingId(null);
+    }
   };
   const mainCategories = items.filter((c) => !c.parent_id);
   const subCategories = items.filter((c) => !!c.parent_id);
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <div className="border-b border-neutral-200 bg-white">
+      <div className="border-b border-neutral-200">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
                 Categories
               </h1>
-              <p className="mt-1 text-neutral-600">
+              <p className="text-sm text-neutral-600">
                 Organize your products with categories & sub-categories.
               </p>
             </div>
-
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setShowForm(true);
-              }}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add category
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => refetch()}
+                disabled={loading}
+              >
+                <RefreshCcw
+                  className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
+                />
+                Actualiser
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditing(null);
+                  setShowForm(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une catégorie
+              </Button>
+            </div>
           </div>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Main Categories"
+              value={mainCategories.length}
+              icon={<Folder className="h-5 w-5" />}
+            />
 
-          {/* Stats Cards */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Folder className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-neutral-900">
-                    {mainCategories.length}
-                  </p>
-                  <p className="text-xs text-neutral-500">Main Categories</p>
-                </div>
-              </div>
-            </motion.div>
+            <StatCard
+              label="Sub Categories"
+              value={subCategories.length}
+              icon={<FolderTree className="h-5 w-5" />}
+            />
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                  <FolderTree className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-neutral-900">
-                    {subCategories.length}
-                  </p>
-                  <p className="text-xs text-neutral-500">Sub Categories</p>
-                </div>
-              </div>
-            </motion.div>
+            <StatCard
+              label="Active"
+              value={items.filter((c) => c.active).length}
+              icon={<Check className="h-5 w-5" />}
+              subtext={`${items.filter((c) => !c.active).length} inactive`}
+            />
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-                  <Check className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-neutral-900">
-                    {items.filter((c) => c.active).length}
-                  </p>
-                  <p className="text-xs text-neutral-500">Active</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 border border-red-200">
-                  <X className="h-5 w-5 text-red-600" />
-                </div>
-
-                <div>
-                  <p className="text-2xl font-semibold text-neutral-900">
-                    {items.filter((c) => !c.active).length}
-                  </p>
-                  <p className="text-xs">Inactive</p>
-                </div>
-              </div>
-            </motion.div>
+            <StatCard
+              label="Inactive"
+              value={items.filter((c) => !c.active).length}
+              icon={<X className="h-5 w-5" />}
+            />
           </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-        {/* Search and Filter Bar */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search categories..."
+              placeholder="Chercher des catégories..."
               className="w-full rounded-xl border border-neutral-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
-          {/* View Toggle */}
           <div className="flex w-full overflow-x-auto rounded-xl border-2 border-primary bg-white shadow-sm sm:w-auto">
             <button
               onClick={() => setView("main")}
@@ -682,12 +743,11 @@ export function AdminCategory() {
           </div>
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center gap-3 rounded-2xl bg-white p-20 shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="text-sm text-neutral-600">
-              Loading categories...
+              Chargement des catégories...
             </span>
           </div>
         ) : filtered.length === 0 ? (
@@ -700,7 +760,7 @@ export function AdminCategory() {
               <Folder className="h-8 w-8 text-neutral-400" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-              No categories found
+              Aucune catégorie trouvée
             </h3>
             <p className="mb-6 text-neutral-600">
               {query
@@ -710,7 +770,7 @@ export function AdminCategory() {
             {!query && (
               <Button onClick={() => setShowForm(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add category
+                Ajouter une catégorie
               </Button>
             )}
           </motion.div>
@@ -797,7 +857,7 @@ export function AdminCategory() {
                             {getSubCount(c.id)}
                           </span>
                         ) : (
-                          <span className="text-sm text-neutral-400">â€”</span>
+                          <span className="text-sm text-neutral-400">-</span>
                         )}
                       </td>
                     )}
@@ -812,7 +872,7 @@ export function AdminCategory() {
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-neutral-400">â€”</span>
+                          <span className="text-sm text-neutral-400">-</span>
                         )}
                       </td>
                     )}
@@ -831,75 +891,69 @@ export function AdminCategory() {
                         ) : (
                           <X className="h-3 w-3" />
                         )}
-                        {c.active ? "Active" : "Inactive"}
+                        {c.active ? "Actif" : "Inactif"}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition"
+                          onClick={() => {
+                            setEditing(c);
+                            setShowForm(true);
+                          }}
+                          title="éditer"
                         >
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setEditing(c);
-                              setShowForm(true);
-                            }}
-                            title="Edit category"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
 
-                        {c.active ? (
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className={cn(
-                                "h-8 w-8",
-                                hasChildren(c.id)
-                                  ? "cursor-not-allowed text-neutral-300"
-                                  : "text-red-500 hover:bg-red-50 hover:text-red-600",
-                              )}
-                              disabled={hasChildren(c.id)}
-                              title={
-                                hasChildren(c.id)
-                                  ? "Remove sub-categories first"
-                                  : "Delete category"
-                              }
-                              onClick={() => {
-                                if (!hasChildren(c.id)) {
-                                  setConfirmDelete(c);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                              onClick={() => activate(c.id)}
-                              title="Activate category"
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className={cn(
+                            "h-8 w-8 rounded-lg transition",
+                            c.active
+                              ? "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700",
+                          )}
+                          onClick={() => toggleActive(c)}
+                          disabled={togglingId === c.id}
+                          title={c.active ? "Deactivate" : "Activate"}
+                        >
+                          {togglingId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : c.active ? (
+                            <X className="h-4 w-4" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className={cn(
+                            "h-8 w-8 rounded-lg transition",
+                            hasChildren(c.id)
+                              ? "bg-neutral-100 text-neutral-300 cursor-not-allowed"
+                              : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700",
+                          )}
+                          disabled={hasChildren(c.id)}
+                          onClick={() => {
+                            if (!hasChildren(c.id)) {
+                              setConfirmDelete(c);
+                            }
+                          }}
+                          title={
+                            hasChildren(c.id)
+                              ? "Supprimez d’abord les sous-catégories"
+                              : "Supprimer"
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                   </motion.tr>
@@ -936,12 +990,14 @@ export function AdminCategory() {
                     <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
                       <div>
                         <h2 className="text-xl font-semibold text-neutral-900">
-                          {editing ? "Edit category" : "Add new category"}
+                          {editing
+                            ? "Modifier la catégorie"
+                            : "Ajouter une nouvelle catégorie"}
                         </h2>
                         <p className="mt-0.5 text-sm text-neutral-500">
                           {editing
-                            ? `Updating "${editing.category_name}"`
-                            : "Create a new product category"}
+                            ? `Mise à jour "${editing.category_name}"`
+                            : "Créer une nouvelle catégorie de produit"}
                         </p>
                       </div>
                       <motion.button
@@ -977,7 +1033,6 @@ export function AdminCategory() {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {confirmDelete && (
           <>
@@ -990,7 +1045,7 @@ export function AdminCategory() {
             />
 
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-85"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1001,16 +1056,19 @@ export function AdminCategory() {
                     <Trash2 className="h-6 w-6 text-red-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-neutral-900">
-                    Delete category
+                    Supprimer la catégorie
                   </h3>
                 </div>
 
                 <p className="mb-6 text-center text-sm text-neutral-600">
-                  Are you sure you want to delete{" "}
+                  Êtes-vous sûr de vouloir supprimer{" "}
                   <span className="font-semibold text-neutral-900">
                     "{confirmDelete.category_name}"
                   </span>
-                  ? This action cannot be undone.
+                  ?
+                  <br />
+                  Une fois supprimé, cette catégorie{" "}
+                  <strong>ne peuvent pas être restaurés</strong>.
                 </p>
 
                 <div className="flex gap-3">
@@ -1019,7 +1077,7 @@ export function AdminCategory() {
                     onClick={() => setConfirmDelete(null)}
                     className="flex-1"
                   >
-                    Cancel
+                    Annuler
                   </Button>
 
                   <Button
@@ -1029,7 +1087,7 @@ export function AdminCategory() {
                       setConfirmDelete(null);
                     }}
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </div>
               </div>

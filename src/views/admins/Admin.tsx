@@ -170,7 +170,9 @@ export default function AdminDashboard() {
   }, [ordersQuery.data]);
   const loading = !hasToken || statsQuery.isLoading || ordersQuery.isLoading;
   const error =
-    statsQuery.isError || ordersQuery.isError ? "Failed to load dashboard" : "";
+    statsQuery.isError || ordersQuery.isError
+      ? "Échec du chargement du tableau de bord"
+      : "";
 
   const recentOrders = orders.slice(0, 10);
 
@@ -222,7 +224,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="border-b border-neutral-200 bg-white">
+      <div className="border-b border-neutral-200">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -233,7 +235,7 @@ export default function AdminDashboard() {
                 Bendouha Electric Dashboard
               </h1>
               <p className="mt-1.5 text-neutral-600">
-                Here's what's happening in your store today.
+                Voici ce qui se passe dans votre magasin aujourd’hui.
               </p>
             </div>
 
@@ -241,7 +243,7 @@ export default function AdminDashboard() {
               <Button asChild variant="outline">
                 <Link to="/shop" target="_blank">
                   <Store className="me-2 h-4 w-4" />
-                  View Store
+                  Voir la boutique
                 </Link>
               </Button>
             </div>
@@ -284,10 +286,10 @@ export default function AdminDashboard() {
             >
               <motion.div variants={fadeUp}>
                 <StatCard
-                  label="Total Revenue"
+                  label="Total Revenu"
                   value={`${stats.totalRevenue.toLocaleString()} DZD`}
                   icon={<DollarSign className="h-5 w-5" />}
-                  subtext={`${stats.confirmedOrders || 0} confirmed orders`}
+                  subtext={`${stats.confirmedOrders || 0} commandes confirmées`}
                 />
               </motion.div>
 
@@ -311,10 +313,10 @@ export default function AdminDashboard() {
 
               <motion.div variants={fadeUp}>
                 <StatCard
-                  label="Wilayas"
+                  label="Wilaya's"
                   value={stats.totalWilayas}
                   icon={<MapPin className="h-5 w-5" />}
-                  subtext={`${stats.activeWilayas} active - ${stats.inactiveWilayas} inactive`}
+                  subtext={`${stats.activeWilayas} actif - ${stats.inactiveWilayas} inactif`}
                 />
               </motion.div>
 
@@ -323,17 +325,17 @@ export default function AdminDashboard() {
                   label="Total Orders"
                   value={stats.totalOrders}
                   icon={<ShoppingCart className="h-5 w-5" />}
-                  subtext={`${stats.todayOrders || 0} orders today`}
+                  subtext={`${stats.todayOrders || 0} commandes d'aujourdhui`}
                 />
               </motion.div>
 
               <motion.div variants={fadeUp}>
                 <StatCard
-                  label="Pending Orders"
+                  label="Ordres en attente"
                   value={stats.pendingOrders}
                   icon={<Clock className="h-5 w-5" />}
                   alert={
-                    stats.pendingOrders > 0 ? "Needs attention" : "All clear"
+                    stats.pendingOrders > 0 ? "Besoin d'attention" : "All clear"
                   }
                   isWarning={stats.pendingOrders > 0}
                 />
@@ -341,13 +343,13 @@ export default function AdminDashboard() {
 
               <motion.div variants={fadeUp}>
                 <StatCard
-                  label="Low Stock Alert"
+                  label="Alerte de stock bas"
                   value={stats.lowStockProducts || 0}
                   icon={<AlertCircle className="h-5 w-5" />}
                   alert={
                     (stats.lowStockProducts || 0) > 0
-                      ? "Restock needed"
-                      : "Healthy"
+                      ? "Réapprovisionnement nécessaire"
+                      : "équilibré"
                   }
                   isWarning={(stats.lowStockProducts || 0) > 0}
                 />
@@ -355,10 +357,10 @@ export default function AdminDashboard() {
 
               <motion.div variants={fadeUp}>
                 <StatCard
-                  label="Out of Stock"
+                  label="Rupture de stock"
                   value={stats.outOfStockProducts}
                   icon={<AlertTriangle className="h-5 w-5" />}
-                  alert={stats.outOfStockProducts > 0 ? "Critical" : "All good"}
+                  alert={stats.outOfStockProducts > 0 ? "Critique" : "Tout bon"}
                   isWarning={stats.outOfStockProducts > 0}
                 />
               </motion.div>
@@ -379,7 +381,7 @@ export default function AdminDashboard() {
                   >
                     <ShoppingCart className="h-5 w-5 text-primary" />
                   </motion.div>
-                  Recent Orders
+                  Commandes récentes
                 </h3>
 
                 <Button
@@ -389,7 +391,7 @@ export default function AdminDashboard() {
                   className="gap-2"
                 >
                   <Eye className="h-4 w-4" />
-                  View all
+                  Voir tous
                 </Button>
               </div>
 
@@ -401,10 +403,11 @@ export default function AdminDashboard() {
                 >
                   <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-neutral-300" />
                   <h4 className="mb-1 text-lg font-semibold text-neutral-900">
-                    No orders yet
+                    Aucune commande pour le moment
                   </h4>
                   <p className="text-sm text-neutral-500">
-                    Orders will appear here once customers start purchasing.
+                    Les commandes apparaîtront ici une fois que les clients
+                    commenceront à acheter.
                   </p>
                 </motion.div>
               ) : (
@@ -416,7 +419,7 @@ export default function AdminDashboard() {
                           Order ID
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-medium text-neutral-600">
-                          Customer
+                          Client
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-medium text-neutral-600">
                           Status
@@ -454,7 +457,7 @@ export default function AdminDashboard() {
                                 {order.customers
                                   ? `${order.customers.first_name} ${order.customers.last_name}`
                                   : `${order.customer_first_name ?? ""} ${order.customer_last_name ?? ""}`.trim() ||
-                                    "Guest"}
+                                    "Client Inconnu"}
                               </div>
 
                               <div className="text-xs text-neutral-500">
@@ -475,7 +478,8 @@ export default function AdminDashboard() {
                                 {getStatusIcon(
                                   order.order_statuses?.status_name,
                                 )}
-                                {order.order_statuses?.status_name || "Unknown"}
+                                {order.order_statuses?.status_name ||
+                                  "Inconnue"}
                               </motion.span>
                             </td>
                             <td className="px-6 py-4 text-sm font-semibold text-neutral-900">

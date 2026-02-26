@@ -71,9 +71,7 @@ export default function AdminSidebar({
           <div className="text-xs uppercase tracking-wide text-neutral-500">
             Admin
           </div>
-          <div className="text-xl font-bold text-neutral-900">
-            {username}
-          </div>
+          <div className="text-xl font-bold text-neutral-900">{username}</div>
         </div>
       </div>
 
@@ -98,12 +96,12 @@ export default function AdminSidebar({
           onClick={onNavigate}
         >
           <Package className="h-4 w-4" />
-          Products
+          Produits
         </NavLink>
 
         <NavLink to="/admin/orders" className={linkClass} onClick={onNavigate}>
           <ShoppingCart className="h-4 w-4" />
-          Orders
+          Commandes
         </NavLink>
 
         <NavLink
@@ -112,7 +110,7 @@ export default function AdminSidebar({
           onClick={onNavigate}
         >
           <MapPin className="h-4 w-4" />
-          Wilayas
+          Wilaya's
         </NavLink>
 
         <NavLink to="/admin/logs" className={linkClass} onClick={onNavigate}>
@@ -124,14 +122,16 @@ export default function AdminSidebar({
       <div className="mt-auto pt-6">
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium
+               bg-red-100 text-red-600
+               hover:bg-red-200 hover:text-red-700
+               transition cursor-pointer"
+               
         >
           <LogOut className="h-4 w-4" />
-          Logout
+          Déconnexion
         </button>
       </div>
     </aside>
   );
 }
-
-

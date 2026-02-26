@@ -374,8 +374,10 @@ function CategorySelector({
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2",
       )}
       aria-pressed={checked}
-      aria-label={checked ? "Unselect category" : "Select category"}
-      title={disabled ? "Select the main category first" : ""}
+      aria-label={
+        checked ? "Désélectionner la catégorie" : "Sélectionner la catégorie"
+      }
+      title={disabled ? "Sélectionnez d’abord la catégorie parent" : ""}
     >
       <Check
         className={cn(
@@ -398,7 +400,8 @@ function CategorySelector({
           <div className="flex-1">
             <p className="text-sm font-semibold text-neutral-900">Categories</p>
             <p className="text-xs text-neutral-500">
-              Select main categories first, then choose subcategories
+              Sélectionnez d’abord les catégories parents, puis choisissez les
+              sous-catégories.
             </p>
           </div>
         </div>
@@ -412,7 +415,7 @@ function CategorySelector({
               "focus:border-primary focus:ring-2 focus:ring-primary/20",
             )}
           >
-            <option value="all">All main categories</option>
+            <option value="all">Toutes les catégories parents</option>
             {mainCategories
               .slice()
               .sort((a, b) => a.category_name.localeCompare(b.category_name))
@@ -432,7 +435,7 @@ function CategorySelector({
             className="gap-2"
           >
             <X className="h-4 w-4" />
-            Clear
+            Suppimer
           </Button>
         </div>
       </div>
@@ -479,10 +482,10 @@ function CategorySelector({
         {filteredMain.length === 0 ? (
           <div className="rounded-xl border border-dashed border-neutral-200 p-6 text-center">
             <p className="text-sm font-medium text-neutral-800">
-              No categories available
+              Pas de catégories disponibles
             </p>
             <p className="mt-1 text-xs text-neutral-500">
-              Create categories first, then assign them to products.
+              Créez d’abord des catégories, puis assignez-les aux produits.
             </p>
           </div>
         ) : (
@@ -516,7 +519,7 @@ function CategorySelector({
                             : "text-neutral-300 cursor-default",
                         )}
                         aria-label={
-                          hasSubs ? "Toggle sub-categories" : undefined
+                          hasSubs ? "Basculer les sous-catégories" : undefined
                         }
                       >
                         {hasSubs ? (
@@ -565,7 +568,7 @@ function CategorySelector({
                                   : "bg-neutral-100 text-neutral-600",
                               )}
                             >
-                              {subs.length} Sub Category
+                              {subs.length} Sub Catégorie
                             </span>
                           )}
                         </div>
@@ -598,8 +601,9 @@ function CategorySelector({
                             <div className="space-y-1 px-3 pb-2 pl-14">
                               {!mainSelected && (
                                 <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-xs text-amber-700">
-                                  Select the main category "{main.category_name}
-                                  " first to enable subcategories
+                                  Sélectionnez la catégorie principale "
+                                  {main.category_name}" d’abord pour activer les
+                                  sous-catégories
                                 </div>
                               )}
                               {subs.map((sub) => {
@@ -796,12 +800,12 @@ function ProductForm({
     e.preventDefault();
 
     if (isCompressing) {
-      toast.error("Please wait for the images to finish compressing.");
+      toast.error("Veuillez attendre que les images terminent la compression.");
       return;
     }
 
     if (!productName.trim()) {
-      toast.error("The product name is mandatory.");
+      toast.error("Le nom du produit est obligatoire.");
       return;
     }
 
@@ -811,32 +815,32 @@ function ProductForm({
     }
 
     if (salePrice < 0) {
-      toast.error("The sale price must be positive.");
+      toast.error("Le prix de vente doit être positif.");
       return;
     }
 
     if (quantity < 0) {
-      toast.error("The quantity must be positive.");
+      toast.error("La quantité doit être positive.");
       return;
     }
 
     if (cct < 1000 || cct > 10000) {
-      toast.error("The CCT must be between 1000 and 10000 Kelvin.");
+      toast.error("La CCT doit être comprise entre 1000 et 10000 Kelvin.");
       return;
     }
 
     if (lumen < 1) {
-      toast.error("The lumen must be greater than or equal to 1.");
+      toast.error("Le lumen doit être supérieur ou égal à 1.");
       return;
     }
 
     if (cri < 0 || cri > 100) {
-      toast.error("The CRI must be between 0 and 100.");
+      toast.error("Le CRI doit être compris entre 0 et 100.");
       return;
     }
 
     if (power < 0) {
-      toast.error("The power must be positive.");
+      toast.error("Le pouvoir doit être positif.");
       return;
     }
 
@@ -886,19 +890,19 @@ function ProductForm({
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
           <Package className="h-5 w-5 text-primary" />
-          Basic Information
+          Information basique
         </h3>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <FieldLabel icon={<Package className="h-4 w-4" />} required>
-              Product name
+              Nom du produit
             </FieldLabel>
             <Input
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               required
-              placeholder="Enter product name"
+              placeholder="Entrez le nom du produit"
             />
           </div>
 
@@ -940,7 +944,7 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<Package className="h-4 w-4" />} required>
-              Quantity
+              Quantité
             </FieldLabel>
             <Input
               type="number"
@@ -953,11 +957,11 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<DollarSign className="h-4 w-4" />} required>
-              Sale price
+              Prix de Vente
             </FieldLabel>
             <Input
               type="number"
-              step="0.01"
+              step="5"
               min={0}
               value={salePrice}
               onChange={(e) => setSalePrice(Number(e.target.value))}
@@ -967,11 +971,11 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-              Compare price
+              Prix de Solde
             </FieldLabel>
             <Input
               type="number"
-              step="0.01"
+              step="5"
               min={0}
               value={comparePrice}
               onChange={(e) => setComparePrice(e.target.value)}
@@ -981,11 +985,11 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<DollarSign className="h-4 w-4" />}>
-              Buying price
+              Prix d'achat
             </FieldLabel>
             <Input
               type="number"
-              step="0.01"
+              step="5"
               min={0}
               value={buyingPrice}
               onChange={(e) => setBuyingPrice(e.target.value)}
@@ -995,7 +999,7 @@ function ProductForm({
 
           <div>
             <FieldLabel icon={<Tag className="h-4 w-4" />}>
-              Product type
+              Type de Produit
             </FieldLabel>
             <Input
               value={type}
@@ -1006,7 +1010,7 @@ function ProductForm({
 
           <div className="md:col-span-2">
             <FieldLabel icon={<FileText className="h-4 w-4" />} required>
-              Short description
+              Brève description
             </FieldLabel>
             <Textarea
               rows={2}
@@ -1014,33 +1018,33 @@ function ProductForm({
               onChange={(e) => setShortDesc(e.target.value)}
               required
               maxLength={165}
-              placeholder="Brief description (max 165 characters)"
+              placeholder="Brève description (max 165 caractères)"
             />
             <p className="mt-1 text-xs text-neutral-500">
-              {shortDesc.length}/165 characters
+              {shortDesc.length}/165 caractères
             </p>
           </div>
 
           <div className="md:col-span-2">
             <FieldLabel icon={<FileText className="h-4 w-4" />} required>
-              Full description
+              Description exhaustive
             </FieldLabel>
             <Textarea
               rows={6}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               required
-              placeholder="Detailed product description"
+              placeholder="Description détaillée du produit"
             />
           </div>
 
           <div className="md:col-span-2">
-            <FieldLabel>Note</FieldLabel>
+            <FieldLabel>Remarque</FieldLabel>
             <Textarea
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Internal notes (optional)"
+              placeholder="Notes internes (facultatif)"
             />
           </div>
         </div>
@@ -1049,7 +1053,7 @@ function ProductForm({
       <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
         <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-primary" />
-          Lighting Specifications
+          Spécifications d'éclairage
         </h3>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -1157,7 +1161,7 @@ function ProductForm({
             />
             {selectedCategoryIds.length > 0 && (
               <p className="text-sm text-neutral-600">
-                Selected {selectedCategoryIds.length} categor
+                Sélectionné {selectedCategoryIds.length} Catégorie
                 {selectedCategoryIds.length === 1 ? "y" : "ies"}
               </p>
             )}
@@ -1178,7 +1182,11 @@ function ProductForm({
           <Toggle
             checked={disableOos}
             onChange={setDisableOos}
-            label={disableOos ? "Hide out of stock" : "Show out of stock"}
+            label={
+              disableOos
+                ? "Cacher en rupture de stock"
+                : "Montrer en rupture de stock"
+            }
             iconOn={<AlertCircle className="h-4 w-4" />}
             iconOff={<Check className="h-4 w-4" />}
           />
@@ -1219,7 +1227,7 @@ function ProductForm({
                 }
 
                 setIsCompressing(true);
-                setCompressionMessage("Compressing thumbnail...");
+                setCompressionMessage("Compression thumbnail...");
 
                 try {
                   const compressed = await compressImageFile(file, {
@@ -1236,8 +1244,8 @@ function ProductForm({
                   const saved = Math.max(0, file.size - compressed.size);
                   setCompressionMessage(
                     saved > 0
-                      ? `Thumbnail compressed: ${bytes(file.size)} -> ${bytes(compressed.size)} (saved ${bytes(saved)}).`
-                      : "Thumbnail is already optimized.",
+                      ? `Thumbnail comprimé: ${bytes(file.size)} -> ${bytes(compressed.size)} (saved ${bytes(saved)}).`
+                      : "Thumbnail est déjà optimisé.",
                   );
                 } catch {
                   setThumbnailFile(file);
@@ -1246,7 +1254,7 @@ function ProductForm({
                     return URL.createObjectURL(file);
                   });
                   setCompressionMessage(
-                    "Could not compress thumbnail. Using original file.",
+                    "Impossible de compresser la miniature. En utilisant le fichier original.",
                   );
                 } finally {
                   setIsCompressing(false);
@@ -1259,14 +1267,14 @@ function ProductForm({
               <>
                 <Check className="h-5 w-5 text-primary" />
                 <span className="font-medium text-primary">
-                  Thumbnail selected
+                  Thumbnail sélectionné
                 </span>
               </>
             ) : (
               <>
                 <Package className="h-5 w-5 text-neutral-400" />
                 <span className="text-neutral-600">
-                  Click to upload thumbnail
+                  Cliquez pour télécharger thumbnail
                 </span>
               </>
             )}
@@ -1286,7 +1294,7 @@ function ProductForm({
 
         <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
           <div className="mb-3 text-sm font-medium text-neutral-800">
-            Gallery images (optional)
+            Gallerie images (optional)
           </div>
 
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-300 p-6 text-sm transition hover:bg-neutral-100">
@@ -1314,7 +1322,7 @@ function ProductForm({
                     },
                     (done, total) => {
                       setCompressionMessage(
-                        `Compressing gallery images (${done}/${total})...`,
+                        `Compression gallery images (${done}/${total})...`,
                       );
                     },
                   );
@@ -1334,8 +1342,8 @@ function ProductForm({
 
                   setCompressionMessage(
                     saved > 0
-                      ? `Gallery compressed: saved ${bytes(saved)} across ${selectedFiles.length} file(s).`
-                      : "Gallery images are already optimized.",
+                      ? `Galerie compressé : sauvegardé ${bytes(saved)} à travers ${selectedFiles.length} fichier(s).`
+                      : "Les images de la galerie sont déjà optimisées.",
                   );
                 } catch {
                   const fallback = selectedFiles.map((file) => ({
@@ -1344,7 +1352,7 @@ function ProductForm({
                   }));
                   setNewImages((prev) => [...prev, ...fallback]);
                   setCompressionMessage(
-                    "Could not compress some images. Original files were kept.",
+                    "Impossible de compresser certaines images. Les fichiers originaux ont été conservés.",
                   );
                 } finally {
                   setIsCompressing(false);
@@ -1353,7 +1361,7 @@ function ProductForm({
               }}
             />
             <Plus className="h-5 w-5 text-neutral-400" />
-            <span className="text-neutral-600">Add images</span>
+            <span className="text-neutral-600">Ajouter des images</span>
           </label>
 
           {(existingImages.length > 0 || newImages.length > 0) && (
@@ -1422,7 +1430,7 @@ function ProductForm({
           className="flex-1"
           onClick={onCancel}
         >
-          Cancel
+          Annuler
         </Button>
         <Button
           type="submit"
@@ -1432,7 +1440,7 @@ function ProductForm({
           {(isLoading || isCompressing) && (
             <Loader2 className="me-2 h-4 w-4 animate-spin" />
           )}
-          {product ? "Update product" : "Create product"}
+          {product ? "Mise à jour produit" : "Créer un produit"}
         </Button>
       </div>
     </form>
@@ -1469,8 +1477,8 @@ function StockPill({ qty, disableOos }: { qty: number; disableOos: boolean }) {
       )}
       title={
         disableOos
-          ? "Out of stock products may be hidden"
-          : "Out of stock products visible"
+          ? "Les produits en rupture de stock peuvent être cachés"
+          : "Produits en rupture de stock visibles"
       }
     >
       {inStock ? (
@@ -1522,7 +1530,7 @@ function ProductRow({
               checked={selected}
               onChange={(e) => onToggleSelect(product.id, e.target.checked)}
               className="peer sr-only"
-              aria-label="Select product"
+              aria-label="Sélectionner un produit"
             />
             <span
               className={cn(
@@ -1583,7 +1591,7 @@ function ProductRow({
             ) : null}
           </div>
           <div className="text-xs text-neutral-500">
-            Coast : {money(product.buying_price ?? 0)} {CURRENCY}
+            Côte : {money(product.buying_price ?? 0)} {CURRENCY}
           </div>
         </div>
       </td>
@@ -1617,7 +1625,7 @@ function ProductRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition"
             onClick={() => onEdit(product)}
             disabled={isDeleting}
             aria-label="Modifier le produit"
@@ -1627,7 +1635,7 @@ function ProductRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+            className="h-8 w-8 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
             onClick={() => onRequestDelete(product)}
             disabled={isDeleting}
             aria-label="Supprimer le produit"
@@ -1662,7 +1670,6 @@ export default function AdminProductsPage() {
   const [limit] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Category filter state
   const [categories, setCategories] = useState<DbCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>("");
@@ -1705,7 +1712,7 @@ export default function AdminProductsPage() {
         );
         setCategories(res.data.data ?? []);
       } catch (error: any) {
-        console.error("Failed to load categories:", error);
+        console.error("Échec du chargement des catégories:", error);
       } finally {
         setLoadingCategories(false);
       }
@@ -1767,7 +1774,9 @@ export default function AdminProductsPage() {
       setTotalPages(res.data.meta.totalPages);
     } catch (e: any) {
       const msg =
-        e?.response?.data?.message || e?.message || "Failed to load products";
+        e?.response?.data?.message ||
+        e?.message ||
+        "Échec du chargement des produits";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -1840,7 +1849,9 @@ export default function AdminProductsPage() {
       setShowForm(true);
     } catch (e: any) {
       const msg =
-        e?.response?.data?.message || e?.message || "Failed to load product";
+        e?.response?.data?.message ||
+        e?.message ||
+        "Échec du chargement du produit";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -1861,7 +1872,7 @@ export default function AdminProductsPage() {
       removedImages?: string[];
     },
   ) => {
-    const loadingToast = toast.loading("Creating product...");
+    const loadingToast = toast.loading("Créer un produit...");
 
     setSaving(true);
 
@@ -1897,7 +1908,7 @@ export default function AdminProductsPage() {
 
       toast.dismiss(loadingToast);
 
-      toast.success(res?.data?.message || "Product created successfully");
+      toast.success(res?.data?.message || "Produit créé avec succès");
 
       await load();
       clearPublicProductsCache();
@@ -1906,7 +1917,9 @@ export default function AdminProductsPage() {
       toast.dismiss(loadingToast);
 
       toast.error(
-        e?.response?.data?.message || e?.message || "Failed to create product",
+        e?.response?.data?.message ||
+          e?.message ||
+          "Échec de la création du produit",
       );
     } finally {
       setSaving(false);
@@ -1923,7 +1936,7 @@ export default function AdminProductsPage() {
   ) => {
     if (!editing) return;
 
-    const loadingToast = toast.loading("Updating product...");
+    const loadingToast = toast.loading("Mise à jour du produit...");
 
     setSaving(true);
 
@@ -1958,7 +1971,7 @@ export default function AdminProductsPage() {
       });
 
       toast.dismiss(loadingToast);
-      toast.success(res?.data?.message || "Product updated successfully ✨");
+      toast.success(res?.data?.message || "Produit mis à jour avec succès");
 
       await load();
       clearPublicProductsCache();
@@ -1966,7 +1979,9 @@ export default function AdminProductsPage() {
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
-        e?.response?.data?.message || e?.message || "Failed to update product",
+        e?.response?.data?.message ||
+          e?.message ||
+          "Échec de la mise à jour du produit",
       );
     } finally {
       setSaving(false);
@@ -1974,7 +1989,7 @@ export default function AdminProductsPage() {
   };
 
   const deleteProduct = async (id: string) => {
-    const loadingToast = toast.loading("Deleting product...");
+    const loadingToast = toast.loading("Supprimer un produit...");
 
     setDeletingId(id);
 
@@ -1982,14 +1997,16 @@ export default function AdminProductsPage() {
       const res = await api.delete(`products/${id}`);
 
       toast.dismiss(loadingToast);
-      toast.success(res?.data?.message || "Product deleted successfully");
+      toast.success(res?.data?.message || "Produit supprimé avec succès");
 
       await load();
       clearPublicProductsCache();
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
-        e?.response?.data?.message || e?.message || "Failed to delete product",
+        e?.response?.data?.message ||
+          e?.message ||
+          "Échec de la suppression du produit",
       );
     } finally {
       setDeletingId(null);
@@ -1999,7 +2016,7 @@ export default function AdminProductsPage() {
   const bulkUpdateStatus = async (published: boolean) => {
     if (selectedIds.length === 0) return;
 
-    const loadingToast = toast.loading("Updating products...");
+    const loadingToast = toast.loading("Mise à jour des produits...");
 
     try {
       const res = await api.patch("products/bulk", {
@@ -2008,7 +2025,7 @@ export default function AdminProductsPage() {
       });
 
       toast.dismiss(loadingToast);
-      toast.success(res?.data?.message || "Products updated successfully");
+      toast.success(res?.data?.message || "Produits mis à jour avec succès");
 
       setItems((prev) =>
         prev.map((p) => (selectedIds.includes(p.id) ? { ...p, published } : p)),
@@ -2027,7 +2044,7 @@ export default function AdminProductsPage() {
   const bulkUpdateOutOfStockVisibility = async (hide: boolean) => {
     if (selectedIds.length === 0) return;
 
-    const loadingToast = toast.loading("Updating products...");
+    const loadingToast = toast.loading("Mise à jour des produits...");
 
     try {
       const res = await api.patch("products/bulk", {
@@ -2036,7 +2053,7 @@ export default function AdminProductsPage() {
       });
 
       toast.dismiss(loadingToast);
-      toast.success(res?.data?.message || "Products updated successfully");
+      toast.success(res?.data?.message || "Produits mis à jour avec succès");
 
       setItems((prev) =>
         prev.map((p) =>
@@ -2049,7 +2066,9 @@ export default function AdminProductsPage() {
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
-        e?.response?.data?.message || e?.message || "Bulk update failed",
+        e?.response?.data?.message ||
+          e?.message ||
+          "Échec de la mise à jour BULK",
       );
     }
   };
@@ -2057,7 +2076,9 @@ export default function AdminProductsPage() {
   const bulkDelete = async () => {
     if (selectedIds.length === 0) return;
 
-    const loadingToast = toast.loading("Deleting selected products...");
+    const loadingToast = toast.loading(
+      "Supprimer les produits sélectionnés...",
+    );
 
     setSaving(true);
 
@@ -2067,7 +2088,7 @@ export default function AdminProductsPage() {
       });
 
       toast.dismiss(loadingToast);
-      toast.success(res?.data?.message || "Products deleted successfully");
+      toast.success(res?.data?.message || "Produits supprimés avec succès");
 
       setSelectedIds([]);
       setConfirmBulkDelete(false);
@@ -2077,7 +2098,9 @@ export default function AdminProductsPage() {
     } catch (e: any) {
       toast.dismiss(loadingToast);
       toast.error(
-        e?.response?.data?.message || e?.message || "Failed to delete products",
+        e?.response?.data?.message ||
+          e?.message ||
+          "Échec de la suppression des produits",
       );
 
       setConfirmBulkDelete(false);
@@ -2110,15 +2133,16 @@ export default function AdminProductsPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="border-b border-neutral-200 bg-white">
+      <div className="border-b border-neutral-200">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
-                Products
+                Produits
               </h1>
               <p className="mt-1 text-neutral-600">
-                Manage your store products with lighting specifications.
+                Gérez les produits de votre magasin avec des spécifications
+                d’éclairage.
               </p>
             </div>
 
@@ -2132,11 +2156,11 @@ export default function AdminProductsPage() {
                 <RefreshCcw
                   className={cn("h-4 w-4", loading && "animate-spin")}
                 />
-                Refresh
+                Actualiser
               </Button>
               <Button onClick={openCreate} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add product
+                Ajouter un Produit
               </Button>
             </div>
           </div>
@@ -2169,7 +2193,7 @@ export default function AdminProductsPage() {
                   )}
                   disabled={loadingCategories}
                 >
-                  <option value="">All categories</option>
+                  <option value="">Toutes les catégories</option>
                   {mainCategories
                     .slice()
                     .sort((a, b) =>
@@ -2193,7 +2217,7 @@ export default function AdminProductsPage() {
                         "border-primary/50 bg-primary/5 font-medium",
                     )}
                   >
-                    <option value="">All subcategories</option>
+                    <option value="">Tout subcategories</option>
                     {subCategories
                       .slice()
                       .sort((a, b) =>
@@ -2219,7 +2243,7 @@ export default function AdminProductsPage() {
                     className="gap-1.5 h-10"
                   >
                     <X className="h-3.5 w-3.5" />
-                    Clear
+                    Supprimer
                   </Button>
                 )}
               </div>
@@ -2380,14 +2404,14 @@ export default function AdminProductsPage() {
               <Package className="h-8 w-8 text-neutral-400" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-              No products yet
+              Pas encore de produits
             </h3>
             <p className="mb-6 text-neutral-600">
-              Create your first product to get started.
+              Créez votre premier produit pour commencer.
             </p>
             <Button onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add product
+              Ajouter un produit
             </Button>
           </div>
         )}
@@ -2398,10 +2422,10 @@ export default function AdminProductsPage() {
               <div className="p-12 text-center">
                 <AlertCircle className="mx-auto mb-4 h-10 w-10 text-neutral-400" />
                 <h3 className="mb-2 text-lg font-semibold text-neutral-900">
-                  No matches
+                  Aucune correspondance
                 </h3>
                 <p className="text-neutral-600">
-                  Try adjusting your search or filters.
+                  Essayez d’ajuster votre recherche ou vos filtres.
                 </p>
               </div>
             ) : (
@@ -2447,10 +2471,10 @@ export default function AdminProductsPage() {
                         </div>
                       </th>
                       <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
-                        Product
+                        Produit
                       </th>
                       <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
-                        Pricing
+                        Prix
                       </th>
                       <th className="px-3 py-3 text-left text-sm font-semibold text-neutral-700">
                         Status
@@ -2502,7 +2526,7 @@ export default function AdminProductsPage() {
                 variant="destructive"
                 onClick={() => setConfirmBulkDelete(true)}
               >
-                Delete selected
+                Supprimer la sélection
               </Button>
 
               <Button
@@ -2526,7 +2550,9 @@ export default function AdminProductsPage() {
                     : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/30",
                 )}
               >
-                {allHideOos ? "Allow Out of Stock" : "Hide Out of Stock"}
+                {allHideOos
+                  ? "Autoriser les ruptures de stock"
+                  : "Cacher en rupture de stock"}
               </Button>
 
               <Button
@@ -2534,7 +2560,7 @@ export default function AdminProductsPage() {
                 className="text-neutral-500"
                 onClick={() => setSelectedIds([])}
               >
-                Clear
+                Supprimer
               </Button>
             </div>
           </div>
@@ -2618,7 +2644,7 @@ export default function AdminProductsPage() {
                     (Number(pageInput) < 1 || Number(pageInput) > totalPages) &&
                     "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40",
                 )}
-                aria-label="Aller Ã  la page"
+                aria-label="Aller à la page."
               />
             </div>
           </div>
@@ -2637,7 +2663,7 @@ export default function AdminProductsPage() {
             />
 
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-90"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -2646,39 +2672,47 @@ export default function AdminProductsPage() {
                 className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-lg font-semibold text-neutral-900">
-                  Delete product
-                </h3>
+                <div className="mb-4 text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                    <Trash2 className="h-6 w-6 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    Supprimer le produit
+                  </h3>
 
-                <p className="mt-2 text-sm text-neutral-600">
-                  Are you sure you want to delete{" "}
-                  <span className="font-medium text-neutral-900">
-                    "{confirmDelete.product_name}"
-                  </span>
-                  ?
-                  <br />
-                  Once deleted, this product <strong>cannot be restored</strong>
-                  .
-                </p>
+                  <p className="mt-2 text-sm text-neutral-600">
+                    Êtes-vous sûr de vouloir supprimer{" "}
+                    <span className="font-medium text-neutral-900">
+                      "{confirmDelete.product_name}"
+                    </span>
+                    ?
+                    <br />
+                    Une fois supprimé, ce produit{" "}
+                    <strong>ne peuvent pas être restaurés</strong>.
+                  </p>
+                </div>
 
                 <div className="mt-6 flex justify-end gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setConfirmDelete(null)}
                     disabled={deletingId === confirmDelete.id}
+                    className="flex-1"
                   >
-                    Cancel
+                    Annuler
                   </Button>
 
                   <Button
-                    className="bg-red-600 hover:bg-red-700"
+                    className="flex-1 bg-red-600 hover:bg-red-700"
                     disabled={deletingId === confirmDelete.id}
                     onClick={async () => {
                       await deleteProduct(confirmDelete.id);
                       setConfirmDelete(null);
                     }}
                   >
-                    {deletingId === confirmDelete.id ? "Deleting..." : "Delete"}
+                    {deletingId === confirmDelete.id
+                      ? "Supprimition..."
+                      : "Supprimer"}
                   </Button>
                 </div>
               </div>
@@ -2709,18 +2743,18 @@ export default function AdminProductsPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  Delete {selectedIds.length} products
+                  Supprimer {selectedIds.length} produits
                 </h3>
 
                 <p className="mt-2 text-sm text-neutral-600">
-                  Are you sure you want to delete{" "}
+                  Êtes-vous sûr de vouloir supprimer{" "}
                   <span className="font-medium text-neutral-900">
                     {selectedIds.length}
                   </span>{" "}
-                  products?
+                  produits?
                   <br />
-                  Once deleted, all products <strong>cannot be restored</strong>
-                  .
+                  Une fois supprimé, tous les produits{" "}
+                  <strong>ne peuvent pas être restaurés</strong>.
                 </p>
 
                 <div className="mt-6 flex justify-end gap-3">
@@ -2729,7 +2763,7 @@ export default function AdminProductsPage() {
                     onClick={() => setConfirmBulkDelete(false)}
                     disabled={saving}
                   >
-                    Cancel
+                    Annuler
                   </Button>
 
                   <Button
@@ -2737,7 +2771,7 @@ export default function AdminProductsPage() {
                     disabled={saving}
                     onClick={bulkDelete}
                   >
-                    {saving ? "Deleting..." : "Delete all"}
+                    {saving ? "Effacement..." : "Supprimer tous"}
                   </Button>
                 </div>
               </div>

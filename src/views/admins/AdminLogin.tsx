@@ -63,7 +63,7 @@ export default function AdminLogin() {
             Admin Panel
           </h1>
           <p className="text-sm text-neutral-500 font-medium">
-            Restricted access Â· Authorized personnel only
+            Accès réservé · Seules personnes autorisées
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export default function AdminLogin() {
             htmlFor="username"
             className="block text-sm font-medium text-navy mb-2"
           >
-            Username
+            Nom d'utilisateur
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -133,7 +133,7 @@ export default function AdminLogin() {
             htmlFor="password"
             className="block text-sm font-medium text-navy mb-2"
           >
-            Password
+            Mot de passe
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -245,7 +245,7 @@ export default function AdminLogin() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Signing in...
+                Connexion...
               </>
             ) : (
               <>
@@ -275,7 +275,7 @@ export default function AdminLogin() {
             aria-hidden="true"
           />
           <span className="text-xs text-neutral-500 font-medium uppercase tracking-wider">
-            Secure Admin Access
+            Accès administrateur sécurisé
           </span>
           <div
             className="w-1.5 h-1.5 rounded-full bg-cyan opacity-50"
@@ -286,5 +286,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-
-

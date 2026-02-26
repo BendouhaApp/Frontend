@@ -230,7 +230,7 @@ export default function AdminLogs() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="border-b border-neutral-200 bg-white">
+      <div className="border-b border-neutral-200">
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -238,7 +238,7 @@ export default function AdminLogs() {
                 Admin Logs
               </h1>
               <p className="mt-1 text-neutral-600">
-                Monitor and track all administrative actions
+                Surveiller et suivre toutes les actions administratives.
               </p>
             </div>
 
@@ -252,7 +252,7 @@ export default function AdminLogs() {
                 <RefreshCcw
                   className={cn("h-4 w-4", refreshing && "animate-spin")}
                 />
-                Refresh
+                Actualiser
               </Button>
             </div>
           </div>
@@ -260,7 +260,6 @@ export default function AdminLogs() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-        {/* Statistics Cards */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -291,7 +290,7 @@ export default function AdminLogs() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-neutral-600">
-                  Last 24 Hours
+                  Dernières 24h
                 </p>
                 <p className="mt-2 text-3xl font-bold text-neutral-900">
                   {stats?.last24h ?? 0}
@@ -304,23 +303,19 @@ export default function AdminLogs() {
           </motion.div>
         </div>
 
-        {/* Filters */}
         <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search logs (e.g. 'john', 'CREATE', 'PRODUCT', 'ORDER ID', 'LOGIN')"
+                placeholder="Explorer les logs (e.g. 'john', 'CREATE', 'PRODUCT', 'ORDER ID', 'LOGIN')"
                 className="w-full rounded-xl border border-neutral-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
-            {/* Filter Buttons */}
             <div className="flex flex-wrap items-center gap-3">
-              {/* Action Filter */}
               <div ref={actionRef} className="relative">
                 <Button
                   variant="outline"
@@ -392,7 +387,6 @@ export default function AdminLogs() {
                 </AnimatePresence>
               </div>
 
-              {/* Entity Filter */}
               <div ref={entityRef} className="relative">
                 <Button
                   variant="outline"
@@ -408,7 +402,7 @@ export default function AdminLogs() {
                   )}
                 >
                   <Filter className="h-4 w-4" />
-                  Entities
+                  Entités
                   {selectedEntities.length > 0 && (
                     <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
                       {selectedEntities.length}
@@ -461,7 +455,6 @@ export default function AdminLogs() {
                 </AnimatePresence>
               </div>
 
-              {/* Date Picker */}
               <div className="relative">
                 <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
@@ -477,7 +470,6 @@ export default function AdminLogs() {
                 />
               </div>
 
-              {/* Clear All */}
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -486,19 +478,17 @@ export default function AdminLogs() {
                   className="gap-2 text-neutral-600 hover:text-neutral-900"
                 >
                   <X className="h-4 w-4" />
-                  Clear all
+                  Effacer tous
                 </Button>
               )}
 
-              {/* Results Summary */}
               <span className="ml-auto text-sm font-medium text-neutral-600">
                 {hasActiveFilters
-                  ? `${total} filtered results`
+                  ? `${total} résultats filtrés`
                   : `${total} total logs`}
               </span>
             </div>
 
-            {/* Active Filter Chips */}
             {hasActiveFilters && (
               <div className="flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
                 {selectedActions.map((action) => (
@@ -593,7 +583,7 @@ export default function AdminLogs() {
           <div className="rounded-2xl border border-neutral-200 bg-white p-12 text-center shadow-sm">
             <Activity className="mx-auto mb-4 h-12 w-12 text-neutral-400" />
             <p className="text-lg font-semibold text-neutral-900">
-              No logs found
+              Aucun logs trouvé
             </p>
             <p className="mt-1 text-sm text-neutral-600">
               {hasActiveFilters
@@ -623,7 +613,7 @@ export default function AdminLogs() {
                       Description
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-600">
-                      Time
+                      Temps
                     </th>
                   </tr>
                 </thead>
@@ -702,7 +692,6 @@ export default function AdminLogs() {
           </div>
         )}
 
-        {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="mt-6 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-sm text-neutral-600">

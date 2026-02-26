@@ -117,7 +117,13 @@ const containerVariants: Variants = {
   show: { transition: { staggerChildren: 0.05 } },
 };
 
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className="flex items-start justify-between gap-4 py-2">
       <span className="shrink-0 text-sm text-neutral-400">{label}</span>
@@ -195,8 +201,8 @@ function OrderDetailModal({
             style={{
               position: "fixed",
               top: 0,
-              left: 0,
-              width: "100vw",
+              left: "256px",
+              width: "calc(100vw - 256px)",
               height: "100dvh",
               zIndex: 9998,
               backgroundColor: "rgba(0,0,0,0.58)",
@@ -216,8 +222,8 @@ function OrderDetailModal({
             style={{
               position: "fixed",
               top: 0,
-              left: 0,
-              width: "100vw",
+              left: "256px",
+              width: "calc(100vw - 256px)",
               height: "100dvh",
               zIndex: 9999,
               display: "flex",
@@ -253,18 +259,42 @@ function OrderDetailModal({
                 }}
               >
                 <div>
-                  <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#111827", margin: 0, lineHeight: 1.3 }}>
+                  <h2
+                    style={{
+                      fontSize: "1.05rem",
+                      fontWeight: 700,
+                      color: "#111827",
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
                     Order Details
                   </h2>
                   {order && (
-                    <p style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 3, fontSize: "0.7rem", color: "#9ca3af", fontFamily: "monospace" }}>
+                    <p
+                      style={{
+                        marginTop: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 3,
+                        fontSize: "0.7rem",
+                        color: "#9ca3af",
+                        fontFamily: "monospace",
+                      }}
+                    >
                       <Hash style={{ width: 10, height: 10 }} />
                       {order.id}
                     </p>
                   )}
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                  }}
+                >
                   {order?.order_statuses && (
                     <span
                       style={{
@@ -317,21 +347,39 @@ function OrderDetailModal({
                 }}
               >
                 {loading ? (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4rem 0", gap: "0.75rem" }}>
-                    <RefreshCcw style={{ width: 28, height: 28, color: "#9ca3af" }} className="animate-spin" />
-                    <p style={{ fontSize: "0.85rem", color: "#9ca3af" }}>Loading order details…</p>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "4rem 0",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <RefreshCcw
+                      style={{ width: 28, height: 28, color: "#9ca3af" }}
+                      className="animate-spin"
+                    />
+                    <p style={{ fontSize: "0.85rem", color: "#9ca3af" }}>
+                      Loading order details…
+                    </p>
                   </div>
                 ) : order ? (
                   <>
-
-                    <SectionCard icon={<User className="h-3.5 w-3.5" />} title="Customer">
+                    <SectionCard
+                      icon={<User className="h-3.5 w-3.5" />}
+                      title="Client"
+                    >
                       <DetailRow
-                        label="Name"
+                        label="Nom & Prénom"
                         value={
                           customerName ? (
                             customerName
                           ) : (
-                            <span className="text-neutral-400 italic text-xs">No name provided</span>
+                            <span className="text-neutral-400 italic text-xs">
+                              Pas de nom fourni
+                            </span>
                           )
                         }
                       />
@@ -342,20 +390,34 @@ function OrderDetailModal({
                       order.customer_commune ||
                       order.shipping_communes?.display_name ||
                       order.delivery_type) && (
-                      <SectionCard icon={<MapPin className="h-3.5 w-3.5" />} title="Shipping">
+                      <SectionCard
+                        icon={<MapPin className="h-3.5 w-3.5" />}
+                        title="Livraison"
+                      >
                         {order.customer_wilaya && (
-                          <DetailRow label="Wilaya" value={fixEncoding(order.customer_wilaya)} />
+                          <DetailRow
+                            label="Wilaya"
+                            value={fixEncoding(order.customer_wilaya)}
+                          />
                         )}
-                        {(order.customer_commune || order.shipping_communes?.display_name) && (
+                        {(order.customer_commune ||
+                          order.shipping_communes?.display_name) && (
                           <DetailRow
                             label="Commune"
-                            value={fixEncoding(order.customer_commune || order.shipping_communes?.display_name)}
+                            value={fixEncoding(
+                              order.customer_commune ||
+                                order.shipping_communes?.display_name,
+                            )}
                           />
                         )}
                         {order.delivery_type && (
                           <DetailRow
-                            label="Delivery"
-                            value={<span className="capitalize">{fixEncoding(order.delivery_type)}</span>}
+                            label="Livraison"
+                            value={
+                              <span className="capitalize">
+                                {fixEncoding(order.delivery_type)}
+                              </span>
+                            }
                           />
                         )}
                       </SectionCard>
@@ -363,7 +425,7 @@ function OrderDetailModal({
 
                     <SectionCard
                       icon={<Package className="h-3.5 w-3.5" />}
-                      title={`Items (${order.order_items.length})`}
+                      title={`Produits (${order.order_items.length})`}
                     >
                       {order.order_items.map((item, idx) => (
                         <div
@@ -375,19 +437,24 @@ function OrderDetailModal({
                         >
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-neutral-800 leading-snug">
-                              {fixEncoding(item.products?.product_name) || "Product"}
+                              {fixEncoding(item.products?.product_name) ||
+                                "Produit"}
                             </p>
                             {item.products?.sku && (
                               <p className="mt-0.5 text-xs text-neutral-400 font-mono">
                                 {fixEncoding(item.products.sku)}
                               </p>
                             )}
-                            <p className="mt-0.5 text-xs text-neutral-400">Qty: {item.quantity}</p>
+                            <p className="mt-0.5 text-xs text-neutral-400">
+                              Qty: {item.quantity}
+                            </p>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-sm font-semibold text-neutral-800">
                               {(item.price * item.quantity).toFixed(2)}{" "}
-                              <span className="text-xs font-normal text-neutral-400">{CURRENCY}</span>
+                              <span className="text-xs font-normal text-neutral-400">
+                                {CURRENCY}
+                              </span>
                             </p>
                             {item.quantity > 1 && (
                               <p className="text-xs text-neutral-400">
@@ -399,7 +466,10 @@ function OrderDetailModal({
                       ))}
                     </SectionCard>
 
-                    <SectionCard icon={<CreditCard className="h-3.5 w-3.5" />} title="Pricing">
+                    <SectionCard
+                      icon={<CreditCard className="h-3.5 w-3.5" />}
+                      title="Tarif's"
+                    >
                       <DetailRow
                         label="Subtotal"
                         value={`${calcTotal(order.order_items).toFixed(2)} ${CURRENCY}`}
@@ -409,13 +479,18 @@ function OrderDetailModal({
                         value={`${Number(order.shipping_price || 0).toFixed(2)} ${CURRENCY}`}
                       />
                       <div className="flex items-center justify-between pt-3 mt-1">
-                        <span className="text-sm font-bold text-neutral-900">Total</span>
+                        <span className="text-sm font-bold text-neutral-900">
+                          Total
+                        </span>
                         <span className="text-base font-bold text-neutral-900">
                           {Number(
                             order.total_price ||
-                              calcTotal(order.order_items) + Number(order.shipping_price || 0),
+                              calcTotal(order.order_items) +
+                                Number(order.shipping_price || 0),
                           ).toFixed(2)}{" "}
-                          <span className="text-sm font-normal text-neutral-400">{CURRENCY}</span>
+                          <span className="text-sm font-normal text-neutral-400">
+                            {CURRENCY}
+                          </span>
                         </span>
                       </div>
                     </SectionCard>
@@ -423,7 +498,7 @@ function OrderDetailModal({
                     <div className="flex items-center gap-1.5 text-xs text-neutral-400 px-1 pb-1">
                       <Clock className="h-3.5 w-3.5 shrink-0" />
                       <span>
-                        Ordered on{" "}
+                        Commandé le{" "}
                         {new Date(order.created_at).toLocaleString(undefined, {
                           dateStyle: "medium",
                           timeStyle: "short",
@@ -443,8 +518,11 @@ function OrderDetailModal({
                     backgroundColor: "#ffffff",
                   }}
                 >
-                  <Button onClick={onClose} className="w-full h-10 rounded-xl font-semibold">
-                    Close
+                  <Button
+                    onClick={onClose}
+                    className="w-full h-10 rounded-xl font-semibold"
+                  >
+                    Fermé
                   </Button>
                 </div>
               )}
@@ -482,9 +560,15 @@ export function AdminOrders() {
     return () => clearTimeout(t);
   }, [query]);
 
-  useEffect(() => { loadStatuses(); }, []);
-  useEffect(() => { loadOrders(); }, [page, debouncedQuery]);
-  useEffect(() => { if (page !== 1) setPage(1); }, [debouncedQuery]);
+  useEffect(() => {
+    loadStatuses();
+  }, []);
+  useEffect(() => {
+    loadOrders();
+  }, [page, debouncedQuery]);
+  useEffect(() => {
+    if (page !== 1) setPage(1);
+  }, [debouncedQuery]);
   useEffect(() => {
     if (selectedOrderId) loadOrderDetails(selectedOrderId);
     else setSelectedOrder(null);
@@ -539,9 +623,9 @@ export function AdminOrders() {
       await toast.promise(
         api.patch(`orders/${orderId}`, { order_status_id: statusId }),
         {
-          loading: "Updating order status…",
-          success: "Order status updated",
-          error: (e) => getErrorMessage(e, "Failed to update status"),
+          loading: "Mise à jour du statut de la commande...",
+          success: "Statut de la commande mis à jour",
+          error: (e) => getErrorMessage(e, "Échec de la mise à jour du statut"),
         },
       );
       await loadOrders();
@@ -551,12 +635,17 @@ export function AdminOrders() {
     }
   };
 
-  const orders = useMemo<Order[]>(() =>
-    items.map((o) => ({
-      ...o,
-      order_items: o.order_items.map((i) => ({ ...i, price: Number(i.price) })),
-    })),
-  [items]);
+  const orders = useMemo<Order[]>(
+    () =>
+      items.map((o) => ({
+        ...o,
+        order_items: o.order_items.map((i) => ({
+          ...i,
+          price: Number(i.price),
+        })),
+      })),
+    [items],
+  );
 
   const confirmedStatusId = statuses.find(
     (s) => s.status_name.toLowerCase() === "confirmed",
@@ -600,17 +689,22 @@ export function AdminOrders() {
         className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6"
       >
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Orders</h1>
-          <p className="mt-1 text-neutral-500 text-sm">Manage customer orders</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Commandes</h1>
+          <p className="mt-1 text-neutral-500 text-sm">
+            Gérer les commandes des clients
+          </p>
         </div>
         <Button
           variant="outline"
-          onClick={() => { loadOrders(); loadStatuses(); }}
+          onClick={() => {
+            loadOrders();
+            loadStatuses();
+          }}
           className="gap-2 self-start"
           disabled={loading}
         >
           <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
-          Refresh
+          Actualiser
         </Button>
       </motion.div>
 
@@ -624,7 +718,7 @@ export function AdminOrders() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by order ID or phone number…"
+          placeholder="Recherche par numéro de commande ou numéro de téléphone..."
           className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-9 pr-4 text-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
         />
       </motion.div>
@@ -639,20 +733,31 @@ export function AdminOrders() {
             <thead className="bg-neutral-50 text-left border-b border-neutral-200">
               <tr>
                 {tableHeaders.map((h) => (
-                  <th key={h} className="px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">{h}</th>
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {[1, 2, 3, 4, 5].map((i) => (
                 <tr key={i} className="border-t border-neutral-100">
-                  <td className="px-4 py-3"><div className="h-4 w-24 animate-pulse rounded-lg bg-neutral-100" /></td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-24 animate-pulse rounded-lg bg-neutral-100" />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="h-4 w-32 animate-pulse rounded-lg bg-neutral-100" />
                     <div className="mt-1 h-3 w-24 animate-pulse rounded-lg bg-neutral-100" />
                   </td>
-                  <td className="px-4 py-3"><div className="h-5 w-20 animate-pulse rounded-full bg-neutral-100" /></td>
-                  <td className="px-4 py-3"><div className="h-4 w-16 animate-pulse rounded-lg bg-neutral-100" /></td>
+                  <td className="px-4 py-3">
+                    <div className="h-5 w-20 animate-pulse rounded-full bg-neutral-100" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-16 animate-pulse rounded-lg bg-neutral-100" />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <div className="h-8 w-8 animate-pulse rounded-lg bg-neutral-100" />
@@ -673,7 +778,9 @@ export function AdminOrders() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100">
             <ShoppingCart className="h-7 w-7 text-neutral-400" />
           </div>
-          <p className="font-semibold text-neutral-700">No orders found</p>
+          <p className="font-semibold text-neutral-700">
+            Aucune commande trouvée
+          </p>
           <p className="mt-1 text-sm text-neutral-400">
             {query ? "Try adjusting your search." : "Orders will appear here."}
           </p>
@@ -689,11 +796,20 @@ export function AdminOrders() {
             <thead className="bg-neutral-50 text-left border-b border-neutral-200">
               <tr>
                 {tableHeaders.map((h) => (
-                  <th key={h} className="px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">{h}</th>
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
-            <motion.tbody variants={containerVariants} initial="hidden" animate="show">
+            <motion.tbody
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
               <AnimatePresence>
                 {filtered.map((order) => {
                   const name = getCustomerName(order);
@@ -713,11 +829,15 @@ export function AdminOrders() {
                       <td className="px-4 py-3">
                         <p className="font-medium text-neutral-800">
                           {name || (
-                            <span className="text-neutral-400 italic text-xs">Unknown customer</span>
+                            <span className="text-neutral-400 italic text-xs">
+                              Client inconnu
+                            </span>
                           )}
                         </p>
                         <p className="text-xs text-neutral-400 mt-0.5">
-                          {order.customers?.email || order.customer_phone || "—"}
+                          {order.customers?.email ||
+                            order.customer_phone ||
+                            "—"}
                         </p>
                       </td>
 
@@ -740,18 +860,25 @@ export function AdminOrders() {
 
                       <td className="px-4 py-3 font-semibold text-neutral-800">
                         {calcTotal(order.order_items).toFixed(2)}{" "}
-                        <span className="text-xs font-normal text-neutral-400">{CURRENCY}</span>
+                        <span className="text-xs font-normal text-neutral-400">
+                          {CURRENCY}
+                        </span>
                       </td>
 
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="px-4 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex gap-1.5">
                           <motion.button
-                            disabled={!confirmedStatusId || updatingOrderId === order.id}
+                            disabled={
+                              !confirmedStatusId || updatingOrderId === order.id
+                            }
                             onClick={() =>
                               confirmedStatusId &&
                               updateOrderStatus(order.id, confirmedStatusId)
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             title="Confirm order"
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.92 }}
@@ -760,12 +887,14 @@ export function AdminOrders() {
                           </motion.button>
 
                           <motion.button
-                            disabled={!canceledStatusId || updatingOrderId === order.id}
+                            disabled={
+                              !canceledStatusId || updatingOrderId === order.id
+                            }
                             onClick={() =>
                               canceledStatusId &&
                               updateOrderStatus(order.id, canceledStatusId)
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             title="Cancel order"
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.92 }}
@@ -791,16 +920,29 @@ export function AdminOrders() {
           className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <span className="text-sm text-neutral-500">
-            Page <span className="font-semibold text-neutral-800">{page}</span> of{" "}
+            Page <span className="font-semibold text-neutral-800">{page}</span>{" "}
+            of{" "}
             <span className="font-semibold text-neutral-800">{totalPages}</span>
-            {total > 0 && <span className="ml-2 text-neutral-400">({total} total)</span>}
+            {total > 0 && (
+              <span className="ml-2 text-neutral-400">({total} total)</span>
+            )}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1 || loading} onClick={() => setPage((p) => p - 1)}>
-              Previous
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1 || loading}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Précédent
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
-              Next
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Suivant
             </Button>
           </div>
         </motion.div>
