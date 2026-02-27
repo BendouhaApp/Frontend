@@ -198,7 +198,7 @@ function OrderDetailModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
             onClick={onClose}
-            className="fixed inset-0 z-[9998] backdrop-blur-[6px]"
+            className="fixed inset-0 z-[9998] backdrop-blur-[6px] md:left-64 md:right-0 md:top-0 md:bottom-0"
             style={{ backgroundColor: "rgba(0,0,0,0.58)" }}
           />
           <motion.div
@@ -208,7 +208,7 @@ function OrderDetailModal({
             exit={{ opacity: 0, scale: 0.96, y: 18 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             onClick={onClose}
-            className="fixed inset-4 z-[9999] flex items-start justify-center md:ml-64 md:items-center"
+            className="fixed inset-4 z-[9999] flex items-start justify-center md:left-64 md:right-4 md:top-4 md:bottom-4 md:items-center"
           >
             <div
               onClick={(e) => e.stopPropagation()}
