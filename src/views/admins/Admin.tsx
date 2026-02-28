@@ -325,7 +325,12 @@ export default function AdminDashboard() {
                   label="Total Orders"
                   value={stats.totalOrders}
                   icon={<ShoppingCart className="h-5 w-5" />}
-                  subtext={`${stats.todayOrders || 0} commandes d'aujourdhui`}
+                  alert={
+                    (stats.todayOrders || 0) === 0
+                      ? "Aucune commande aujourd'hui"
+                      : `${stats.todayOrders} commandes aujourd'hui`
+                  }
+                  isWarning={(stats.todayOrders || 0) === 0}
                 />
               </motion.div>
 

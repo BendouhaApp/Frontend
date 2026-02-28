@@ -688,7 +688,6 @@ export function AdminCategory() {
               label="Active"
               value={items.filter((c) => c.active).length}
               icon={<Check className="h-5 w-5" />}
-              subtext={`${items.filter((c) => !c.active).length} inactive`}
             />
 
             <StatCard
