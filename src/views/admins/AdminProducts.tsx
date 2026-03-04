@@ -79,6 +79,7 @@ type DbProduct = {
   updated_at?: string;
   thumbnail?: string | null;
   gallery?: string[];
+  lighting_specs_enabled?: boolean | null;
   cct: number;
   lumen: number;
   cri: number;
@@ -122,6 +123,7 @@ type ProductPayload = {
   note?: string | null;
   thumbnail?: string | null;
   images?: string[];
+  lighting_specs_enabled: boolean;
   cct: number;
   lumen: number;
   cri: number;
@@ -729,6 +731,9 @@ function ProductForm({
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionMessage, setCompressionMessage] = useState("");
+  const [lightingEnabled, setLightingEnabled] = useState(
+    Boolean(product?.lighting_specs_enabled ?? true),
+  );
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -782,6 +787,7 @@ function ProductForm({
     setThumbnailFile(null);
     setThumbnailPreview(null);
     setCompressionMessage("");
+    setLightingEnabled(Boolean(product?.lighting_specs_enabled ?? true));
   }, [product?.id]);
 
   useEffect(() => {
@@ -870,6 +876,7 @@ function ProductForm({
       note: note.trim() ? note.trim() : null,
       thumbnail: undefined,
       images: undefined,
+      lighting_specs_enabled: lightingEnabled,
       cct: Number(cct),
       lumen: Number(lumen),
       cri: Number(cri),
@@ -1051,95 +1058,118 @@ function ProductForm({
       </div>
 
       <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-6">
-        <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          Spécifications d'éclairage
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-primary" />
+            Spécifications d'éclairage
+          </h3>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
-              CCT (Kelvin)
-            </FieldLabel>
-            <Input
-              type="number"
-              min={1000}
-              max={10000}
-              step={100}
-              value={cct}
-              onChange={(e) => setCct(Number(e.target.value))}
-              required
-              placeholder="e.g., 3000"
+          <div className="w-48">
+            <Toggle
+              checked={lightingEnabled}
+              onChange={setLightingEnabled}
+              label={lightingEnabled ? "Activé" : "Désactivé"}
+              iconOn={<Lightbulb className="h-4 w-4" />}
+              iconOff={<Lightbulb className="h-4 w-4" />}
             />
-            <p className="mt-1 text-xs text-neutral-500">Range: 1000-10000K</p>
-          </div>
-
-          <div>
-            <FieldLabel icon={<Zap className="h-4 w-4" />} required>
-              Lumen (lm)
-            </FieldLabel>
-            <Input
-              type="number"
-              min={1}
-              step={1}
-              value={lumen}
-              onChange={(e) => setLumen(Number(e.target.value))}
-              required
-              placeholder="e.g., 800"
-            />
-            <p className="mt-1 text-xs text-neutral-500">Minimum: 1 lm</p>
-          </div>
-
-          <div>
-            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
-              CRI
-            </FieldLabel>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              step={1}
-              value={cri}
-              onChange={(e) => setCri(Number(e.target.value))}
-              required
-              placeholder="e.g., 80"
-            />
-            <p className="mt-1 text-xs text-neutral-500">Range: 0-100</p>
-          </div>
-
-          <div>
-            <FieldLabel icon={<Zap className="h-4 w-4" />} required>
-              Power (W)
-            </FieldLabel>
-            <Input
-              type="number"
-              min={0}
-              step={0.1}
-              value={power}
-              onChange={(e) => setPower(Number(e.target.value))}
-              required
-              placeholder="e.g., 10"
-            />
-            <p className="mt-1 text-xs text-neutral-500">In Watts</p>
-          </div>
-
-          <div className="md:col-span-2">
-            <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
-              Beam Angle (degrees)
-            </FieldLabel>
-            <Input
-              type="number"
-              min={1}
-              max={180}
-              step={1}
-              value={angle}
-              onChange={(e) => setAngle(Number(e.target.value))}
-              required
-              placeholder="e.g., 120"
-            />
-            <p className="mt-1 text-xs text-neutral-500">Plage : 1-180°</p>
           </div>
         </div>
+
+        {!lightingEnabled && (
+          <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+            <Lightbulb className="h-4 w-4" />
+            Ce produit n'utilise pas de spécifications d’éclairage.
+          </div>
+        )}
+
+        {lightingEnabled && (
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+                CCT (Kelvin)
+              </FieldLabel>
+              <Input
+                type="number"
+                min={1000}
+                max={10000}
+                step={100}
+                value={cct}
+                onChange={(e) => setCct(Number(e.target.value))}
+                required={lightingEnabled}
+                placeholder="e.g., 3000"
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Range: 1000-10000K
+              </p>
+            </div>
+
+            <div>
+              <FieldLabel icon={<Zap className="h-4 w-4" />} required>
+                Lumen (lm)
+              </FieldLabel>
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                value={lumen}
+                onChange={(e) => setLumen(Number(e.target.value))}
+                required={lightingEnabled}
+                placeholder="e.g., 800"
+              />
+              <p className="mt-1 text-xs text-neutral-500">Minimum: 1 lm</p>
+            </div>
+
+            <div>
+              <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+                CRI
+              </FieldLabel>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={cri}
+                onChange={(e) => setCri(Number(e.target.value))}
+                required={lightingEnabled}
+                placeholder="e.g., 80"
+              />
+              <p className="mt-1 text-xs text-neutral-500">Range: 0-100</p>
+            </div>
+
+            <div>
+              <FieldLabel icon={<Zap className="h-4 w-4" />} required>
+                Power (W)
+              </FieldLabel>
+              <Input
+                type="number"
+                min={0}
+                step={0.1}
+                value={power}
+                onChange={(e) => setPower(Number(e.target.value))}
+                required={lightingEnabled}
+                placeholder="e.g., 10"
+              />
+              <p className="mt-1 text-xs text-neutral-500">In Watts</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <FieldLabel icon={<Gauge className="h-4 w-4" />} required>
+                Beam Angle (degrees)
+              </FieldLabel>
+              <Input
+                type="number"
+                min={1}
+                max={180}
+                step={1}
+                value={angle}
+                onChange={(e) => setAngle(Number(e.target.value))}
+                required={lightingEnabled}
+                placeholder="e.g., 120"
+              />
+              <p className="mt-1 text-xs text-neutral-500">Plage : 1-180°</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
