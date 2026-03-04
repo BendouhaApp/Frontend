@@ -124,11 +124,11 @@ type ProductPayload = {
   thumbnail?: string | null;
   images?: string[];
   lighting_specs_enabled: boolean;
-  cct: number;
-  lumen: number;
-  cri: number;
-  power: number;
-  angle: number;
+  cct?: number;
+  lumen?: number;
+  cri?: number;
+  power?: number;
+  angle?: number;
   category_ids?: string[];
 };
 
@@ -770,19 +770,14 @@ function ProductForm({
     setPublished(Boolean(product?.published ?? false));
     setDisableOos(Boolean(product?.disable_out_of_stock ?? true));
     setNote(product?.note ?? "");
-
     setCct(product?.cct ?? 3000);
     setLumen(product?.lumen ?? 800);
-    // FIX: aligned with backend default (was 80, backend default is 90)
     setCri(product?.cri ?? 90);
     setPower(Number(product?.power ?? 10));
-    // FIX: aligned with backend default (was 120, backend default is 60)
     setAngle(product?.angle ?? 60);
-
     setSelectedCategoryIds(
       product?.product_categories?.map((pc) => pc.category_id) ?? [],
     );
-
     setExistingImages(product?.gallery ?? []);
     setRemovedImages([]);
     setNewImages([]);
@@ -881,11 +876,13 @@ function ProductForm({
       thumbnail: undefined,
       images: undefined,
       lighting_specs_enabled: lightingEnabled,
-      cct: Number(cct),
-      lumen: Number(lumen),
-      cri: Number(cri),
-      power: Number(power),
-      angle: Number(angle),
+      ...(lightingEnabled && {
+        cct: Number(cct),
+        lumen: Number(lumen),
+        cri: Number(cri),
+        power: Number(power),
+        angle: Number(angle),
+      }),
       category_ids: selectedCategoryIds,
     };
 
@@ -1638,20 +1635,27 @@ function ProductRow({
       </td>
 
       <td className="px-3 py-3">
-        <div className="flex flex-col gap-1 text-xs text-neutral-600">
-          <div className="flex items-center gap-1">
+        {product.lighting_specs_enabled ? (
+          <div className="flex flex-col gap-1 text-xs text-neutral-600">
+            <div className="flex items-center gap-1">
+              <Lightbulb className="h-3 w-3" />
+              <span>
+                {product.cct}K - {product.lumen}lm
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              <span>
+                {money(product.power)}W - {product.angle}°
+              </span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-xs text-neutral-400 flex items-center gap-1">
             <Lightbulb className="h-3 w-3" />
-            <span>
-              {product.cct}K - {product.lumen}lm
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            <span>
-              {money(product.power)}W - {product.angle}°
-            </span>
-          </div>
-        </div>
+            No lighting specs
+          </span>
+        )}
       </td>
 
       <td className="px-3 py-3">
@@ -1689,10 +1693,17 @@ function ProductRow({
 export default function AdminProductsPage() {
   const queryClient = useQueryClient();
 
-  const clearPublicProductsCache = () => {
+  {
+    /*const clearPublicProductsCache = () => {
     //queryClient.removeQueries({ queryKey: ["products", "public"] });
     queryClient.invalidateQueries({ queryKey: ["products/public"] });
     queryClient.removeQueries({ queryKey: ["products/public"] });
+  };*/
+  }
+
+  const clearPublicProductsCache = () => {
+    queryClient.invalidateQueries({ queryKey: ["products"], exact: false });
+    queryClient.removeQueries({ queryKey: ["products"], exact: false });
   };
 
   const [query, setQuery] = useState("");
