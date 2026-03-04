@@ -708,9 +708,9 @@ function ProductForm({
 
   const [cct, setCct] = useState<number>(product?.cct ?? 3000);
   const [lumen, setLumen] = useState<number>(product?.lumen ?? 800);
-  const [cri, setCri] = useState<number>(product?.cri ?? 80);
+  const [cri, setCri] = useState<number>(product?.cri ?? 90);
   const [power, setPower] = useState<number>(Number(product?.power ?? 10));
-  const [angle, setAngle] = useState<number>(product?.angle ?? 120);
+  const [angle, setAngle] = useState<number>(product?.angle ?? 60);
 
   const [categories, setCategories] = useState<DbCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -732,7 +732,7 @@ function ProductForm({
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionMessage, setCompressionMessage] = useState("");
   const [lightingEnabled, setLightingEnabled] = useState(
-    Boolean(product?.lighting_specs_enabled ?? true),
+    product?.lighting_specs_enabled !== false,
   );
 
   useEffect(() => {
@@ -773,9 +773,11 @@ function ProductForm({
 
     setCct(product?.cct ?? 3000);
     setLumen(product?.lumen ?? 800);
-    setCri(product?.cri ?? 80);
+    // FIX: aligned with backend default (was 80, backend default is 90)
+    setCri(product?.cri ?? 90);
     setPower(Number(product?.power ?? 10));
-    setAngle(product?.angle ?? 120);
+    // FIX: aligned with backend default (was 120, backend default is 60)
+    setAngle(product?.angle ?? 60);
 
     setSelectedCategoryIds(
       product?.product_categories?.map((pc) => pc.category_id) ?? [],
@@ -787,7 +789,7 @@ function ProductForm({
     setThumbnailFile(null);
     setThumbnailPreview(null);
     setCompressionMessage("");
-    setLightingEnabled(Boolean(product?.lighting_specs_enabled ?? true));
+    setLightingEnabled(product?.lighting_specs_enabled !== false);
   }, [product?.id]);
 
   useEffect(() => {
@@ -830,29 +832,31 @@ function ProductForm({
       return;
     }
 
-    if (cct < 1000 || cct > 10000) {
-      toast.error("La CCT doit être comprise entre 1000 et 10000 Kelvin.");
-      return;
-    }
+    if (lightingEnabled) {
+      if (cct < 1000 || cct > 10000) {
+        toast.error("La CCT doit être comprise entre 1000 et 10000 Kelvin.");
+        return;
+      }
 
-    if (lumen < 1) {
-      toast.error("Le lumen doit être supérieur ou égal à 1.");
-      return;
-    }
+      if (lumen < 1) {
+        toast.error("Le lumen doit être supérieur ou égal à 1.");
+        return;
+      }
 
-    if (cri < 0 || cri > 100) {
-      toast.error("Le CRI doit être compris entre 0 et 100.");
-      return;
-    }
+      if (cri < 0 || cri > 100) {
+        toast.error("Le CRI doit être compris entre 0 et 100.");
+        return;
+      }
 
-    if (power < 0) {
-      toast.error("Le pouvoir doit être positif.");
-      return;
-    }
+      if (power < 0) {
+        toast.error("Le pouvoir doit être positif.");
+        return;
+      }
 
-    if (angle < 1 || angle > 180) {
-      toast.error("L'angle doit être compris entre 1° et 180°.");
-      return;
+      if (angle < 1 || angle > 180) {
+        toast.error("L'angle doit être compris entre 1° et 180°.");
+        return;
+      }
     }
 
     if (selectedCategoryIds.length === 0) {
@@ -1078,7 +1082,7 @@ function ProductForm({
         {!lightingEnabled && (
           <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
             <Lightbulb className="h-4 w-4" />
-            Ce produit n'utilise pas de spécifications d’éclairage.
+            Ce produit n'utilise pas de spécifications d'éclairage.
           </div>
         )}
 
@@ -1131,7 +1135,7 @@ function ProductForm({
                 value={cri}
                 onChange={(e) => setCri(Number(e.target.value))}
                 required={lightingEnabled}
-                placeholder="e.g., 80"
+                placeholder="e.g., 90"
               />
               <p className="mt-1 text-xs text-neutral-500">Range: 0-100</p>
             </div>
@@ -1164,7 +1168,7 @@ function ProductForm({
                 value={angle}
                 onChange={(e) => setAngle(Number(e.target.value))}
                 required={lightingEnabled}
-                placeholder="e.g., 120"
+                placeholder="e.g., 60"
               />
               <p className="mt-1 text-xs text-neutral-500">Plage : 1-180°</p>
             </div>
@@ -1372,7 +1376,7 @@ function ProductForm({
 
                   setCompressionMessage(
                     saved > 0
-                      ? `Galerie compressé : sauvegardé ${bytes(saved)} à travers ${selectedFiles.length} fichier(s).`
+                      ? `Galerie compressé : sauvegardé ${bytes(saved)} à travers ${selectedFiles.length} fichier(s).`
                       : "Les images de la galerie sont déjà optimisées.",
                   );
                 } catch {
