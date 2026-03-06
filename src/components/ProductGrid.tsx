@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion, type Variants } from '@/lib/gsap-motion'
-import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
-import { Link } from '@/lib/router'
-import { ArrowRight } from 'lucide-react'
-import { ProductCard } from '@/components/ProductCard'
-import { Button } from '@/components/ui/button'
-import { SkeletonProductGrid } from '@/components/ui/skeleton'
-import { buildGetQueryKey, fetchGet, useGet } from '@/hooks/useGet'
-import { getProductAvailableQuantity, isProductOutOfStock } from '@/lib/product-stock'
-import { useCartId, useCartProductQuantities } from '@/hooks/useCart'
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, type Variants } from "@/lib/gsap-motion";
+import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@/lib/router";
+import { ArrowRight } from "lucide-react";
+import { ProductCard } from "@/components/ProductCard";
+import { Button } from "@/components/ui/button";
+import { SkeletonProductGrid } from "@/components/ui/skeleton";
+import { buildGetQueryKey, fetchGet, useGet } from "@/hooks/useGet";
+import {
+  getProductAvailableQuantity,
+  isProductOutOfStock,
+} from "@/lib/product-stock";
+import { useCartId, useCartProductQuantities } from "@/hooks/useCart";
 import type {
   ApiResponse,
   Cart,
@@ -17,11 +20,11 @@ import type {
   Product,
   ProductResponse,
   ProductsResponse,
-} from '@/types/api'
-import { cn } from '@/lib/utils'
-import { apiClient } from '@/lib/http'
-import { toast } from 'sonner'
-import { mergeCartItemIntoCartResponse } from '@/lib/cart'
+} from "@/types/api";
+import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/http";
+import { toast } from "sonner";
+import { mergeCartItemIntoCartResponse } from "@/lib/cart";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -31,7 +34,7 @@ const containerVariants: Variants = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -42,118 +45,125 @@ const itemVariants: Variants = {
       duration: 0.5,
     },
   },
-}
+};
 
 function useStockAwareAddToCart() {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const { cartId } = useCartId()
-  const cartProductQuantities = useCartProductQuantities()
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { cartId } = useCartId();
+  const cartProductQuantities = useCartProductQuantities();
   const [availableQuantityByProductId, setAvailableQuantityByProductId] =
-    useState<Record<string, number>>({})
-  const cartProductQuantitiesRef = useRef<Record<string, number>>({})
-  const availableQuantityByProductIdRef = useRef<Record<string, number>>({})
-  const pendingAddByProductIdRef = useRef<Record<string, number>>({})
+    useState<Record<string, number>>({});
+  const cartProductQuantitiesRef = useRef<Record<string, number>>({});
+  const availableQuantityByProductIdRef = useRef<Record<string, number>>({});
+  const pendingAddByProductIdRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
-    cartProductQuantitiesRef.current = cartProductQuantities
-  }, [cartProductQuantities])
+    cartProductQuantitiesRef.current = cartProductQuantities;
+  }, [cartProductQuantities]);
 
   useEffect(() => {
-    availableQuantityByProductIdRef.current = availableQuantityByProductId
-  }, [availableQuantityByProductId])
+    availableQuantityByProductIdRef.current = availableQuantityByProductId;
+  }, [availableQuantityByProductId]);
 
   const rememberAvailableQuantity = useCallback(
     (productId: string, quantity: number) => {
       availableQuantityByProductIdRef.current = {
         ...availableQuantityByProductIdRef.current,
         [productId]: quantity,
-      }
+      };
       setAvailableQuantityByProductId((prev) =>
-        prev[productId] === quantity ? prev : { ...prev, [productId]: quantity },
-      )
+        prev[productId] === quantity
+          ? prev
+          : { ...prev, [productId]: quantity },
+      );
     },
     [],
-  )
+  );
 
   const getAvailableQuantity = useCallback(
-    async (productId: string, fallback?: number): Promise<number | undefined> => {
-      const known = availableQuantityByProductIdRef.current[productId]
-      if (typeof known === 'number') return known
+    async (
+      productId: string,
+      fallback?: number,
+    ): Promise<number | undefined> => {
+      const known = availableQuantityByProductIdRef.current[productId];
+      if (typeof known === "number") return known;
 
-      if (typeof fallback === 'number') {
-        rememberAvailableQuantity(productId, fallback)
-        return fallback
+      if (typeof fallback === "number") {
+        rememberAvailableQuantity(productId, fallback);
+        return fallback;
       }
 
       const cachedDetail = queryClient.getQueryData<ProductResponse>(
         buildGetQueryKey(`products/public/${productId}`),
-      )
-      const cachedQuantity = cachedDetail?.data?.quantity
-      if (typeof cachedQuantity === 'number') {
-        rememberAvailableQuantity(productId, cachedQuantity)
-        return cachedQuantity
+      );
+      const cachedQuantity = cachedDetail?.data?.quantity;
+      if (typeof cachedQuantity === "number") {
+        rememberAvailableQuantity(productId, cachedQuantity);
+        return cachedQuantity;
       }
 
       try {
         const response = await fetchGet<ProductResponse>({
           path: `products/public/${productId}`,
-        })
-        const quantity = response.data?.quantity
-        if (typeof quantity !== 'number') return undefined
+        });
+        const quantity = response.data?.quantity;
+        if (typeof quantity !== "number") return undefined;
 
-        rememberAvailableQuantity(productId, quantity)
-        return quantity
+        rememberAvailableQuantity(productId, quantity);
+        return quantity;
       } catch {
-        return undefined
+        return undefined;
       }
     },
     [queryClient, rememberAvailableQuantity],
-  )
+  );
 
   const isAddToCartDisabled = useCallback(
     (product: Product) => {
       const availableQuantity =
         availableQuantityByProductId[product.id] ??
-        getProductAvailableQuantity(product)
+        getProductAvailableQuantity(product);
 
-      if (typeof availableQuantity !== 'number') {
-        return isProductOutOfStock(product)
+      if (typeof availableQuantity !== "number") {
+        return isProductOutOfStock(product);
       }
 
-      const inCartQuantity = cartProductQuantities[product.id] ?? 0
-      return isProductOutOfStock(product) || inCartQuantity >= availableQuantity
+      const inCartQuantity = cartProductQuantities[product.id] ?? 0;
+      return (
+        isProductOutOfStock(product) || inCartQuantity >= availableQuantity
+      );
     },
     [availableQuantityByProductId, cartProductQuantities],
-  )
+  );
 
   const handleAddToCart = useCallback(
     async (product: Product) => {
       if (!cartId) {
-        toast.error(t('cart.notReady'))
-        return
+        toast.error(t("cart.notReady"));
+        return;
       }
 
       const availableQuantity = await getAvailableQuantity(
         product.id,
         getProductAvailableQuantity(product),
-      )
-      const inCartQuantity = cartProductQuantitiesRef.current[product.id] ?? 0
-      const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0
-      const nextQuantity = inCartQuantity + pendingQuantity
+      );
+      const inCartQuantity = cartProductQuantitiesRef.current[product.id] ?? 0;
+      const pendingQuantity = pendingAddByProductIdRef.current[product.id] ?? 0;
+      const nextQuantity = inCartQuantity + pendingQuantity;
 
       if (
-        typeof availableQuantity === 'number' &&
+        typeof availableQuantity === "number" &&
         nextQuantity >= availableQuantity
       ) {
-        toast.error(t('common.outOfStock'))
-        return
+        toast.error(t("common.outOfStock"));
+        return;
       }
 
       pendingAddByProductIdRef.current = {
         ...pendingAddByProductIdRef.current,
         [product.id]: pendingQuantity + 1,
-      }
+      };
 
       try {
         const response = await apiClient
@@ -163,60 +173,63 @@ function useStockAwareAddToCart() {
               quantity: 1,
             },
           })
-          .json<ApiResponse<CartItem>>()
+          .json<ApiResponse<CartItem>>();
 
         queryClient.setQueryData<ApiResponse<Cart>>(
-          buildGetQueryKey('cart'),
+          buildGetQueryKey("cart"),
           (current) =>
             mergeCartItemIntoCartResponse(current, response.data, cartId),
-        )
+        );
 
-        await queryClient.invalidateQueries({ queryKey: ['cart'] })
+        await queryClient.invalidateQueries({ queryKey: ["cart"] });
+
+        toast.success(t("cart.addedToCart"));
       } catch {
-        toast.error(t('cart.addToCartError'))
+        toast.error(t("cart.addToCartError"));
       } finally {
-        const currentPending = pendingAddByProductIdRef.current[product.id] ?? 0
+        const currentPending =
+          pendingAddByProductIdRef.current[product.id] ?? 0;
         if (currentPending <= 1) {
-          const nextPending = { ...pendingAddByProductIdRef.current }
-          delete nextPending[product.id]
-          pendingAddByProductIdRef.current = nextPending
+          const nextPending = { ...pendingAddByProductIdRef.current };
+          delete nextPending[product.id];
+          pendingAddByProductIdRef.current = nextPending;
         } else {
           pendingAddByProductIdRef.current = {
             ...pendingAddByProductIdRef.current,
             [product.id]: currentPending - 1,
-          }
+          };
         }
       }
     },
     [cartId, getAvailableQuantity, queryClient, t],
-  )
+  );
 
-  return { handleAddToCart, isAddToCartDisabled }
+  return { handleAddToCart, isAddToCartDisabled };
 }
 
 interface ProductGridProps {
   /** Custom title for the section */
-  title?: string
+  title?: string;
   /** Custom subtitle */
-  subtitle?: string
+  subtitle?: string;
   /** Products to display */
-  products?: Product[]
+  products?: Product[];
   /** Number of columns on different breakpoints */
-  columns?: 2 | 3 | 4
+  columns?: 2 | 3 | 4;
   /** Show "View All" button */
-  showViewAll?: boolean
+  showViewAll?: boolean;
   /** Link for View All button */
-  viewAllLink?: string
+  viewAllLink?: string;
   /** Card variant */
-  cardVariant?: 'default' | 'compact' | 'detailed'
+  cardVariant?: "default" | "compact" | "detailed";
   /** Additional class names */
-  className?: string
+  className?: string;
   /** Callback when add to cart is clicked */
-  onAddToCart?: (product: Product) => void
+  onAddToCart?: (product: Product) => void;
   /** Disable add to cart for a specific product */
-  isAddToCartDisabled?: (product: Product) => boolean
+  isAddToCartDisabled?: (product: Product) => boolean;
   /** Loading state */
-  isLoading?: boolean
+  isLoading?: boolean;
 }
 
 export function ProductGrid({
@@ -225,23 +238,23 @@ export function ProductGrid({
   products = [],
   columns = 4,
   showViewAll = true,
-  viewAllLink = '/shop',
-  cardVariant = 'default',
+  viewAllLink = "/shop",
+  cardVariant = "default",
   className,
   onAddToCart,
   isAddToCartDisabled,
   isLoading = false,
 }: ProductGridProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
   const gridCols = {
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-  }
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  };
 
   return (
-    <section className={cn('section-padding bg-white', className)}>
+    <section className={cn("section-padding bg-white", className)}>
       <div className="container mx-auto">
         {/* Header */}
         {(title || subtitle) && (
@@ -272,7 +285,7 @@ export function ProductGrid({
                 asChild
               >
                 <Link to={viewAllLink}>
-                  {t('common.viewAll')}
+                  {t("common.viewAll")}
                   <ArrowRight className="ms-2 h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
                 </Link>
               </Button>
@@ -289,8 +302,8 @@ export function ProductGrid({
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            className={cn('grid gap-6 md:gap-8', gridCols[columns])}
+            viewport={{ once: true, margin: "-50px" }}
+            className={cn("grid gap-6 md:gap-8", gridCols[columns])}
           >
             {products.map((product) => (
               <motion.div key={product.id} variants={itemVariants}>
@@ -306,7 +319,7 @@ export function ProductGrid({
         )}
       </div>
     </section>
-  )
+  );
 }
 
 // Featured Products Section - Uses API
@@ -314,65 +327,67 @@ export function FeaturedProducts({
   count = 4,
   initialData,
 }: {
-  count?: number
-  initialData?: ProductsResponse
+  count?: number;
+  initialData?: ProductsResponse;
 }) {
-  const { t } = useTranslation()
-  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
-  
-  const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products/public',
-    query: {
-      limit: count,
-      sort: 'newest',
-      view: 'card',
-    },
+  const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { data, isLoading, isFetching } = useGet<ProductsResponse>({
+    path: "products/public/pinned",
     options: {
       staleTime: 1000 * 60 * 5,
       initialData,
       refetchOnMount: true,
     },
-  })
-  
-  const products = (data?.data || []).slice(0, count)
-  
+  });
+
+  const products = (data?.data || []).slice(0, count);
+  const showSkeleton =
+    !mounted || isLoading || (isFetching && products.length === 0);
+
   return (
     <ProductGrid
-      title={t('products.featured')}
-      subtitle={t('products.featuredSubtitle')}
+      title={t("products.featured")}
+      subtitle={t("products.featuredSubtitle")}
       products={products}
       columns={count === 3 ? 3 : 4}
       onAddToCart={handleAddToCart}
       isAddToCartDisabled={isAddToCartDisabled}
-      isLoading={isLoading}
+      isLoading={showSkeleton}
     />
-  )
+  );
 }
 
 // New Arrivals Section - Uses API
 export function NewArrivals() {
-  const { t } = useTranslation()
-  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
-  
+  const { t } = useTranslation();
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart();
+
   const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products/public',
+    path: "products/public",
     query: {
       limit: 6,
-      sort: 'newest',
-      view: 'card',
+      sort: "newest",
+      view: "card",
     },
     options: {
       staleTime: 1000 * 60 * 5,
       refetchOnMount: true,
     },
-  })
-  
+  });
+
   // Get latest products (by created_at)
-  const products = (data?.data || []).slice(0, 6)
-  
+  const products = (data?.data || []).slice(0, 6);
+
   return (
     <ProductGrid
-      title={t('products.newArrivals')}
+      title={t("products.newArrivals")}
       products={products}
       columns={3}
       showViewAll
@@ -381,33 +396,36 @@ export function NewArrivals() {
       isAddToCartDisabled={isAddToCartDisabled}
       isLoading={isLoading}
     />
-  )
+  );
 }
 
 // Sale Products Section - Uses API
 export function SaleProducts() {
-  const { t } = useTranslation()
-  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
-  
+  const { t } = useTranslation();
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart();
+
   const { data, isLoading } = useGet<ProductsResponse>({
-    path: 'products/public',
+    path: "products/public",
     query: {
       limit: 24,
-      sort: 'price-desc',
-      view: 'card',
+      sort: "price-desc",
+      view: "card",
     },
     options: {
       staleTime: 1000 * 60 * 5,
       refetchOnMount: true,
     },
-  })
-  
+  });
+
   // Show products with a discount when possible
   const discounted = (data?.data || []).filter(
-    (p) => p.originalPrice && p.originalPrice > p.price
-  )
-  const products = (discounted.length ? discounted : data?.data || []).slice(0, 3)
-  
+    (p) => p.originalPrice && p.originalPrice > p.price,
+  );
+  const products = (discounted.length ? discounted : data?.data || []).slice(
+    0,
+    3,
+  );
+
   return (
     <section className="section-padding bg-gold-50">
       <div className="container mx-auto">
@@ -419,10 +437,10 @@ export function SaleProducts() {
           className="mb-12 text-center"
         >
           <span className="mb-4 inline-block rounded-full bg-gold px-4 py-1 text-sm font-medium text-navy">
-            {t('common.sale')}
+            {t("common.sale")}
           </span>
           <h2 className="font-display text-4xl font-light tracking-tight text-navy md:text-5xl">
-            {t('common.sale')}
+            {t("common.sale")}
           </h2>
         </motion.div>
 
@@ -450,7 +468,7 @@ export function SaleProducts() {
         )}
       </div>
     </section>
-  )
+  );
 }
 
 // Horizontal scrollable product list - Uses API
@@ -459,12 +477,12 @@ export function ProductCarousel({
   products = [],
   isLoading = false,
 }: {
-  title?: string
-  products?: Product[]
-  isLoading?: boolean
+  title?: string;
+  products?: Product[];
+  isLoading?: boolean;
 }) {
-  const { t } = useTranslation()
-  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart()
+  const { t } = useTranslation();
+  const { handleAddToCart, isAddToCartDisabled } = useStockAwareAddToCart();
 
   return (
     <section className="section-padding-sm bg-white">
@@ -479,9 +497,13 @@ export function ProductCarousel({
             <h2 className="font-display text-3xl font-light tracking-tight text-navy">
               {title}
             </h2>
-            <Button variant="ghost" className="group text-primary hover:text-primary-600" asChild>
+            <Button
+              variant="ghost"
+              className="group text-primary hover:text-primary-600"
+              asChild
+            >
               <Link to="/shop">
-                {t('common.viewAll')}
+                {t("common.viewAll")}
                 <ArrowRight className="ms-2 h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
               </Link>
             </Button>
@@ -525,7 +547,5 @@ export function ProductCarousel({
         )}
       </div>
     </section>
-  )
+  );
 }
-
-

@@ -25,6 +25,8 @@ import {
   ChevronRight,
   ChevronDown,
   Filter,
+  Star,
+  StarOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,6 +82,7 @@ type DbProduct = {
   thumbnail?: string | null;
   gallery?: string[];
   lighting_specs_enabled?: boolean | null;
+  pinned: boolean;
   cct: number;
   lumen: number;
   cri: number;
@@ -124,6 +127,7 @@ type ProductPayload = {
   thumbnail?: string | null;
   images?: string[];
   lighting_specs_enabled: boolean;
+  pinned: boolean;
   cct?: number;
   lumen?: number;
   cri?: number;
@@ -704,8 +708,8 @@ function ProductForm({
   const [disableOos, setDisableOos] = useState(
     Boolean(product?.disable_out_of_stock ?? true),
   );
+  const [pinned, setPinned] = useState(product?.pinned ?? false);
   const [note, setNote] = useState(product?.note ?? "");
-
   const [cct, setCct] = useState<number>(product?.cct ?? 3000);
   const [lumen, setLumen] = useState<number>(product?.lumen ?? 800);
   const [cri, setCri] = useState<number>(product?.cri ?? 90);
@@ -769,6 +773,7 @@ function ProductForm({
     setType(product?.product_type ?? "");
     setPublished(Boolean(product?.published ?? false));
     setDisableOos(Boolean(product?.disable_out_of_stock ?? true));
+    setPinned(product?.pinned ?? false);
     setNote(product?.note ?? "");
     setCct(product?.cct ?? 3000);
     setLumen(product?.lumen ?? 800);
@@ -876,6 +881,7 @@ function ProductForm({
       thumbnail: undefined,
       images: undefined,
       lighting_specs_enabled: lightingEnabled,
+      pinned,
       ...(lightingEnabled && {
         cct: Number(cct),
         lumen: Number(lumen),
@@ -1221,6 +1227,13 @@ function ProductForm({
             iconOn={<AlertCircle className="h-4 w-4" />}
             iconOff={<Check className="h-4 w-4" />}
           />
+          <Toggle
+            checked={pinned}
+            onChange={setPinned}
+            label={pinned ? "Pinned on homepage" : "Not pinned"}
+            iconOn={<Star className="h-4 w-4" />}
+            iconOff={<StarOff className="h-4 w-4" />}
+          />
         </div>
       </div>
 
@@ -1539,6 +1552,7 @@ function ProductRow({
 }) {
   const published = Boolean(product.published ?? false);
   const disableOos = Boolean(product.disable_out_of_stock ?? true);
+  const pinned = Boolean(product.pinned ?? false);
   const thumb = product.thumbnail || null;
 
   return (
@@ -1598,9 +1612,18 @@ function ProductRow({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-neutral-900 text-sm">
-              {product.product_name}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="truncate font-medium text-neutral-900 text-sm">
+                {product.product_name}
+              </p>
+
+              {pinned && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100/60">
+                  <Star className="h-3 w-3 fill-current" />
+                  Pinned
+                </span>
+              )}
+            </div>
             <p className="truncate text-xs text-neutral-500">
               <span className="font-mono">{product.slug}</span>
             </p>

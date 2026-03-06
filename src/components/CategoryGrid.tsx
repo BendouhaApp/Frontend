@@ -5,6 +5,7 @@ import { Link } from '@/lib/router'
 import { useGet } from '@/hooks/useGet'
 import type { ApiResponse, Category } from '@/types/api'
 import { handleImageError, resolveMediaUrl } from '@/lib/media'
+import { useState, useEffect } from 'react'
 
 const MotionLink = motion.create(Link)
 const DEFAULT_CATEGORY_IMAGE = '/images/categories/default-category.svg'
@@ -202,6 +203,8 @@ export function CategoryGridMinimal({
 }: {
   initialData?: ApiResponse<Category[]>
 }) {
+  const [mounted, setMounted] = useState(false)
+
   const { data } = useGet<ApiResponse<Category[]>>({
     path: 'categories',
     options: {
@@ -209,7 +212,34 @@ export function CategoryGridMinimal({
       initialData,
     },
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const minimalCategories = (data?.data ?? []).slice(0, 8)
+
+  // Don't render until client is mounted to avoid SSR/client hydration mismatch
+  // The category IDs in hrefs come from an API fetch, so server and client would differ
+  if (!mounted) {
+    return (
+      <section
+        id="home-discover"
+        className="section-padding-sm border-y border-navy-200 bg-navy-50"
+      >
+        <div className="container mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-4 w-20 animate-pulse rounded bg-navy-200 md:w-24"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section
