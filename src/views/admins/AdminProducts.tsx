@@ -1542,6 +1542,7 @@ function ProductRow({
   onEdit,
   onRequestDelete,
   isDeleting,
+  onTogglePin,
 }: {
   product: DbProduct;
   selected: boolean;
@@ -1549,6 +1550,7 @@ function ProductRow({
   onEdit: (p: DbProduct) => void;
   onRequestDelete: (p: DbProduct) => void;
   isDeleting?: boolean;
+  onTogglePin: (product: DbProduct) => void;
 }) {
   const published = Boolean(product.published ?? false);
   const disableOos = Boolean(product.disable_out_of_stock ?? true);
@@ -1617,12 +1619,17 @@ function ProductRow({
                 {product.product_name}
               </p>
 
-              {pinned && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100/60">
-                  <Star className="h-3 w-3 fill-current" />
-                  Pinned
-                </span>
-              )}
+              <button
+                onClick={() => onTogglePin(product)}
+                className="transition hover:scale-110"
+                title={pinned ? "Unpin product" : "Pin product"}
+              >
+                {pinned ? (
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-500 cursor-pointer" />
+                ) : (
+                  <StarOff className="h-4 w-4 text-neutral-300 cursor-pointer" />
+                )}
+              </button>
             </div>
             <p className="truncate text-xs text-neutral-500">
               <span className="font-mono">{product.slug}</span>
@@ -2179,6 +2186,30 @@ export default function AdminProductsPage() {
     }
   };
 
+  const togglePin = async (product: DbProduct) => {
+    try {
+      const newPinned = !product.pinned;
+
+      const res = await api.patch(`products/${product.id}`, {
+        pinned: newPinned,
+      });
+
+      toast.success(newPinned ? "Product pinned" : "Product unpinned");
+
+      setItems((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, pinned: newPinned } : p,
+        ),
+      );
+
+      clearPublicProductsCache();
+    } catch (e: any) {
+      toast.error(
+        e?.response?.data?.message || e?.message || "Failed to update pin",
+      );
+    }
+  };
+
   const selectedProducts = normalized.filter((p) => selectedIds.includes(p.id));
 
   const allPublished =
@@ -2564,6 +2595,7 @@ export default function AdminProductsPage() {
                         <ProductRow
                           key={p.id}
                           product={p}
+                          onTogglePin={togglePin}
                           selected={selectedIds.includes(p.id)}
                           onToggleSelect={(id, checked) =>
                             setSelectedIds((prev) =>
