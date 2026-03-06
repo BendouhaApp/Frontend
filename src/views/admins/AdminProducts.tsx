@@ -19,6 +19,7 @@ import {
   DollarSign,
   FileText,
   Lightbulb,
+  LightbulbOff,
   Zap,
   Gauge,
   Folder,
@@ -134,6 +135,13 @@ type ProductPayload = {
   power?: number;
   angle?: number;
   category_ids?: string[];
+};
+
+type FilterPillOption = {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
+  activeClass?: string;
 };
 
 function FieldLabel({
@@ -1077,14 +1085,14 @@ function ProductForm({
               onChange={setLightingEnabled}
               label={lightingEnabled ? "Activé" : "Désactivé"}
               iconOn={<Lightbulb className="h-4 w-4" />}
-              iconOff={<Lightbulb className="h-4 w-4" />}
+              iconOff={<LightbulbOff className="h-4 w-4" />}
             />
           </div>
         </div>
 
         {!lightingEnabled && (
           <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
-            <Lightbulb className="h-4 w-4" />
+            <LightbulbOff className="h-4 w-4" />
             Ce produit n'utilise pas de spécifications d'éclairage.
           </div>
         )}
@@ -1685,7 +1693,7 @@ function ProductRow({
           </div>
         ) : (
           <span className="text-xs text-neutral-400 flex items-center gap-1">
-            <Lightbulb className="h-3 w-3" />
+            <LightbulbOff className="h-3 w-3" />
             No lighting specs
           </span>
         )}
@@ -1720,6 +1728,44 @@ function ProductRow({
         </div>
       </td>
     </motion.tr>
+  );
+}
+
+function FilterPillGroup({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: FilterPillOption[];
+}) {
+  return (
+    <div className="flex items-center rounded-xl border border-neutral-200 bg-neutral-50 p-0.5 gap-0.5">
+      {options.map((opt) => {
+        const isActive = value === opt.value;
+        const activeClass =
+          opt.activeClass ??
+          "border-primary/30 bg-white text-primary shadow-sm";
+        const inactiveClass =
+          "border-transparent bg-transparent text-neutral-500 hover:text-neutral-700";
+
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all duration-150",
+              isActive ? activeClass : inactiveClass,
+            )}
+          >
+            {opt.icon}
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -1775,6 +1821,12 @@ export default function AdminProductsPage() {
     "created",
   );
   const [dir, setDir] = useState<"asc" | "desc">("desc");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterStock, setFilterStock] = useState<string>("");
+  const [filterPinned, setFilterPinned] = useState<string>("");
+  const [filterLightingSpecs, setFilterLightingSpecs] = useState<string>("");
+  const [filterOutOfStockVisibility, setFilterOutOfStockVisibility] =
+    useState<string>("");
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
@@ -1840,6 +1892,26 @@ export default function AdminProductsPage() {
         params.set("categoryId", activeCategoryFilter);
       }
 
+      if (filterStatus) {
+        params.set("status", filterStatus);
+      }
+
+      if (filterStock) {
+        params.set("stock", filterStock);
+      }
+
+      if (filterPinned) {
+        params.set("pinned", filterPinned);
+      }
+
+      if (filterLightingSpecs) {
+        params.set("lightingSpecs", filterLightingSpecs);
+      }
+
+      if (filterOutOfStockVisibility) {
+        params.set("outOfStockVisibility", filterOutOfStockVisibility);
+      }
+
       const res = await api.get<{
         data: DbProduct[];
         meta: {
@@ -1866,12 +1938,29 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     load();
-  }, [page, debouncedQuery, activeCategoryFilter]);
+  }, [
+    page,
+    debouncedQuery,
+    activeCategoryFilter,
+    filterStatus,
+    filterStock,
+    filterPinned,
+    filterLightingSpecs,
+    filterOutOfStockVisibility,
+  ]);
 
   useEffect(() => {
     setPage(1);
     setPageInput("1");
-  }, [debouncedQuery, activeCategoryFilter]);
+  }, [
+    debouncedQuery,
+    activeCategoryFilter,
+    filterStatus,
+    filterStock,
+    filterPinned,
+    filterLightingSpecs,
+    filterOutOfStockVisibility,
+  ]);
 
   useEffect(() => {
     if (items.length === 0 && page > 1) {
@@ -2422,6 +2511,132 @@ export default function AdminProductsPage() {
                 </div>
               </motion.div>
             )}
+
+            {/* Advanced Filters Row */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Status Filter Group */}
+              <FilterPillGroup
+                value={filterStatus}
+                onChange={setFilterStatus}
+                options={[
+                  { value: "", label: "Tous" },
+                  {
+                    value: "published",
+                    label: "Publié",
+                    icon: <Eye className="h-3 w-3" />,
+                  },
+                  {
+                    value: "draft",
+                    label: "Brouillon",
+                    icon: <EyeOff className="h-3 w-3" />,
+                  },
+                ]}
+              />
+
+              <div className="h-5 w-px bg-neutral-200 flex-shrink-0" />
+
+              {/* Stock Filter Group */}
+              <FilterPillGroup
+                value={filterStock}
+                onChange={setFilterStock}
+                options={[
+                  { value: "", label: "Stock" },
+                  {
+                    value: "in",
+                    label: "En stock",
+                  },
+                  {
+                    value: "out",
+                    label: "Rupture",
+                  },
+                ]}
+              />
+
+              <div className="h-5 w-px bg-neutral-200 flex-shrink-0" />
+
+              {/* Pinned Filter Group */}
+              <FilterPillGroup
+                value={filterPinned}
+                onChange={setFilterPinned}
+                options={[
+                  { value: "", label: "Épinglé" },
+                  {
+                    value: "true",
+                    label: "Oui",
+                    icon: <Star className="h-3 w-3" />,
+                  },
+                  {
+                    value: "false",
+                    label: "Non",
+                    icon: <StarOff className="h-3 w-3" />,
+                  },
+                ]}
+              />
+
+              <div className="h-5 w-px bg-neutral-200 flex-shrink-0" />
+
+              {/* Lighting Specs Filter Group */}
+              <FilterPillGroup
+                value={filterLightingSpecs}
+                onChange={setFilterLightingSpecs}
+                options={[
+                  { value: "", label: "Éclairage" },
+                  {
+                    value: "true",
+                    label: "Activé",
+                    icon: <Lightbulb className="h-3 w-3" />,
+                  },
+                  {
+                    value: "false",
+                    label: "Désactivé",
+                    icon: <LightbulbOff className="h-3 w-3" />,
+                  },
+                ]}
+              />
+
+              <div className="h-5 w-px bg-neutral-200 flex-shrink-0" />
+
+              {/* Out-of-Stock Visibility Filter Group */}
+              <FilterPillGroup
+                value={filterOutOfStockVisibility}
+                onChange={setFilterOutOfStockVisibility}
+                options={[
+                  { value: "", label: "Rupture visible" },
+                  {
+                    value: "show",
+                    label: "Affiché",
+                    icon: <Eye className="h-3 w-3" />,
+                  },
+                  {
+                    value: "hide",
+                    label: "Caché",
+                    icon: <EyeOff className="h-3 w-3" />,
+                  },
+                ]}
+              />
+
+              {/* Clear all advanced filters */}
+              {(filterStatus ||
+                filterStock ||
+                filterPinned ||
+                filterLightingSpecs ||
+                filterOutOfStockVisibility) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterStatus("");
+                    setFilterStock("");
+                    setFilterPinned("");
+                    setFilterLightingSpecs("");
+                    setFilterOutOfStockVisibility("");
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition hover:border-primary/60 hover:bg-primary/10"
+                >
+                  <X className="h-3 w-3" />
+                  Effacer
+                </button>
+              )}
+            </div>
           </div>
 
           {error && (
