@@ -1,14 +1,13 @@
-import type { SyntheticEvent } from 'react'
-import { motion, type Variants } from '@/lib/gsap-motion'
-import { useTranslation } from 'react-i18next'
-import { Link } from '@/lib/router'
-import { useGet } from '@/hooks/useGet'
-import type { ApiResponse, Category } from '@/types/api'
-import { handleImageError, resolveMediaUrl } from '@/lib/media'
-import { useState, useEffect } from 'react'
+import type { SyntheticEvent } from "react";
+import { motion, type Variants } from "@/lib/gsap-motion";
+import { useTranslation } from "react-i18next";
+import { Link } from "@/lib/router";
+import { useGet } from "@/hooks/useGet";
+import type { ApiResponse, Category } from "@/types/api";
+import { handleImageError, resolveMediaUrl } from "@/lib/media";
+import { useState, useEffect , useMemo } from "react";
 
-const MotionLink = motion.create(Link)
-const DEFAULT_CATEGORY_IMAGE = '/images/categories/default-category.svg'
+const DEFAULT_CATEGORY_IMAGE = "/images/categories/default-category.svg";
 
 // Animation variants
 const containerVariants: Variants = {
@@ -19,7 +18,7 @@ const containerVariants: Variants = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -30,17 +29,17 @@ const itemVariants: Variants = {
       duration: 0.5,
     },
   },
-}
+};
 
 interface CategoryGridProps {
   /** Section title */
-  title?: string
+  title?: string;
   /** Section subtitle */
-  subtitle?: string
+  subtitle?: string;
   /** Show item count on cards */
-  showItemCount?: boolean
+  showItemCount?: boolean;
   /** Preloaded categories (optional) */
-  initialData?: ApiResponse<Category[]>
+  initialData?: ApiResponse<Category[]>;
 }
 
 export function CategoryGrid({
@@ -49,25 +48,31 @@ export function CategoryGrid({
   showItemCount = false,
   initialData,
 }: CategoryGridProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
   const { data } = useGet<ApiResponse<Category[]>>({
-    path: 'categories',
+    path: "categories",
     options: {
       staleTime: 1000 * 60 * 10,
       initialData,
     },
-  })
+  });
 
-  const displayTitle = title ?? t('categories.title')
-  const displaySubtitle = subtitle ?? t('categories.subtitle')
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayTitle = title ?? t("categories.title");
+  const displaySubtitle = subtitle ?? t("categories.subtitle");
   const categories =
     data?.data?.map((cat) => ({
       id: cat.id,
       name: cat.category_name,
-      description: cat.category_description ?? '',
+      description: cat.category_description ?? "",
       image: resolveMediaUrl(cat.image, DEFAULT_CATEGORY_IMAGE),
       itemCount: cat.other_categories?.length ?? 0,
-    })) ?? []
+    })) ?? [];
 
   return (
     <section className="section-padding bg-navy-50">
@@ -88,46 +93,67 @@ export function CategoryGrid({
           </p>
         </motion.div>
 
+        {/* Skeleton while not mounted */}
+        {!mounted && (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[4/3] animate-pulse rounded-xl bg-navy-200"
+              />
+            ))}
+          </div>
+        )}
+
         {/* Category Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              showItemCount={showItemCount}
-              exploreText={t('categories.exploreCollection')}
-              itemsText={t('common.items')}
-            />
-          ))}
-        </motion.div>
+        {mounted && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                showItemCount={showItemCount}
+                exploreText={t("categories.exploreCollection")}
+                itemsText={t("common.items")}
+              />
+            ))}
+          </motion.div>
+        )}
       </div>
     </section>
-  )
+  );
 }
 
 // Individual Category Card Component
 interface CategoryCardData {
-  id: string
-  name: string
-  description: string
-  image: string
-  itemCount: number
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  itemCount: number;
 }
 
 interface CategoryCardProps {
-  category: CategoryCardData
-  showItemCount?: boolean
-  exploreText: string
-  itemsText: string
+  category: CategoryCardData;
+  showItemCount?: boolean;
+  exploreText: string;
+  itemsText: string;
 }
 
-function CategoryCard({ category, showItemCount, exploreText, itemsText }: CategoryCardProps) {
+function CategoryCard({
+  category,
+  showItemCount,
+  exploreText,
+  itemsText,
+}: CategoryCardProps) {
+  const MotionLink = useMemo(() => motion.create(Link), []);
+
   return (
     <MotionLink
       to={`/shop?category=${category.id}`}
@@ -141,7 +167,7 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
           alt={category.name}
           className="h-full w-full object-cover"
           whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           onError={(event: SyntheticEvent<HTMLImageElement>) =>
             handleImageError(event, DEFAULT_CATEGORY_IMAGE)
           }
@@ -194,30 +220,31 @@ function CategoryCard({ category, showItemCount, exploreText, itemsText }: Categ
         </div>
       </div>
     </MotionLink>
-  )
+  );
 }
 
 // Alternative: Minimal Category Grid (no images, just text)
 export function CategoryGridMinimal({
   initialData,
 }: {
-  initialData?: ApiResponse<Category[]>
+  initialData?: ApiResponse<Category[]>;
 }) {
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  const MotionLink = useMemo(() => motion.create(Link), []);
 
   const { data } = useGet<ApiResponse<Category[]>>({
-    path: 'categories',
+    path: "categories",
     options: {
       staleTime: 1000 * 60 * 10,
       initialData,
     },
-  })
+  });
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
-  const minimalCategories = (data?.data ?? []).slice(0, 8)
+  const minimalCategories = (data?.data ?? []).slice(0, 8);
 
   // Don't render until client is mounted to avoid SSR/client hydration mismatch
   // The category IDs in hrefs come from an API fetch, so server and client would differ
@@ -238,7 +265,7 @@ export function CategoryGridMinimal({
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -265,29 +292,32 @@ export function CategoryGridMinimal({
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 // Alternative: Featured Categories (larger cards, 2 columns)
 export function CategoryGridFeatured() {
-  const { t } = useTranslation()
-
+  const { t } = useTranslation();
+  const MotionLink = useMemo(() => motion.create(Link), []);
+  
   const featuredCategories = [
     {
-      id: '1',
-      nameKey: 'categories.theLivingCollection',
-      descKey: 'categories.theLivingCollectionDesc',
-      image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80',
-      ctaKey: 'categories.discoverLiving',
+      id: "1",
+      nameKey: "categories.theLivingCollection",
+      descKey: "categories.theLivingCollectionDesc",
+      image:
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+      ctaKey: "categories.discoverLiving",
     },
     {
-      id: '2',
-      nameKey: 'categories.theBedroomEdit',
-      descKey: 'categories.theBedroomEditDesc',
-      image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1200&q=80',
-      ctaKey: 'categories.shopBedroom',
+      id: "2",
+      nameKey: "categories.theBedroomEdit",
+      descKey: "categories.theBedroomEditDesc",
+      image:
+        "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1200&q=80",
+      ctaKey: "categories.shopBedroom",
     },
-  ]
+  ];
 
   return (
     <section className="section-padding bg-navy-50">
@@ -310,7 +340,7 @@ export function CategoryGridFeatured() {
                   alt={t(category.nameKey)}
                   className="h-full w-full object-cover"
                   whileHover={{ scale: 1.03 }}
-                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
                 />
 
                 {/* Gradient Overlay */}
@@ -347,7 +377,5 @@ export function CategoryGridFeatured() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-
-

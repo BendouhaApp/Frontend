@@ -1625,9 +1625,12 @@ function ProductRow({
                 title={pinned ? "Unpin product" : "Pin product"}
               >
                 {pinned ? (
-                  <Star className="h-4 w-4 text-amber-500 fill-amber-500 cursor-pointer" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100/60 cursor-pointer">
+                    <Star className="h-3 w-3 fill-current" />
+                    Pinned
+                  </span>
                 ) : (
-                  <StarOff className="h-4 w-4 text-neutral-300 cursor-pointer" />
+                  <StarOff className="h-3 w-3 text-neutral-500 cursor-pointer" />
                 )}
               </button>
             </div>
